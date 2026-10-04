@@ -41,10 +41,13 @@ async function showApp() {
 
 // ---------- 📒 聯絡簿連結 ----------
 async function loadContact() {
-  const { data, error } = await db.from('settings').select('value').eq('key', 'contact_book_url').maybeSingle();
+  const { data, error } = await db.from('settings').select('key, value')
+    .in('key', ['contact_book_url', 'contact_book_ratio']);
   if (error) return;
-  $('contact-url').value = data?.value ?? '';
-  $('contact-msg').textContent = data?.value ? '目前的聯絡簿連結 ✓' : '還沒有設定聯絡簿連結';
+  const setting = Object.fromEntries(data.map((r) => [r.key, r.value]));
+  $('contact-url').value = setting.contact_book_url ?? '';
+  $('contact-ratio').value = setting.contact_book_ratio ?? '16:9';
+  $('contact-msg').textContent = setting.contact_book_url ? '目前的聯絡簿連結 ✓' : '還沒有設定聯絡簿連結';
 }
 
 $('contact-form').addEventListener('submit', async (e) => {
@@ -56,8 +59,11 @@ $('contact-form').addEventListener('submit', async (e) => {
     return;
   }
   const value = url.replace(/\?embed$/, '');   // 存成一般的檢視連結
-  const { error } = await db.from('settings')
-    .upsert({ key: 'contact_book_url', value, updated_at: new Date().toISOString() });
+  const now = new Date().toISOString();
+  const { error } = await db.from('settings').upsert([
+    { key: 'contact_book_url', value, updated_at: now },
+    { key: 'contact_book_ratio', value: $('contact-ratio').value, updated_at: now },
+  ]);
   if (error) return toast(`儲存失敗：${friendlyError(error)}`, { tone: 'error', seconds: 5 });
   $('contact-url').value = value;
   $('contact-msg').textContent = '已儲存 ✓ 教室的聯絡簿頁會自動更新';

@@ -612,3 +612,39 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .dot.red    { --glass: #d9434a; }
 .dot { box-shadow: inset 0 -1px 2px rgba(0, 0, 0, .15), 0 1px 2px rgba(60, 20, 35, .15); }
 .seat:active { transform: scale(.9); filter: brightness(1.05); }
+
+/* ---------- 聯絡簿頁：標題縮小，把空間留給聯絡簿 ---------- */
+.contact-page { padding: clamp(10px, 1.2vw, 24px); }
+.contact-page .board-header {
+  align-items: center;
+  padding-bottom: clamp(6px, .6vw, 12px);
+  margin-bottom: clamp(8px, .8vw, 14px);
+}
+.contact-page .board-title { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem 1.2rem; }
+.contact-page .board-title h1 { font-size: clamp(1.1rem, 1.7vw, 1.9rem); }
+.contact-page .date { margin: 0; font-size: clamp(.95rem, 1.1vw, 1.3rem); }
+.contact-page .board-nav { margin-top: 0; }
+.contact-page .board-nav a { min-height: 40px; font-size: clamp(.95rem, 1.1vw, 1.25rem); }
+.contact-page .clock { font-size: clamp(1.8rem, 3.2vw, 3.6rem); }
+.contact-frame {
+  display: grid; place-items: center;
+  background: transparent; border: none; border-radius: 0;
+}
+.contact-frame iframe { width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 6px 24px rgba(60, 20, 35, .12); }
+.ratio-field select {
+  min-height: 44px; padding: .3rem .8rem; border-radius: 10px;
+  border: 1.5px solid var(--line); background: #fff; font: inherit; color: var(--ink);
+}
+
+/* ---------- 搖一搖、轉久一點 ---------- */
+.machine.spinning .knob { animation: turn 3s cubic-bezier(.45, 0, .35, 1); }
+@keyframes turn { to { transform: rotate(1080deg); } }
+.machine.shaking { animation: shake .083s ease-in-out infinite alternate; }
+@keyframes shake {
+  from { transform: translateX(-7px) rotate(-3deg); }
+  to   { transform: translateX(7px) rotate(3deg); }
+}
+.stage .machine { cursor: pointer; }
+.go-row { display: grid; grid-template-columns: 1fr 2fr; gap: .8rem; }
+.go-row .btn { min-height: clamp(64px, 7vw, 96px); font-size: clamp(1.2rem, 2.2vw, 2.2rem); font-weight: 700; border-radius: 20px; }
+.go-row .shake-btn:only-child, .go-row .go-btn:only-child { grid-column: 1 / -1; }

@@ -107,10 +107,17 @@ export function createMachine(container, kind, count = 18) {
     });
   }
 
-  // 一小步物理運算
-  function step(stirring) {
+  // 一小步物理運算；mode：'stir' 轉把手攪動、'shake' 左右搖晃、null 只有重力
+  function step(mode, t = 0) {
+    const stirring = mode === 'stir';
+    // 搖晃：整台左右來回，膠囊被甩向兩邊、往上跳
+    const sway = mode === 'shake' ? Math.sin(t * Math.PI * 2 * 6) * 11000 : 0;
     for (const c of caps) {
-      let ax = 0, ay = G;
+      let ax = sway, ay = G;
+      if (mode === 'shake') {
+        ay -= 2200 + Math.random() * 3200;
+        ax += (Math.random() - 0.5) * 4000;
+      }
       if (stirring) {
         const dx = c.x - CX, dy = c.y - CY;
         const d = Math.hypot(dx, dy) || 1;
@@ -172,13 +179,13 @@ export function createMachine(container, kind, count = 18) {
   }
 
   // 一開始先讓膠囊自然落到底部
-  for (let i = 0; i < 480; i++) step(false);
+  for (let i = 0; i < 480; i++) step(null);
   render();
 
   let running = null;
 
   // 播放物理動畫：stirSeconds 秒的攪動，接著讓膠囊落下靜止
-  function animate(stirSeconds, settleSeconds = 2.2) {
+  function animate(stirSeconds, settleSeconds = 2.2, mode = 'stir') {
     if (running) cancelAnimationFrame(running);
     // 以真實時間計時：就算電腦忙、畫面變慢，也會準時結束
     return new Promise((resolve) => {
@@ -192,7 +199,7 @@ export function createMachine(container, kind, count = 18) {
         acc += Math.min(0.05, (now - last) / 1000);
         last = now;
         while (acc >= STEP) {
-          step(elapsed < stirSeconds);
+          step(elapsed < stirSeconds ? mode : null, elapsed);
           acc -= STEP;
         }
         render();
@@ -212,6 +219,13 @@ export function createMachine(container, kind, count = 18) {
       el.classList.add('spinning');
       await animate(seconds);
       el.classList.remove('spinning');
+    },
+    // 搖一搖：整台左右晃，膠囊彈跳
+    async shake(seconds) {
+      if (reduceMotion) return;
+      el.classList.add('shaking');
+      await animate(seconds, 2, 'shake');
+      el.classList.remove('shaking');
     },
     // 拿走最底下的一顆膠囊（掉出出口），回傳它的顏色
     take() {

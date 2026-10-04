@@ -7,6 +7,7 @@ import { createMachine } from './machine.js';
 
 const $ = (id) => document.getElementById(id);
 const MAX_COUNT = 100;
+const SPIN_SECONDS = 3;     // 轉把手的時間
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, reduceMotion ? Math.min(ms, 150) : ms));
 
@@ -21,6 +22,7 @@ let kind = null;
 let seat = null;
 let busy = false;
 let machine = null;      // 抽獎視窗裡的那台
+let shaking = false;
 let drawToken = 0;       // 每次重設就換號碼，舊的抽獎結果不會跑到新的畫面
 
 document.title = `扭蛋機｜${CLASS_NAME}`;
@@ -88,6 +90,7 @@ function resetDraw() {
   $('result').replaceChildren();
   $('after').hidden = true;
   $('go').hidden = false;
+  $('shake').hidden = false;
   $('cancel-draw').hidden = false;
   $('controls').classList.remove('locked');
   renderSeats();
@@ -116,6 +119,19 @@ $('minus').addEventListener('click', () => { $('count').value = Math.max(1, coun
 $('plus').addEventListener('click', () => { $('count').value = Math.min(MAX_COUNT, count() + 1); });
 $('count').addEventListener('change', () => { $('count').value = count(); });
 
+// ---------- 搖一搖（不會抽，只是好玩） ----------
+async function shake() {
+  if (busy || shaking || !$('result').hidden) return;
+  shaking = true;
+  $('go').disabled = true;
+  sound.rattle(1.2);
+  await machine.shake(1.2);
+  shaking = false;
+  renderGo();
+}
+$('shake').addEventListener('click', shake);
+$('stage').addEventListener('click', (e) => { if (e.target.closest('.machine')) shake(); });
+
 $('cancel-draw').addEventListener('click', () => $('draw').close());
 $('close-draw').addEventListener('click', () => $('draw').close());
 $('again').addEventListener('click', async () => {
@@ -133,7 +149,7 @@ $('draw').addEventListener('close', refreshStatus);
 
 // ---------- 抽！ ----------
 $('go').addEventListener('click', async () => {
-  if (!seat || busy) return;
+  if (!seat || busy || shaking) return;
   busy = true;
   const token = drawToken;
   const pickedSeat = seat;
@@ -145,8 +161,9 @@ $('go').addEventListener('click', async () => {
 
   // 動畫和資料庫同時進行
   const request = operator.rpc('draw_gacha', { p_kind: kind, p_seat: pickedSeat, p_count: n });
-  sound.crank(1.6);
-  await Promise.all([machine.stir(1.6), sleep(1600)]);
+  $('shake').hidden = true;
+  sound.crank(SPIN_SECONDS);
+  await Promise.all([machine.stir(SPIN_SECONDS), sleep(SPIN_SECONDS * 1000)]);
 
   const { data, error } = await request;
   if (token !== drawToken) return;

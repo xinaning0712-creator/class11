@@ -38,6 +38,14 @@ export function crank(seconds) {
   const n = Math.round(seconds * 9);
   for (let i = 0; i < n; i++) tone(1100 + (i % 2) * 250, i / 9, 0.04, { type: 'square', gain: 0.06 });
 }
+// 搖晃：膠囊互撞的喀啦喀啦
+export function rattle(seconds) {
+  const n = Math.round(seconds * 30);
+  for (let i = 0; i < n; i++) {
+    tone(1600 + Math.random() * 1800, Math.random() * seconds, 0.03,
+      { type: Math.random() < 0.5 ? 'square' : 'triangle', gain: 0.03 + Math.random() * 0.04 });
+  }
+}
 // 膠囊掉下來：咚
 export function drop() { tone(220, 0, 0.25, { to: 70, gain: 0.35 }); }
 // 膠囊打開：啵

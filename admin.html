@@ -135,6 +135,15 @@
       <form id="contact-form" class="card contact-form">
         <label for="contact-url" class="form-title">Canva 聯絡簿連結</label>
         <input id="contact-url" type="text" placeholder="https://www.canva.com/design/.../view" autocomplete="off">
+        <label class="field ratio-field"><span>聯絡簿的形狀（選對了旁邊就不會有黑邊）</span>
+          <select id="contact-ratio">
+            <option value="16:9">簡報 16:9（橫的，最常見）</option>
+            <option value="4:3">簡報 4:3</option>
+            <option value="1:1.414">A4 直式</option>
+            <option value="1.414:1">A4 橫式</option>
+            <option value="1:1">正方形</option>
+          </select>
+        </label>
         <p id="contact-msg" class="hint"></p>
         <div class="row-actions">
           <button class="btn primary" type="submit">儲存</button>
