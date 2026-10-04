@@ -3,12 +3,10 @@
 ## 網址
 | 頁面 | 用途 | 網址 |
 |---|---|---|
-| 主畫面 | 白板投影：作業燈號 | `（公開網址）/` |
-| 聯絡簿 | 白板投影：Canva 聯絡簿 | `（公開網址）/contact.html` |
-| 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | `（公開網址）/gacha.html` |
-| 老師後台 | 需密碼 | `（公開網址）/admin.html` |
-
-> 公開網址設定好之後，把上面的「（公開網址）」換成真正的網址。
+| 主畫面 | 白板投影：作業燈號 | https://xinaning0712-creator.github.io/class11/ |
+| 聯絡簿 | 白板投影：Canva 聯絡簿 | https://xinaning0712-creator.github.io/class11/contact.html |
+| 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | https://xinaning0712-creator.github.io/class11/gacha.html |
+| 老師後台 | 需密碼 | https://xinaning0712-creator.github.io/class11/admin.html |
 
 ## 教室電腦第一次使用
 1. 用瀏覽器打開主畫面，按右下角 ⚙︎ → 輸入**教室密碼** → 開啟教室模式。孩子就能點燈號、抽扭蛋。
