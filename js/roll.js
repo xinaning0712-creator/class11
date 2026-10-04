@@ -1,125 +1,123 @@
-// 隨機點名（只在這台裝置上記錄，不用登入、不存雲端）
+// 抽籤：樂透機（只在這台裝置上記錄，不用登入、不存雲端）
 import { CLASS_NAME } from './config.js';
 import { SEATS, el, startClock } from './ui.js';
 import * as sound from './sound.js';
 import { confetti } from './celebrate.js';
+import { createLottery, ballColor } from './lottery.js';
 
 const $ = (id) => document.getElementById(id);
-const STORE = 'shiny11-roll';
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STORE = 'shiny11-lottery';
+const SHAKE_SECONDS = 3;
 
-let state = { noRepeat: false, drawn: [] };
-let rolling = false;
-let lastPick = null;
+let state = { putBack: false, out: [] };   // out：已抽出、還沒放回的號碼
+let busy = false;
 
-document.title = `隨機點名｜${CLASS_NAME}`;
+document.title = `抽籤｜${CLASS_NAME}`;
 $('class-name').textContent = CLASS_NAME;
 startClock($('clock'), $('date'));
 
 try {
   const saved = JSON.parse(localStorage.getItem(STORE));
-  if (saved && Array.isArray(saved.drawn)) state = { noRepeat: !!saved.noRepeat, drawn: saved.drawn };
+  if (saved && Array.isArray(saved.out)) {
+    state = { putBack: !!saved.putBack, out: saved.out.filter((n) => SEATS.includes(n)) };
+  }
 } catch { /* 沒有存過也沒關係 */ }
 
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* 存不了也能用 */ }
 }
 
-const remaining = () => SEATS.filter((s) => !state.drawn.includes(s));
+const lottery = createLottery($('lottery'), SEATS.filter((n) => !state.out.includes(n)));
 
 // ---------- 畫面 ----------
 function render() {
-  $('no-repeat').checked = state.noRepeat;
-  $('round-box').hidden = !state.noRepeat;
-  const left = remaining();
-  const roundDone = state.noRepeat && left.length === 0;
-
-  $('roll-go').textContent = roundDone ? '這一輪抽完了！再來一輪' : '🎲 抽一位';
-  $('roll-go').disabled = rolling;
-  $('round-status').textContent = roundDone
-    ? '全班都抽過了 ✨'
-    : `這一輪已抽 ${state.drawn.length} 人，還剩 ${left.length} 人`;
-
-  $('roll-seats').replaceChildren(...SEATS.map((s) => el('span', {
-    class: `seat mini ${state.drawn.includes(s) ? 'drawn' : 'waiting'}${s === lastPick ? ' last' : ''}`,
-    'aria-label': `${s} 號${state.drawn.includes(s) ? '，已抽過' : ''}`,
-  }, s)));
-
+  const left = lottery.count();
+  $('put-back').checked = state.putBack;
+  $('draw-btn').disabled = busy || left === 0;
+  $('draw-btn').textContent = left === 0 ? '球都抽完了！請按重置' : '🎲 搖一搖，抽一顆！';
+  $('reset-btn').disabled = busy;
+  $('tray-title').textContent = `已抽出的球（${state.out.length}）・大球裡還有 ${left} 顆`;
+  $('tray').replaceChildren(...(state.out.length
+    ? state.out.map((n) => el('button', {
+        class: 'marble small',
+        type: 'button',
+        style: `--glass:${ballColor(n)}`,
+        'aria-label': `${n} 號，點一下放回去`,
+        title: '點一下放回去',
+        onclick: () => putBack(n),
+      }, el('span', {}, n)))
+    : [el('p', { class: 'muted' }, state.putBack ? '球抽完會自動放回去' : '還沒有抽出的球')]));
   $('sound-btn').textContent = sound.soundOn() ? '🔊 音效開' : '🔇 音效關';
 }
 
-function showNumber(n, { final = false } = {}) {
-  $('ball-num').textContent = n;
-  const ball = $('ball');
-  ball.classList.toggle('picked', final);
-  if (!reduceMotion) {
-    ball.animate(final
-      ? [{ transform: 'scale(.85)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }]
-      : [{ transform: 'translateY(-4px)' }, { transform: 'translateY(0)' }],
-    { duration: final ? 550 : 90, easing: 'ease-out' });
-  }
+function showResult(n) {
+  const big = $('big-ball');
+  big.classList.remove('empty');
+  big.style.setProperty('--glass', ballColor(n));
+  $('big-num').textContent = n;
+  big.animate([
+    { transform: 'scale(.3) rotate(-120deg)', opacity: 0 },
+    { transform: 'scale(1.12) rotate(8deg)', opacity: 1, offset: 0.7 },
+    { transform: 'scale(1) rotate(0)' },
+  ], { duration: 650, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+  $('caption').textContent = `請 ${n} 號！`;
 }
 
 // ---------- 抽 ----------
-async function roll() {
-  if (rolling) return;
-  if (state.noRepeat && remaining().length === 0) {
-    state.drawn = [];
-    lastPick = null;
-    save();
-    $('ball-num').textContent = '?';
-    $('ball').classList.remove('picked');
-    $('ball-caption').textContent = '新的一輪開始囉！';
-    render();
-    return;
-  }
-
-  rolling = true;
+async function draw() {
+  if (busy || lottery.count() === 0) return;
+  busy = true;
   render();
-  const pool = state.noRepeat ? remaining() : SEATS;
-  const pick = pool[Math.floor(Math.random() * pool.length)];
-  $('ball-caption').textContent = '抽抽抽…';
+  $('caption').textContent = '搖搖搖～～～';
+  sound.rattle(SHAKE_SECONDS);
+  await lottery.shake(SHAKE_SECONDS);
 
-  // 號碼快速跳動，越來越慢
-  if (!reduceMotion && pool.length > 1) {
-    let delay = 45, shown = null;
-    while (delay < 420) {
-      let n;
-      do { n = pool[Math.floor(Math.random() * pool.length)]; } while (n === shown);
-      shown = n;
-      showNumber(n);
-      sound.tick();
-      await new Promise((r) => setTimeout(r, delay));
-      delay *= 1.13;
-    }
-  }
+  const inside = lottery.inside();
+  const pick = inside[Math.floor(Math.random() * inside.length)];
+  $('caption').textContent = '掉出來了…';
+  await lottery.release(pick);
+  sound.drop();
 
-  showNumber(pick, { final: true });
-  $('ball-caption').textContent = `請 ${pick} 號！`;
+  showResult(pick);
   sound.ding();
-  confetti({ count: 70, duration: 2600 });
+  confetti({ count: 80, duration: 2600 });
 
-  lastPick = pick;
-  if (state.noRepeat) state.drawn.push(pick);
+  if (state.putBack) {
+    setTimeout(() => { lottery.putBack(pick); render(); }, 1500);
+  } else {
+    state.out.push(pick);
+  }
   save();
-  rolling = false;
+  busy = false;
   render();
 }
 
-$('roll-go').addEventListener('click', roll);
-$('ball').addEventListener('click', roll);
+function putBack(n) {
+  if (busy) return;
+  state.out = state.out.filter((x) => x !== n);
+  lottery.putBack(n);
+  save();
+  render();
+}
 
-$('no-repeat').addEventListener('change', (e) => {
-  state.noRepeat = e.target.checked;
-  if (state.noRepeat) state.drawn = [];
+$('draw-btn').addEventListener('click', draw);
+$('lottery').addEventListener('click', draw);
+
+$('put-back').addEventListener('change', (e) => {
+  state.putBack = e.target.checked;
   save();
   render();
 });
 
-$('round-reset').addEventListener('click', () => {
-  if (state.drawn.length && !confirm('確定要重新開始這一輪嗎？')) return;
-  state.drawn = [];
-  lastPick = null;
+$('reset-btn').addEventListener('click', () => {
+  if (busy) return;
+  if (state.out.length && !confirm('要把所有抽出的球都放回去嗎？')) return;
+  lottery.putBack(state.out);
+  state.out = [];
+  $('big-ball').classList.add('empty');
+  $('big-ball').style.removeProperty('--glass');
+  $('big-num').textContent = '?';
+  $('caption').textContent = '球都放回去了，重新開始！';
   save();
   render();
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>隨機點名</title>
+  <title>抽籤</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -17,34 +17,38 @@
       <nav class="board-nav" aria-label="切換頁面">
         <a href="index.html">作業燈號</a>
         <a href="contact.html">聯絡簿</a>
-        <a href="roll.html" class="active" aria-current="page">點名</a>
+        <a href="roll.html" class="active" aria-current="page">抽籤</a>
       </nav>
     </div>
     <div id="clock" class="clock" aria-label="現在時間"></div>
   </header>
 
-  <main class="roll-layout">
-    <section class="roll-stage">
-      <div id="ball" class="roll-ball" aria-live="polite"><span id="ball-num">?</span></div>
-      <p id="ball-caption" class="roll-caption">按「抽一位」開始點名</p>
-    </section>
+  <main class="lottery-layout">
+    <section class="lottery-stage" id="lottery"></section>
 
-    <section class="roll-controls">
-      <button id="roll-go" class="btn primary roll-go" type="button">🎲 抽一位</button>
-
-      <label class="switch">
-        <input id="no-repeat" type="checkbox">
-        <span class="switch-track" aria-hidden="true"></span>
-        <span>已抽到的不重複</span>
-      </label>
-
-      <div id="round-box" class="round-box" hidden>
-        <p id="round-status" class="round-status"></p>
-        <div id="roll-seats" class="roll-seats"></div>
-        <button id="round-reset" class="btn" type="button">重新開始這一輪</button>
+    <section class="lottery-side">
+      <div class="lottery-result">
+        <div id="big-ball" class="big-marble empty"><span id="big-num">?</span></div>
+        <p id="caption" class="roll-caption">按下面的按鈕開始抽籤</p>
       </div>
 
-      <button id="sound-btn" class="btn ghost small sound-toggle" type="button"></button>
+      <button id="draw-btn" class="btn primary roll-go" type="button">🎲 搖一搖，抽一顆！</button>
+
+      <label class="switch">
+        <input id="put-back" type="checkbox">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>抽到的球放回去</span>
+      </label>
+
+      <div class="tray" id="tray-box">
+        <p class="tray-title"><span id="tray-title">已抽出的球</span> <span class="muted tray-hint">點一顆可以放回去</span></p>
+        <div id="tray" class="tray-balls"></div>
+      </div>
+
+      <div class="lottery-actions">
+        <button id="reset-btn" class="btn" type="button">🔄 全部放回（重置）</button>
+        <button id="sound-btn" class="btn ghost" type="button"></button>
+      </div>
     </section>
   </main>
 

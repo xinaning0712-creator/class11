@@ -5,7 +5,7 @@
 |---|---|---|
 | 主畫面 | 白板投影：作業燈號 | https://xinaning0712-creator.github.io/class11/ |
 | 聯絡簿 | 白板投影：Canva 聯絡簿 | https://xinaning0712-creator.github.io/class11/contact.html |
-| 隨機點名 | 白板投影：抽座號 | https://xinaning0712-creator.github.io/class11/roll.html |
+| 抽籤 | 白板投影：樂透機抽座號 | https://xinaning0712-creator.github.io/class11/roll.html |
 | 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | https://xinaning0712-creator.github.io/class11/gacha.html |
 | 老師後台 | 需密碼 | https://xinaning0712-creator.github.io/class11/admin.html |
 

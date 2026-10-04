@@ -680,48 +680,61 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 }
 .celebrate-title { margin: .2rem 0 0; font-size: clamp(1.4rem, 2.8vw, 3rem); font-weight: 700; }
 
-/* ---------- 隨機點名 ---------- */
+/* ---------- 抽籤（樂透機） ---------- */
 .roll-page { min-height: 100vh; }
-.roll-layout {
-  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: clamp(20px, 4vw, 72px); align-items: center;
-  max-width: 1500px; margin: clamp(8px, 2vh, 40px) auto 0;
+.lottery-layout {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 56px); align-items: center;
+  max-width: 1600px; margin: clamp(4px, 1vh, 24px) auto 0;
 }
-.roll-stage { display: grid; justify-items: center; gap: clamp(12px, 2vh, 28px); }
-.roll-ball {
+.lottery-stage { justify-self: center; width: min(100%, calc((100vh - 120px) * 600 / 660)); cursor: pointer; }
+.lottery-machine { display: block; width: 100%; height: auto; overflow: visible; transform-origin: 50% 95%; }
+.lottery-machine.shaking-hard { animation: shake-hard .07s ease-in-out infinite alternate; }
+@keyframes shake-hard {
+  from { transform: translate(-9px, 2px) rotate(-2.2deg); }
+  to   { transform: translate(9px, -2px) rotate(2.2deg); }
+}
+
+.lottery-side { display: grid; gap: clamp(12px, 1.8vh, 24px); }
+.lottery-result { display: flex; align-items: center; gap: clamp(14px, 2vw, 32px); }
+
+/* 玻璃珠（大的結果、小的已抽出） */
+.marble, .big-marble {
   --glass: #f2b3c6;
-  width: min(100%, 62vh, 560px); aspect-ratio: 1; border-radius: 50%;
-  display: grid; place-items: center; cursor: pointer;
+  display: grid; place-items: center; flex-shrink: 0;
+  aspect-ratio: 1; border-radius: 50%; border: none; padding: 0;
   background:
     radial-gradient(ellipse 56% 30% at 50% 11%, rgba(255, 255, 255, .85), rgba(255, 255, 255, .2) 55%, rgba(255, 255, 255, 0) 72%),
-    radial-gradient(circle at 24% 21%, rgba(255, 255, 255, .95) 0 3%, rgba(255, 255, 255, 0) 7%),
-    radial-gradient(circle at 50% 110%, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0) 48%),
+    radial-gradient(circle at 26% 22%, rgba(255, 255, 255, .95) 0 4%, rgba(255, 255, 255, 0) 9%),
+    radial-gradient(circle at 50% 110%, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 48%),
     radial-gradient(circle at 50% 42%,
       color-mix(in srgb, var(--glass) 55%, white) 0%,
       var(--glass) 60%,
-      color-mix(in srgb, var(--glass) 70%, black) 100%);
-  box-shadow:
-    inset 0 0 0 4px rgba(255, 255, 255, .5),
-    inset 0 -18px 36px rgba(120, 30, 60, .18),
-    0 24px 50px rgba(120, 40, 70, .22);
-  transition: --glass .3s ease;
+      color-mix(in srgb, var(--glass) 65%, black) 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45), inset 0 -6px 12px rgba(0, 0, 0, .15), 0 6px 14px rgba(80, 20, 40, .18);
 }
-.roll-ball.picked { --glass: #e2708f; }
-#ball-num {
-  font-size: clamp(6rem, 22vh, 15rem); font-weight: 700; line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: #fff; text-shadow: 0 4px 12px rgba(120, 30, 60, .35);
+.marble span, .big-marble span {
+  display: grid; place-items: center;
+  width: 54%; aspect-ratio: 1; border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+  color: #3f2830; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1;
 }
-.roll-caption { margin: 0; font-size: clamp(1.4rem, 3vw, 3rem); font-weight: 700; color: var(--accent); min-height: 1.5em; }
+.big-marble { width: clamp(120px, 22vh, 220px); }
+.big-marble span { font-size: clamp(3rem, 9vh, 6rem); }
+.big-marble.empty { --glass: #eed3db; }
+.big-marble.empty span { color: var(--muted); }
+.marble.small { width: 100%; cursor: pointer; transition: transform .12s ease; }
+.marble.small:active { transform: scale(.88); }
+.marble.small span { font-size: clamp(.9rem, 1.5vw, 1.4rem); }
 
-.roll-controls { display: grid; gap: clamp(14px, 2vh, 26px); }
+.roll-caption { margin: 0; font-size: clamp(1.6rem, 3.4vw, 3.4rem); font-weight: 700; color: var(--accent); }
 .roll-go {
-  min-height: clamp(80px, 10vh, 120px); border-radius: 24px;
-  font-size: clamp(1.8rem, 3.4vw, 3.4rem); font-weight: 700;
+  min-height: clamp(76px, 10vh, 116px); border-radius: 24px;
+  font-size: clamp(1.6rem, 3vw, 3rem); font-weight: 700;
 }
 .roll-go:disabled { opacity: .55; cursor: default; }
 
-.switch { display: flex; align-items: center; gap: .9rem; font-size: clamp(1.2rem, 2vw, 2rem); font-weight: 700; cursor: pointer; }
+.switch { display: flex; align-items: center; gap: .9rem; font-size: clamp(1.2rem, 2vw, 1.9rem); font-weight: 700; cursor: pointer; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch-track {
   position: relative; flex-shrink: 0;
@@ -738,16 +751,14 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .switch input:checked + .switch-track::after { transform: translateX(1.1em); }
 .switch input:focus-visible + .switch-track { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-.round-box { display: grid; gap: .8rem; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: clamp(12px, 1.5vw, 24px); }
-.round-status { margin: 0; font-size: clamp(1rem, 1.6vw, 1.6rem); font-weight: 700; }
-.roll-seats { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(4px, .6vw, 10px); }
-.seat.mini { display: grid; place-items: center; cursor: default; font-size: clamp(.9rem, 1.4vw, 1.5rem); }
-.seat.mini.waiting { --glass: #f6dde5; color: var(--muted); }
-.seat.mini.drawn   { --glass: #e2708f; color: #fff; text-shadow: 0 1px 2px rgba(100, 20, 50, .4); }
-.seat.mini.last    { outline: 3px solid var(--ink); outline-offset: 2px; }
-.sound-toggle { justify-self: start; }
+.tray { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: clamp(10px, 1.4vw, 20px); }
+.tray-title { margin: 0 0 .6rem; font-weight: 700; font-size: clamp(1rem, 1.4vw, 1.4rem); }
+.tray-hint { font-weight: 400; font-size: .8em; margin-left: .4rem; }
+.tray-balls { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(6px, .7vw, 10px); min-height: 2.5rem; }
+.tray-balls p { grid-column: 1 / -1; margin: 0; }
+.lottery-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 
-@media (max-width: 800px) {
-  .roll-layout { grid-template-columns: 1fr; }
-  .roll-ball { width: min(80vw, 46vh); }
+@media (max-width: 860px) {
+  .lottery-layout { grid-template-columns: 1fr; }
+  .lottery-stage { width: min(100%, 60vh); }
 }
