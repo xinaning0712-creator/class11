@@ -12,7 +12,7 @@ const NS = 'http://www.w3.org/2000/svg';
 
 // 每個號碼一個顏色，繞色環一圈
 export function ballColor(n, total = 24) {
-  return `hsl(${Math.round(((n - 1) / total) * 360)} 78% 58%)`;
+  return `hsl(${Math.round(((n - 1) / total) * 360)} 55% 76%)`;   // 柔和的馬卡龍色
 }
 
 function svg(id) {
