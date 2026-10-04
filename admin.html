@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>老師後台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin">
+  <!-- 登入 -->
+  <section id="login-view" class="login" hidden>
+    <form id="login-form" class="card login-card">
+      <h1>老師後台</h1>
+      <p class="muted" id="login-class"></p>
+      <label for="pw">密碼</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <label class="check">
+        <input id="remember" type="checkbox">
+        在這台裝置記住我
+      </label>
+      <p class="hint">自己的電腦、手機可以勾。<strong>教室電腦請不要勾</strong>，關掉分頁就會自動登出。</p>
+      <p id="login-err" class="error" hidden></p>
+      <button class="btn primary" type="submit">登入</button>
+      <a class="link" href="index.html">← 回主畫面</a>
+    </form>
+  </section>
+
+  <!-- 後台 -->
+  <section id="app-view" hidden>
+    <header class="admin-header">
+      <h1>老師後台</h1>
+      <div class="admin-actions">
+        <a class="btn small" href="index.html">主畫面</a>
+        <button id="logout" class="btn small" type="button">登出</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="後台功能">
+      <button class="tab active" type="button" data-tab="homework">📋 作業管理</button>
+      <button class="tab" type="button" data-tab="prizes">🎁 獎品庫存 <span class="tab-badge" hidden></span></button>
+      <button class="tab" type="button" data-tab="punish">⚠️ 懲罰管理 <span class="tab-badge" hidden></span></button>
+      <button class="tab" type="button" data-tab="draws">🧾 抽獎紀錄</button>
+      <button class="tab" type="button" data-tab="contact">📒 聯絡簿</button>
+      <a class="tab" href="gacha.html">扭蛋頁 ↗</a>
+    </nav>
+
+    <main id="tab-homework" class="tab-panel">
+      <form id="add-form" class="card add-form">
+        <label for="new-title">新增作業項目（預設全班綠燈）</label>
+        <div class="row">
+          <input id="new-title" type="text" maxlength="40" placeholder="例如：數習 3-2 訂正" required>
+          <button class="btn primary" type="submit">新增</button>
+        </div>
+      </form>
+
+      <div class="card pen-card">
+        <p class="pen-label">先選顏色，再點座號：</p>
+        <div class="pens" role="radiogroup" aria-label="要設定的燈號">
+          <button class="pen green" type="button" data-pen="green" role="radio">完成</button>
+          <button class="pen yellow" type="button" data-pen="yellow" role="radio">未訂正</button>
+          <button class="pen red active" type="button" data-pen="red" role="radio">未交</button>
+        </div>
+      </div>
+
+      <section id="active-list" class="admin-list"></section>
+
+      <details class="card archived">
+        <summary>已封存的作業</summary>
+        <div id="archived-list"></div>
+      </details>
+    </main>
+
+    <!-- 🎁 獎品庫存 -->
+    <main id="tab-prizes" class="tab-panel" hidden>
+      <p id="low-stock" class="alert" hidden></p>
+      <form id="prize-form" class="card add-grid">
+        <p class="form-title">新增獎品</p>
+        <label class="field wide"><span>名稱</span><input id="prize-name" type="text" maxlength="40" placeholder="例如：免寫作業一次" required></label>
+        <label class="field"><span>庫存</span><input id="prize-stock" type="number" min="0" value="5" inputmode="numeric"></label>
+        <label class="field"><span>比重</span><input id="prize-weight" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+        <label class="field"><span>剩幾個時提醒</span><input id="prize-alert" type="number" min="0" value="2" inputmode="numeric"></label>
+        <button class="btn primary" type="submit">新增</button>
+      </form>
+      <p class="hint">「比重」越大越容易抽中，例如 5、3、1，機率會自動換算。沒庫存的獎品自動不參加。</p>
+      <section id="prize-list" class="item-list"></section>
+      <details class="card archived">
+        <summary>已移除的獎品</summary>
+        <div id="prize-removed"></div>
+      </details>
+    </main>
+
+    <!-- ⚠️ 懲罰管理 -->
+    <main id="tab-punish" class="tab-panel" hidden>
+      <section class="card">
+        <h2 class="section-title">待完成</h2>
+        <div id="pending-list"></div>
+      </section>
+      <form id="punish-form" class="card add-grid">
+        <p class="form-title">新增懲罰項目</p>
+        <label class="field wide"><span>名稱</span><input id="punish-name" type="text" maxlength="40" placeholder="例如：幫忙擦黑板一天" required></label>
+        <label class="field"><span>比重</span><input id="punish-weight" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+        <button class="btn primary" type="submit">新增</button>
+      </form>
+      <section id="punish-list" class="item-list"></section>
+      <details class="card archived">
+        <summary>最近完成的懲罰</summary>
+        <div id="completed-list"></div>
+      </details>
+      <details class="card archived">
+        <summary>已移除的懲罰項目</summary>
+        <div id="punish-removed"></div>
+      </details>
+    </main>
+
+    <!-- 🧾 抽獎紀錄 -->
+    <main id="tab-draws" class="tab-panel" hidden>
+      <div class="card filters">
+        <select id="draw-kind" aria-label="種類">
+          <option value="all">全部</option>
+          <option value="reward">😇 天堂（獎賞）</option>
+          <option value="punish">😈 地獄（懲罰）</option>
+        </select>
+        <select id="draw-seat" aria-label="座號"></select>
+      </div>
+      <p class="hint">顯示最近 300 筆。撤銷獎賞時，庫存會自動加回。</p>
+      <section id="draw-list" class="card log-list"></section>
+    </main>
+
+    <!-- 📒 聯絡簿 -->
+    <main id="tab-contact" class="tab-panel" hidden>
+      <form id="contact-form" class="card contact-form">
+        <label for="contact-url" class="form-title">Canva 聯絡簿連結</label>
+        <input id="contact-url" type="text" placeholder="https://www.canva.com/design/.../view" autocomplete="off">
+        <p id="contact-msg" class="hint"></p>
+        <div class="row-actions">
+          <button class="btn primary" type="submit">儲存</button>
+          <a class="btn" href="contact.html" target="_blank" rel="noopener">打開聯絡簿頁 ↗</a>
+        </div>
+      </form>
+      <div class="card hint-card">
+        <p class="form-title">怎麼拿到連結？</p>
+        <ol>
+          <li>在 Canva 打開聯絡簿，按右上角「分享」。</li>
+          <li>「存取權限」改成「<strong>知道連結的任何人</strong>」可以檢視。</li>
+          <li>按「複製連結」選<strong>檢視</strong>連結（網址結尾是 <code>/view</code>），貼到上面。</li>
+        </ol>
+        <p class="muted">同一份 Canva 設計改內容，網頁會自動更新，不用重新貼。換成另一份設計時才需要貼新連結。</p>
+      </div>
+    </main>
+  </section>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# 每 3 天自動連一次資料庫，避免 Supabase 免費方案在寒暑假時因為沒人用而暫停
+name: 保持資料庫醒著
+
+on:
+  schedule:
+    - cron: '0 1 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 連一下資料庫
+        run: |
+          curl -fsS "https://kpioyqyeubinxitjvcei.supabase.co/rest/v1/assignments?select=id&limit=1" \
+            -H "apikey: sb_publishable_ryf5day9SRaVK7jJkw9ccg_VfeRwrGS" > /dev/null
+          echo "資料庫醒著 ✓"

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>最閃亮的11班</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="board">
+  <header class="board-header">
+    <div class="board-title">
+      <h1 id="class-name">最閃亮的11班</h1>
+      <p id="date" class="date"></p>
+      <nav class="board-nav" aria-label="切換頁面">
+        <a href="index.html" class="active" aria-current="page">作業燈號</a>
+        <a href="contact.html">聯絡簿</a>
+      </nav>
+    </div>
+    <div id="clock" class="clock" aria-label="現在時間"></div>
+  </header>
+
+  <main>
+    <div class="legend" aria-label="燈號說明">
+      <span><i class="dot green"></i>完成</span>
+      <span><i class="dot yellow"></i>未訂正完成</span>
+      <span><i class="dot red"></i>未交</span>
+      <span id="mode-hint" class="mode-hint"></span>
+    </div>
+    <section id="board" class="assignments" aria-live="polite">
+      <p class="empty">載入中…</p>
+    </section>
+  </main>
+
+  <button id="settings-btn" class="corner-btn" type="button" aria-label="設定">⚙︎</button>
+
+  <dialog id="settings" class="sheet">
+    <form method="dialog" class="sheet-body" id="settings-form">
+      <h2>這台裝置</h2>
+      <p id="settings-status" class="muted"></p>
+
+      <div id="classroom-login">
+        <label for="classroom-pw">輸入教室密碼，開啟「教室模式」，孩子就能在這台電腦上點燈號。</label>
+        <input id="classroom-pw" type="password" autocomplete="current-password" placeholder="教室密碼">
+        <p id="classroom-err" class="error" hidden></p>
+        <button id="classroom-login-btn" class="btn primary" type="button">開啟教室模式</button>
+      </div>
+      <button id="classroom-logout-btn" class="btn" type="button" hidden>關閉教室模式</button>
+
+      <hr>
+      <a class="btn" href="admin.html">前往老師後台</a>
+      <button class="btn ghost" value="close">關閉</button>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

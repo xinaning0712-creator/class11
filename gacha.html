@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>扭蛋機</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="gacha-page">
+  <header class="gacha-header">
+    <h1><span id="class-name"></span>・扭蛋機</h1>
+    <button id="sound-btn" class="btn" type="button"></button>
+  </header>
+
+  <p id="gacha-hint" class="gacha-hint" hidden></p>
+
+  <main class="machines">
+    <button id="reward-card" class="machine-card reward" type="button" data-kind="reward">
+      <div class="machine-art"></div>
+      <h2>😇 天堂扭蛋</h2>
+      <p class="muted">集點卡集滿 20 點，抽一次</p>
+      <span class="machine-status" hidden></span>
+    </button>
+    <button id="punish-card" class="machine-card punish" type="button" data-kind="punish">
+      <div class="machine-art"></div>
+      <h2>😈 地獄扭蛋</h2>
+      <p class="muted">違規滿 5 點，抽一次</p>
+      <span class="machine-status" hidden></span>
+    </button>
+  </main>
+
+  <dialog id="draw" class="draw-dialog">
+    <div class="draw-layout">
+      <section class="stage" id="stage">
+        <div class="stage-machine machine-art"></div>
+        <div class="result" id="result" hidden></div>
+      </section>
+
+      <section class="controls" id="controls">
+        <h2 id="draw-title"></h2>
+
+        <div class="step">
+          <p class="step-label">① 誰要抽？請點座號</p>
+          <div class="seat-picker" id="seat-picker"></div>
+        </div>
+
+        <div class="step">
+          <p class="step-label">② 抽幾次？</p>
+          <div class="stepper">
+            <button type="button" class="step-btn" id="minus" aria-label="少一次">−</button>
+            <input id="count" type="number" inputmode="numeric" min="1" max="100" value="1" aria-label="次數">
+            <button type="button" class="step-btn" id="plus" aria-label="多一次">＋</button>
+          </div>
+        </div>
+
+        <button id="go" class="btn primary go-btn" type="button" disabled>請先選座號</button>
+        <div class="after" id="after" hidden>
+          <button id="again" class="btn primary" type="button">換下一位</button>
+          <button id="close-draw" class="btn" type="button">完成</button>
+        </div>
+        <button id="cancel-draw" class="btn ghost" type="button">返回</button>
+      </section>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/gacha.js"></script>
+</body>
+</html>

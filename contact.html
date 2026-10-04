@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>聯絡簿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="board contact-page">
+  <header class="board-header">
+    <div class="board-title">
+      <h1 id="class-name">最閃亮的11班</h1>
+      <p id="date" class="date"></p>
+      <nav class="board-nav" aria-label="切換頁面">
+        <a href="index.html">作業燈號</a>
+        <a href="contact.html" class="active" aria-current="page">聯絡簿</a>
+      </nav>
+    </div>
+    <div id="clock" class="clock" aria-label="現在時間"></div>
+  </header>
+
+  <main class="contact-frame" id="frame">
+    <p class="empty">載入中…</p>
+  </main>
+
+  <script type="module" src="js/contact.js"></script>
+</body>
+</html>
