@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>隨機點名</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="board compact-page roll-page">
+  <header class="board-header">
+    <div class="board-title">
+      <h1 id="class-name">最閃亮的11班</h1>
+      <p id="date" class="date"></p>
+      <nav class="board-nav" aria-label="切換頁面">
+        <a href="index.html">作業燈號</a>
+        <a href="contact.html">聯絡簿</a>
+        <a href="roll.html" class="active" aria-current="page">點名</a>
+      </nav>
+    </div>
+    <div id="clock" class="clock" aria-label="現在時間"></div>
+  </header>
+
+  <main class="roll-layout">
+    <section class="roll-stage">
+      <div id="ball" class="roll-ball" aria-live="polite"><span id="ball-num">?</span></div>
+      <p id="ball-caption" class="roll-caption">按「抽一位」開始點名</p>
+    </section>
+
+    <section class="roll-controls">
+      <button id="roll-go" class="btn primary roll-go" type="button">🎲 抽一位</button>
+
+      <label class="switch">
+        <input id="no-repeat" type="checkbox">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>已抽到的不重複</span>
+      </label>
+
+      <div id="round-box" class="round-box" hidden>
+        <p id="round-status" class="round-status"></p>
+        <div id="roll-seats" class="roll-seats"></div>
+        <button id="round-reset" class="btn" type="button">重新開始這一輪</button>
+      </div>
+
+      <button id="sound-btn" class="btn ghost small sound-toggle" type="button"></button>
+    </section>
+  </main>
+
+  <script type="module" src="js/roll.js"></script>
+</body>
+</html>

@@ -46,6 +46,13 @@ export function rattle(seconds) {
       { type: Math.random() < 0.5 ? 'square' : 'triangle', gain: 0.03 + Math.random() * 0.04 });
   }
 }
+// 點名號碼跳動：嗒
+export function tick() { tone(880, 0, 0.05, { type: 'triangle', gain: 0.08 }); }
+// 點到了：叮～
+export function ding() {
+  tone(1047, 0, 0.6, { type: 'sine', gain: 0.22 });
+  tone(1568, 0.08, 0.7, { type: 'sine', gain: 0.12 });
+}
 // 膠囊掉下來：咚
 export function drop() { tone(220, 0, 0.25, { to: 70, gain: 0.35 }); }
 // 膠囊打開：啵

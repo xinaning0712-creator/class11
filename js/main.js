@@ -2,6 +2,7 @@
 import { CLASS_NAME, CLASSROOM_EMAIL } from './config.js';
 import { configured, classroomDb, findOperator, friendlyError } from './db.js';
 import { STATUS, SEATS, el, toast, debounce, startClock } from './ui.js';
+import { celebrate } from './celebrate.js';
 
 const $ = (id) => document.getElementById(id);
 const UNDO_SECONDS = 10;
@@ -18,6 +19,15 @@ startClock($('clock'), $('date'));
 
 // ---------- 讀取資料 ----------
 const key = (a, s) => `${a}-${s}`;
+const allGreen = (id, map) => SEATS.every((s) => (map.get(key(id, s)) ?? 'green') === 'green');
+
+// 從「還有人沒完成」變成「全班綠燈」→ 慶祝（剛新增的作業本來就全綠，不算）
+function celebrateNewlyDone(before, after) {
+  for (const a of assignments) {
+    const known = SEATS.some((s) => before.has(key(a.id, s)));
+    if (known && !allGreen(a.id, before) && allGreen(a.id, after)) celebrate(a.title);
+  }
+}
 
 async function load() {
   const db = classroomDb();
@@ -33,9 +43,11 @@ async function load() {
     if (e2) return showError(e2);
     ls = data;
   }
+  const before = lights;
   assignments = as;
   lights = new Map(ls.map((l) => [key(l.assignment_id, l.seat), l.status]));
   render();
+  celebrateNewlyDone(before, lights);
 }
 const reload = debounce(load, 300);
 
@@ -88,8 +100,10 @@ async function onSeatTap(a, seat) {
   }
   if (before === 'green') return;
 
+  const snapshot = new Map(lights);
   lights.set(k, 'green');   // 先在畫面上變綠，感覺比較快
   render();
+  celebrateNewlyDone(snapshot, lights);
   const { data: logId, error } = await operator.rpc('set_light', {
     p_assignment: a.id, p_seat: seat, p_status: 'green',
   });
