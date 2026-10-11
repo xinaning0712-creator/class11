@@ -45,6 +45,7 @@
       <button class="tab" type="button" data-tab="punish">⚠️ 懲罰管理 <span class="tab-badge" hidden></span></button>
       <button class="tab" type="button" data-tab="draws">🧾 抽獎紀錄</button>
       <button class="tab" type="button" data-tab="contact">📒 聯絡簿</button>
+      <button class="tab" type="button" data-tab="countdown">⏳ 倒數日</button>
       <a class="tab" href="gacha.html">扭蛋頁 ↗</a>
     </nav>
 
@@ -159,6 +160,25 @@
         </ol>
         <p class="muted">同一份 Canva 設計改內容，網頁會自動更新，不用重新貼。換成另一份設計時才需要貼新連結。</p>
       </div>
+    </main>
+
+    <!-- ⏳ 倒數日 -->
+    <main id="tab-countdown" class="tab-panel" hidden>
+      <form id="cd-form" class="card add-grid cd-form">
+        <p class="form-title">新增倒數日</p>
+        <label class="field wide"><span>名稱</span><input id="cd-title" type="text" maxlength="20" placeholder="例如：🏃 運動會" required></label>
+        <label class="field"><span>日期</span><input id="cd-date" type="date" required></label>
+        <button class="btn primary" type="submit">新增</button>
+      </form>
+      <p class="hint">可以先排好很多個，畫面上只會顯示最近的 3 個（🔴 最近、🔵 第二、🟣 第三），日子過了會自動換下一個。名稱前面可以加表情符號。</p>
+      <section class="card">
+        <h2 class="section-title">即將到來</h2>
+        <div id="cd-list"></div>
+      </section>
+      <details class="card archived">
+        <summary>已經過去的</summary>
+        <div id="cd-past"></div>
+      </details>
     </main>
   </section>
 

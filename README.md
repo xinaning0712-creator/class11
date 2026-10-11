@@ -36,6 +36,7 @@
   2. `02_設定老師與教室帳號.sql`：帳號身分
   3. `03_扭蛋機.sql`：扭蛋機
   4. `04_聯絡簿.sql`：聯絡簿連結
+  5. `05_倒數日.sql`：倒數日
 - 登入帳號：
   - 老師 `teacher@shiny11.local`
   - 教室 `classroom@shiny11.local`

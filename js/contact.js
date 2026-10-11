@@ -2,6 +2,7 @@
 import { CLASS_NAME } from './config.js';
 import { configured, classroomDb, friendlyError } from './db.js';
 import { el, startClock, canvaEmbedUrl } from './ui.js';
+import { watchCountdowns, renderPanel } from './countdown.js';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
@@ -57,6 +58,7 @@ new ResizeObserver(fit).observe($('frame'));
 
 async function start() {
   if (!configured) return show('還沒連上資料庫：請在 js/config.js 填入 Supabase 網址與公開鑰匙。');
+  watchCountdowns((items) => renderPanel($('countdown'), items));
   await load();
   classroomDb().channel('contact')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, load)

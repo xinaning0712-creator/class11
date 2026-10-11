@@ -3,6 +3,7 @@ import { CLASS_NAME, TEACHER_EMAIL } from './config.js';
 import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js';
 import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js';
 import * as gacha from './admin-gacha.js';
+import * as countdown from './admin-countdown.js';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
@@ -25,7 +26,8 @@ async function showApp() {
   $('login-view').hidden = true;
   $('app-view').hidden = false;
   gacha.init(db);
-  await Promise.all([load(), gacha.load(), loadContact()]);
+  countdown.init(db);
+  await Promise.all([load(), gacha.load(), loadContact(), countdown.load()]);
   const reloadGacha = debounce(gacha.load, 300);
   db.channel('admin')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lights' }, reload)
@@ -33,6 +35,7 @@ async function showApp() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prizes' }, reloadGacha)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'punishments' }, reloadGacha)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'draws' }, reloadGacha)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'countdowns' }, debounce(countdown.load, 300))
     .subscribe();
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) { load(); gacha.load(); }

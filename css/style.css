@@ -762,3 +762,85 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
   .lottery-layout { grid-template-columns: 1fr; }
   .lottery-stage { width: min(100%, 60vh); }
 }
+
+/* ---------- 時鐘秒數 ---------- */
+.clock-sec { font-size: .6em; opacity: .75; margin-left: .04em; }
+
+/* ---------- 倒數日 ---------- */
+.board { --cd-red: #d64550; --cd-blue: #4a7fc9; --cd-purple: #8b67c2; }
+
+/* 聯絡簿頁右欄 */
+.contact-body { flex: 1; min-height: 0; display: flex; gap: clamp(8px, 1vw, 18px); }
+.contact-body .contact-frame { flex: 1; min-width: 0; }
+.countdown-panel {
+  flex: 0 0 clamp(170px, 15vw, 290px);
+  display: flex; flex-direction: column; gap: clamp(8px, 1.2vh, 16px);
+  overflow-y: auto;
+}
+.cd-heading { margin: 0; font-weight: 700; font-size: clamp(1rem, 1.3vw, 1.5rem); color: var(--muted); }
+.cd-card {
+  --tone: var(--cd-red);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 8px solid var(--tone);
+  border-radius: 18px;
+  padding: clamp(10px, 1vw, 18px);
+  box-shadow: 0 4px 14px rgba(80, 20, 40, .08);
+}
+.cd-card.blue   { --tone: var(--cd-blue); }
+.cd-card.purple { --tone: var(--cd-purple); }
+.cd-card p { margin: 0; }
+.cd-title { font-weight: 700; font-size: clamp(1.05rem, 1.4vw, 1.7rem); line-height: 1.3; }
+.cd-days { margin-top: .2rem !important; color: var(--tone); font-weight: 700; font-size: clamp(1rem, 1.2vw, 1.4rem); }
+.cd-num { font-size: clamp(2.6rem, 4.4vw, 5rem); line-height: 1.05; font-variant-numeric: tabular-nums; margin: 0 .08em; }
+.cd-today { font-size: clamp(1.6rem, 2.4vw, 2.8rem); }
+.cd-date { color: var(--muted); font-size: clamp(.85rem, 1vw, 1.1rem); }
+.cd-card.red .cd-today { animation: cd-pulse 1.6s ease-in-out infinite; display: inline-block; }
+@keyframes cd-pulse { 50% { transform: scale(1.08); } }
+
+/* 主畫面上方小標籤 */
+.board-header { gap: 1rem; }
+.countdown-strip {
+  flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: .5rem .7rem; align-self: center;
+}
+.cd-chip {
+  --tone: var(--cd-red);
+  display: inline-flex; align-items: baseline; gap: .5em;
+  padding: .35em .9em; border-radius: 999px;
+  background: var(--surface); border: 2px solid var(--tone);
+  font-size: clamp(.95rem, 1.3vw, 1.6rem); font-weight: 700; white-space: nowrap;
+}
+.cd-chip.blue   { --tone: var(--cd-blue); }
+.cd-chip.purple { --tone: var(--cd-purple); }
+.cd-chip-days { color: var(--tone); }
+.cd-chip .cd-num { font-size: 1.35em; margin: 0 .05em; }
+.cd-chip .cd-today { font-size: 1em; }
+
+/* 後台列表 */
+.cd-form { grid-template-columns: 3fr 1.3fr auto; }
+.cd-form input[type="date"], .cd-row input[type="date"] {
+  min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line); border-radius: 10px;
+  background: #fff; font: inherit; color: var(--ink);
+}
+.cd-row {
+  display: grid; grid-template-columns: 1fr auto auto auto auto; align-items: center; gap: .4rem .8rem;
+  padding: .6rem 0; border-top: 1px solid var(--line);
+}
+.cd-row:first-child { border-top: none; }
+.cd-row-title { font-weight: 700; }
+.cd-row-days { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cd-row-state { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.cd-row.showing .cd-row-state { color: var(--accent); font-weight: 700; }
+
+@media (max-width: 900px) {
+  .contact-body { flex-direction: column; }
+  .countdown-panel { flex: none; flex-direction: row; flex-wrap: wrap; }
+  .countdown-panel .cd-card { flex: 1 1 160px; }
+  .countdown-strip { order: 3; flex-basis: 100%; justify-content: flex-start; }
+}
+@media (max-width: 700px) {
+  .cd-form { grid-template-columns: 1fr; }
+  .cd-row { grid-template-columns: 1fr auto; }
+  .cd-row .row-actions { grid-column: 1 / -1; }
+}

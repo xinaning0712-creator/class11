@@ -3,6 +3,7 @@ import { CLASS_NAME, CLASSROOM_EMAIL } from './config.js';
 import { configured, classroomDb, findOperator, friendlyError } from './db.js';
 import { STATUS, SEATS, el, toast, debounce, startClock } from './ui.js';
 import { celebrate } from './celebrate.js';
+import { watchCountdowns, renderStrip } from './countdown.js';
 
 const $ = (id) => document.getElementById(id);
 const UNDO_SECONDS = 10;
@@ -183,6 +184,7 @@ async function start() {
     $('settings-btn').hidden = true;
     return;
   }
+  watchCountdowns((items) => renderStrip($('countdown-strip'), items));
   await refreshOperator();
   await load();
 

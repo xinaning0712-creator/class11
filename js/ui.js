@@ -74,11 +74,15 @@ export function debounce(fn, ms) {
 
 // 大時鐘與日期
 export function startClock(timeEl, dateEl) {
-  const timeFmt = new Intl.DateTimeFormat('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dateFmt = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  const two = (n) => String(n).padStart(2, '0');
+  const hm = el('span');
+  const sec = el('span', { class: 'clock-sec' });
+  timeEl.replaceChildren(hm, sec);
   const tick = () => {
     const now = new Date();
-    timeEl.textContent = timeFmt.format(now);
+    hm.textContent = `${two(now.getHours())}:${two(now.getMinutes())}`;
+    sec.textContent = `:${two(now.getSeconds())}`;
     dateEl.textContent = dateFmt.format(now);
   };
   tick();
