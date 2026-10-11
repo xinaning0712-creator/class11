@@ -1,9 +1,9 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js';
-import * as gacha from './admin-gacha.js';
-import * as countdown from './admin-countdown.js';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610111429';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610111429';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610111429';
+import * as gacha from './admin-gacha.js?v=202610111429';
+import * as countdown from './admin-countdown.js?v=202610111429';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;

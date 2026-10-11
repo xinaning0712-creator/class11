@@ -16,7 +16,7 @@
 ---
 
 ## 修改網站後，怎麼更新到公開網址
-1. 跟 Claude 說要改什麼，Claude 改好並存檔（commit）。
+1. 跟 Claude 說要改什麼，Claude 改好後先執行 `python3 tools/bump_version.py`（更新版本號，讓瀏覽器抓新檔案），再存檔（commit）。
 2. 打開 **GitHub Desktop**，按上方的 **Push origin**。
 3. 等 1～2 分鐘，公開網址就更新了。如果看到的還是舊畫面，按 `⌘ + Shift + R` 重新整理。
 
