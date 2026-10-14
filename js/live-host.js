@@ -8,9 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142307';
-import { qrSvg } from './qr.js?v=202610142307';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142307';
+} from './live-common.js?v=202610142323';
+import { qrSvg } from './qr.js?v=202610142323';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142323';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -152,7 +152,7 @@ function onJoin(p){
   // 同一個座號只能有一個人（成績才對得起來）
   if(seat){
     const other=Array.from(S.players.values()).find(o=>o.id!==p.id&&o.seat===seat);
-    if(other){ send('seat-taken',{ to:p.id, seat, name:other.name }); return; }
+    if(other){ send('seat-taken',{ to:p.id }); return; }
   }
   if(pl){ if(seat&&pl.seat!==seat){ pl.seat=seat; if(S.phase==='lobby') renderLobby(); } }
   else{
@@ -189,7 +189,7 @@ function syncFor(pl){
 /* ============================================================
    大廳
    ============================================================ */
-function chipHTML(pl){ return '<button class="chip" data-id="'+esc(pl.id)+'">'+(pl.seat?'<span class="seat">'+pl.seat+'</span>':'')+esc(pl.name)+'</button>'; }
+function chipHTML(pl){ return '<button class="chip" data-id="'+esc(pl.id)+'">'+esc(pl.name)+'</button>'; }   // 白板只顯示暱稱，不顯示座號
 const bySeat=(a,b)=>(a.seat||99)-(b.seat||99);
 function renderLobby(){
   $('playerCount').textContent=S.players.size;
@@ -197,7 +197,7 @@ function renderLobby(){
   const box=$('lobbyPlayers');
   $('reshuffleBtn').classList.toggle('hidden', !isTeamMode(S.mode));
   if(!S.players.size){ box.innerHTML='<div class="empty-hint">等待大家加入中…</div>'; return; }
-  const list=Array.from(S.players.values()).sort(bySeat);
+  const list=Array.from(S.players.values());
   if(isTeamMode(S.mode)){
     const n=teamCount(S.mode);
     let h='<div class="team-cols" style="grid-template-columns:repeat('+n+',1fr)">';
@@ -678,7 +678,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610142307');
+    const m=await import('./db.js?v=202610142323');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

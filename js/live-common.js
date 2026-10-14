@@ -4,9 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142307';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142323';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142307';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142323';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */

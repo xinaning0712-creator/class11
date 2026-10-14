@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142307';
+} from './live-common.js?v=202610142323';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -127,7 +127,7 @@ function handle(event,p){
     case 'full': fail('房間人數已滿，請找老師幫忙'); return;
     case 'seat-taken':
       P.joined=false; clearTimeout(P.joinTimer); store.del('fr-code');
-      fail(cleanSeat(p.seat)+' 號已經有人加入了（'+(cleanName(p.name)||'？')+'）。請確認座號；如果真的是你，請老師在白板上點那個名字移除，再加入一次。');
+      fail('這個座號已經有人加入了，請確認是不是點錯；如果沒點錯，請找老師幫忙。');
       return;
     case 'rollcall': if(P.joined) send('join',joinInfo()); return;
   }
@@ -189,7 +189,7 @@ function teamBadgeHTML(t,cls){
   return '<span class="'+(cls||'team-badge')+'" style="border-color:'+T.color+';color:'+T.deep+'">'+T.emoji+' '+T.name+' '+T.animal+'</span>';
 }
 function showWait(){
-  $('waitHello').textContent='嗨，'+P.name+'！'+(P.seat?'（'+P.seat+' 號）':'');
+  $('waitHello').textContent='嗨，'+P.name+'！';
   const teamMode=(P.mode==='tug'||P.mode==='marble')&&P.team>=0;
   $('waitTeam').innerHTML= teamMode ? '你是 '+teamBadgeHTML(P.team) : '';
   const label={ tug:'🪢 準備全班拔河！', marble:'🔮 準備玻璃球賽跑！', quiz:'🎯 準備搶答大挑戰！' }[P.mode]||'';
