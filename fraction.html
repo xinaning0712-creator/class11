@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>分數大冒險：擴分與約分</title>
+<!--
+  ════════════════════════════════════════════════════════════
+  ⚔️ 分數大冒險：擴分與約分（五年級數學互動教學網頁）
+  ────────────────────────────────────────────────────────────
+  ・純 Vanilla JS / CSS / SVG，單一檔案，無任何外部資源
+  ・可直接用瀏覽器開啟、放上電子白板、iPad，或嵌入 Google 協作平台
+  ・老師想修改「秒數、格數、隊名」等設定，請搜尋本檔案中的
+    「SETTINGS」區塊（在 <script> 的最上方），每一項都有中文說明
+  ════════════════════════════════════════════════════════════
+-->
+<style>
+/* ============================================================
+   🎨 色彩與字體設定（奶茶 × 玫粉可愛風）
+   ============================================================ */
+:root{
+  /* 主色：玫瑰粉（--grass 系列）／ 輔色：奶茶（--sky 系列）*/
+  --grass:#eaa3b4;  --grass-d:#cf7d91;
+  --sky:#dcbfa3;    --sky-d:#a98263;
+  --parch:#fdf5ef;  --parch-d:#efd9c8;
+  --gold:#f7c5d1;   --gold-d:#d98ea2;
+  --ink:#5b4038;
+  /* 兩隊顏色：草莓兔兔隊（粉）／ 奶茶熊熊隊（奶茶棕）*/
+  --red:#f28bab;    --red-d:#d0587e;  --red-l:#ffe9f0;
+  --blue:#c49a74;   --blue-d:#8b5e3c; --blue-l:#f6ece2;
+  --white:#fffdfb;
+  --ok:#3fae5a; --warn:#e8892b;
+  --radius:18px;
+  --shadow:0 4px 0 rgba(90,70,30,.15), 0 8px 18px rgba(90,70,30,.10);
+  --font:"PingFang TC","Microsoft JhengHei","Noto Sans TC","Heiti TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+
+/* ============================================================
+   🛡️ 平板防禦：禁止整頁捲動、縮放、文字選取、長按選單
+   ============================================================ */
+html,body{
+  margin:0; padding:0; width:100%; height:100%;
+  overflow:hidden; touch-action:none; overscroll-behavior:none;
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
+  font-family:var(--font); color:var(--ink); background:#fbeee9;
+}
+/* 輸入框仍需要能輸入文字 */
+input{user-select:text; -webkit-user-select:text; font-family:inherit}
+
+/* ============================================================
+   🧱 旗艦四層 Flexbox 佈局（不使用 100vh，改用 fixed + inset:0）
+   ============================================================ */
+#app{
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#fde8ee 0%,#f8ecdf 100%);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+/* (1) 頂部標題列 */
+#topbar{
+  flex:0 0 auto; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  padding:8px 76px; min-height:60px;
+  background:linear-gradient(90deg,var(--grass-d),var(--grass) 50%,var(--grass-d));
+  color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.12);
+}
+#topbar h1{
+  margin:0; font-size:clamp(1.3rem,2.8vw,2.3rem); letter-spacing:2px;
+  text-shadow:0 2px 0 rgba(0,0,0,.22); white-space:nowrap;
+}
+#soundBtn{
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:52px; height:52px; border-radius:50%; font-size:1.6rem;
+  border:3px solid rgba(255,255,255,.8); background:rgba(255,255,255,.25); color:#fff;
+}
+/* (2) 頁籤列 */
+#tabs{
+  flex:0 0 auto; display:flex; gap:12px; justify-content:center;
+  padding:10px 12px; background:var(--parch); border-bottom:3px solid var(--parch-d);
+}
+.tab-btn{
+  flex:1 1 0; max-width:330px; min-height:58px;
+  font-size:clamp(1.05rem,2.1vw,1.6rem); font-weight:800; color:var(--ink);
+  border:3px solid var(--parch-d); border-radius:16px; background:var(--white);
+  box-shadow:0 4px 0 var(--parch-d); transition:all .18s;
+}
+.tab-btn.active{
+  background:linear-gradient(180deg,#fde3ea,var(--gold)); border-color:var(--gold-d);
+  box-shadow:0 4px 0 var(--gold-d), 0 0 0 5px rgba(236,140,168,.35);
+  transform:translateY(-2px); color:#8b3550;
+}
+/* (3) 主內容區：唯一可以上下捲動的一層 */
+#content{
+  flex:1 1 auto; min-height:0;
+  overflow-y:auto; overflow-x:hidden;
+  touch-action:pan-y; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  padding:14px;
+}
+/* (4) 底部提示列 */
+#hint{
+  flex:0 0 auto; min-height:48px; padding:10px 16px;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  background:#9a6b5a; color:#fff4f0; font-size:clamp(.95rem,1.7vw,1.3rem); font-weight:700;
+}
+
+/* ============================================================
+   🧩 共用元件
+   ============================================================ */
+.page{display:none; max-width:1280px; margin:0 auto}
+.page.active{display:block; animation:pageIn .35s ease}
+#page-arena{max-width:1760px}   /* 競技場在大螢幕上撐得更開 */
+/* 對戰中：依螢幕高度自動分配，題目區固定、拔河場景吃滿剩下的空間 */
+#content{container-type:size}
+#page-arena.playing{height:100%}
+#arenaGame.active{display:flex; flex-direction:column; height:100%}
+#arenaGame .scene-wrap{flex:1 1 0; min-height:150px; max-height:520px}
+#arenaGame .teams{flex:0 0 auto}
+@keyframes pageIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+
+button{font-family:inherit; min-width:48px; min-height:48px; cursor:pointer; touch-action:manipulation}
+.btn{
+  font-size:clamp(1rem,1.8vw,1.35rem); font-weight:800; color:var(--ink);
+  padding:8px 18px; border-radius:14px; border:3px solid var(--parch-d);
+  background:var(--white); box-shadow:0 4px 0 var(--parch-d); transition:transform .1s, box-shadow .1s;
+}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--parch-d)}
+.btn-gold{background:linear-gradient(180deg,#fde3ea,var(--gold)); border-color:var(--gold-d); box-shadow:0 4px 0 var(--gold-d); color:#8b3550}
+.btn-green{background:linear-gradient(180deg,#f6c6d2,var(--grass)); border-color:var(--grass-d); box-shadow:0 4px 0 var(--grass-d); color:#7a2f45}
+.btn-sky{background:linear-gradient(180deg,#f1e1d2,var(--sky)); border-color:var(--sky-d); box-shadow:0 4px 0 var(--sky-d); color:#5e3b22}
+.btn.big{min-height:62px; font-size:clamp(1.15rem,2.1vw,1.6rem); padding:10px 26px}
+.btn.selected{background:linear-gradient(180deg,#fde3ea,var(--gold)); border-color:var(--gold-d); box-shadow:0 4px 0 var(--gold-d), 0 0 0 4px rgba(236,140,168,.35)}
+.hidden{display:none !important}
+
+.card{
+  background:var(--parch); border:3px solid var(--parch-d); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:14px 18px;
+}
+.label{font-size:clamp(1rem,1.8vw,1.35rem); font-weight:800; color:#9a6b55; margin-bottom:6px}
+
+/* 分數一律上下排版：分子 / 分數線 / 分母 */
+.frac{
+  display:inline-flex; flex-direction:column; align-items:center;
+  vertical-align:middle; line-height:1.05; margin:0 .12em; font-weight:800;
+}
+.frac .num,.frac .den{display:block; text-align:center; min-width:1.1em; padding:0 .18em}
+.frac .den{border-top:.09em solid currentColor; margin-top:.06em; padding-top:.06em}
+.qmark{color:#e0662b}
+.eq{display:inline-block; margin:0 .25em; font-weight:800}
+
+/* ============================================================
+   🏡 新手村：神奇披薩
+   ============================================================ */
+.question-banner{
+  text-align:center; font-size:clamp(1.3rem,2.6vw,2.1rem); font-weight:800;
+  background:var(--white); border-color:var(--gold); margin-bottom:14px;
+}
+.village-grid{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:14px; align-items:stretch}
+.pizza-box{display:flex; align-items:center; justify-content:center; background:#fff8e6}
+#pizzaSvg{width:100%; max-width:440px; height:auto; display:block}
+.village-side{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center}
+.big-frac{font-size:clamp(4rem,10vw,7.5rem); color:#c9718a; min-height:1.2em; line-height:1}
+.big-frac .frac .den{border-top-width:.06em}
+.fade-in{animation:fadeIn .45s ease}
+@keyframes fadeIn{from{opacity:0; transform:scale(.7)} to{opacity:1; transform:none}}
+.small-info{font-size:clamp(1rem,1.8vw,1.35rem); font-weight:700; color:#8b5e4a}
+.slider-box{width:100%; max-width:460px; background:var(--white); border:3px solid var(--parch-d); border-radius:16px; padding:10px 16px}
+.slider-box .label{margin:0 0 4px}
+.slider-box b{color:#c9718a; font-size:1.3em}
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:52px; margin:0;
+  background:transparent; touch-action:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:16px; border-radius:8px; background:linear-gradient(90deg,var(--grass),var(--sky))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:46px; height:46px; margin-top:-15px; border-radius:50%;
+  background:var(--gold); border:5px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+input[type=range]::-moz-range-track{height:16px; border-radius:8px; background:linear-gradient(90deg,var(--grass),var(--sky))}
+input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; background:var(--gold); border:5px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.slider-ticks{display:flex; justify-content:space-between; padding:0 12px; font-weight:800; font-size:1.1rem; color:#a98263}
+.collection{margin-top:14px}
+.collection-row{
+  display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+  font-size:clamp(1.7rem,3.6vw,2.8rem); color:#8b4a5c; min-height:2.6em;
+}
+.collection-row .frac{padding:4px 6px; border-radius:12px}
+.collection-row .frac.now{background:#ffd9e3; box-shadow:0 0 0 3px var(--gold)}
+.cut-new{stroke-dasharray:170; stroke-dashoffset:170; animation:cutLine .5s ease forwards}
+@keyframes cutLine{to{stroke-dashoffset:0}}
+
+/* ============================================================
+   🛠️ 鍛造工坊
+   ============================================================ */
+.forge-top{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px}
+.mode-switch{display:flex; gap:10px; flex-wrap:wrap}
+.success-counter{
+  font-size:clamp(1.05rem,2vw,1.5rem); font-weight:800; padding:8px 18px; border-radius:999px;
+  background:linear-gradient(180deg,#ffeef3,#f9cbd7); border:3px solid var(--gold-d); color:#8b3550;
+}
+.success-counter b{font-size:1.3em}
+.forge-question{
+  font-size:clamp(1.3rem,2.6vw,2.1rem); font-weight:800; text-align:center;
+  background:var(--white); border-color:var(--sky); margin-bottom:12px; line-height:1.5;
+}
+.forge-question .frac{color:var(--sky-d); font-size:1.15em}
+.forge-main{display:grid; grid-template-columns:minmax(0,2.1fr) minmax(260px,1fr); gap:14px; align-items:start}
+.legend{display:flex; flex-wrap:wrap; gap:8px 20px; font-size:clamp(1rem,1.8vw,1.3rem); font-weight:800}
+.legend .lg{display:inline-flex; align-items:center; gap:4px}
+.legend .target{color:var(--sky-d)}
+.legend .mine{color:#c9718a}
+#forgeSvg{width:100%; height:auto; display:block; touch-action:none; margin:4px 0}
+.cell-ctrl{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; font-size:clamp(1.1rem,2vw,1.5rem); font-weight:800}
+.cell-ctrl .round{width:58px; height:58px; padding:0; border-radius:50%; font-size:1.8rem}
+.cell-ctrl #cellCount{min-width:2ch; text-align:center; font-size:1.6em; color:#c9718a}
+.forge-answer{display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center}
+.answer-frac{display:flex; flex-direction:column; align-items:center; gap:6px}
+.answer-frac input{
+  width:130px; height:70px; font-size:2.4rem; font-weight:800; text-align:center; color:var(--ink);
+  border:3px solid var(--parch-d); border-radius:14px; background:var(--white); outline:none;
+}
+.answer-frac input:focus{border-color:var(--gold-d); box-shadow:0 0 0 4px rgba(236,140,168,.4)}
+.answer-frac .ans-line{width:150px; height:6px; border-radius:3px; background:var(--ink)}
+.feedback{
+  min-height:2.6em; width:100%; padding:10px 12px; border-radius:14px;
+  font-size:clamp(1.05rem,1.9vw,1.4rem); font-weight:800; line-height:1.5;
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px;
+}
+.feedback:empty{background:transparent}
+.feedback.success{background:#ffeef3; color:#8b3550; border:3px solid var(--gold)}
+.feedback.warn{background:#fff1e6; color:#9a5530; border:3px solid #eab48f}
+.feedback.info{background:#f4ece5; color:#7a5536; border:3px solid #dcc3ad}
+.gold-flash{animation:goldFlash 1.2s ease}
+@keyframes goldFlash{
+  0%{box-shadow:var(--shadow)}
+  25%{box-shadow:0 0 0 6px var(--gold),0 0 40px 14px rgba(240,150,178,.95); background:#fff0f4}
+  50%{box-shadow:0 0 0 3px var(--gold),0 0 18px 6px rgba(240,150,178,.6)}
+  75%{box-shadow:0 0 0 6px var(--gold),0 0 40px 14px rgba(240,150,178,.95); background:#fff0f4}
+  100%{box-shadow:var(--shadow)}
+}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ============================================================
+   🪢 決戰競技場
+   ============================================================ */
+.arena-screen{display:none}
+.arena-screen.active{display:block; animation:pageIn .3s ease}
+.arena-card{max-width:860px; margin:0 auto; text-align:center}
+.arena-card h2{font-size:clamp(1.8rem,4vw,3rem); margin:4px 0 10px; color:#8b4a5c}
+.rules{text-align:left; font-size:clamp(1rem,1.9vw,1.35rem); line-height:1.7; background:var(--white); border-radius:14px; padding:10px 18px 10px 40px; margin:0 0 14px}
+.setting-row{display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; font-size:clamp(1.05rem,2vw,1.4rem); font-weight:800}
+.name-input{
+  width:200px; height:54px; font-size:1.35rem; font-weight:800; text-align:center;
+  border-radius:12px; border:3px solid; background:#fff; outline:none;
+}
+.name-input.red{border-color:var(--red); color:var(--red-d)}
+.name-input.blue{border-color:var(--blue); color:var(--blue-d)}
+
+.scene-wrap{position:relative; border-radius:24px; overflow:hidden; border:4px solid #fff; box-shadow:var(--shadow); background:#fff6f1}
+.scoreboard{
+  position:absolute; top:8px; left:10px; right:10px; z-index:2; pointer-events:none;
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px;
+}
+.team-score{
+  justify-self:start; display:flex; align-items:center; gap:10px; max-width:100%;
+  font-size:clamp(1.05rem,2.1vw,2.3rem); font-weight:900; padding:4px 16px; border-radius:999px;
+  background:rgba(255,255,255,.88); border:3px solid; white-space:nowrap; overflow:hidden;
+}
+.team-score.red{color:var(--red-d); border-color:var(--red)}
+.team-score.blue{justify-self:end; color:var(--blue-d); border-color:var(--blue)}
+.team-score b{font-size:1.35em; min-width:1.6ch; text-align:center}
+.timer{
+  font-size:clamp(1.6rem,3.6vw,3.6rem); font-weight:900; padding:4px 22px; border-radius:999px;
+  background:var(--white); border:4px solid var(--gold); color:#8b4a5c; min-width:140px; text-align:center;
+}
+.timer.danger{color:#d62828; border-color:#d62828; animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+#ropeSvg{width:100%; height:100%; display:block}
+.teams{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px}
+.team-panel{position:relative; border-radius:18px; padding:8px 12px 10px; border:4px solid; transition:opacity .2s}
+.team-panel.red{background:var(--red-l); border-color:var(--red)}
+.team-panel.blue{background:var(--blue-l); border-color:var(--blue)}
+.q-type{display:inline-block; font-size:clamp(.9rem,1.6vw,1.6rem); font-weight:800; padding:2px 12px; border-radius:999px; background:#fff}
+.team-panel.red .q-type{color:var(--red-d)}
+.team-panel.blue .q-type{color:var(--blue-d)}
+.q-text{
+  font-size:clamp(1.3rem,2.5vw,3rem); font-size:clamp(1.25rem,min(2.5vw,4.2cqh),3rem); font-weight:800; min-height:2.4em;
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.15em; text-align:center; margin:2px 0 6px;
+}
+.options{display:grid; grid-template-columns:1fr 1fr; gap:10px; touch-action:none}
+.opt-btn{
+  position:relative; min-height:clamp(56px,6.8vw,128px); min-height:clamp(56px,min(6.8vw,10.5cqh),128px);
+  font-size:clamp(1.3rem,2.5vw,3rem); font-weight:800; color:var(--ink);
+  border-radius:16px; border:3px solid #fff; background:#fff; box-shadow:0 5px 0 rgba(0,0,0,.15);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.team-panel.red .opt-btn{border-color:#f7c3d2}
+.team-panel.blue .opt-btn{border-color:#e6cfba}
+.opt-btn.right{background:#c9f5c4 !important; border-color:var(--ok) !important}
+.opt-btn.wrong{background:#ffd2cc !important; border-color:#d62828 !important; animation:shake .4s}
+.opt-btn.reveal{box-shadow:0 0 0 4px var(--ok), 0 5px 0 rgba(0,0,0,.15)}
+.team-panel.locked .opt-btn:not(.wrong):not(.reveal){filter:grayscale(1); opacity:.5}
+.reveal-tag{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:4px;
+  background:rgba(255,255,255,.94); color:var(--ok); font-size:.75em; font-weight:900;
+}
+.combo-badge{
+  position:absolute; top:-18px; left:50%; transform:translateX(-50%);
+  padding:4px 16px; border-radius:999px; white-space:nowrap;
+  background:linear-gradient(90deg,#ff7aa2,#ffb36b); color:#fff; font-size:clamp(1rem,2vw,1.4rem); font-weight:900;
+  box-shadow:0 3px 10px rgba(255,122,162,.5); animation:pop .4s ease;
+}
+@keyframes pop{0%{transform:translateX(-50%) scale(.3)} 70%{transform:translateX(-50%) scale(1.2)} 100%{transform:translateX(-50%) scale(1)}}
+
+/* 拔河角色與場景動畫 */
+.puller{transform-box:fill-box; transform-origin:50% 90%}
+.red-puller{animation:idleRed 1.2s ease-in-out infinite}
+.blue-puller{animation:idleBlue 1.2s ease-in-out infinite}
+@keyframes idleRed{0%,100%{transform:rotate(-8deg) translateY(0)}50%{transform:rotate(-14deg) translateY(-5px)}}
+@keyframes idleBlue{0%,100%{transform:rotate(8deg) translateY(0)}50%{transform:rotate(14deg) translateY(-5px)}}
+.red-puller.tug{animation:tugRed .6s ease; animation-delay:0s !important}
+.blue-puller.tug{animation:tugBlue .6s ease; animation-delay:0s !important}
+@keyframes tugRed{0%{transform:rotate(-8deg)}30%{transform:translateX(-18px) rotate(-30deg) scale(1.1)}65%{transform:translateX(-6px) rotate(-16deg)}100%{transform:rotate(-8deg)}}
+@keyframes tugBlue{0%{transform:rotate(8deg)}30%{transform:translateX(18px) rotate(30deg) scale(1.1)}65%{transform:translateX(6px) rotate(16deg)}100%{transform:rotate(8deg)}}
+.shake-rope{animation:ropeShake .45s ease}
+@keyframes ropeShake{0%,100%{transform:translateY(0)}20%{transform:translateY(-7px)}40%{transform:translateY(6px)}60%{transform:translateY(-3px)}80%{transform:translateY(2px)}}
+.spark{opacity:0; transform-box:fill-box; transform-origin:50% 50%}
+.spark.spark-on{animation:spark .6s ease}
+@keyframes spark{0%{opacity:0; transform:scale(.3)}30%{opacity:1; transform:scale(1.6)}100%{opacity:0; transform:translateY(-24px) scale(1)}}
+.dust{transform-box:fill-box; transform-origin:50% 50%}
+.dust.red{animation:dustL .7s ease-out forwards}
+.dust.blue{animation:dustR .7s ease-out forwards}
+@keyframes dustL{0%{opacity:.95; transform:scale(.7)}100%{opacity:0; transform:translate(-44px,-16px) scale(1.5)}}
+@keyframes dustR{0%{opacity:.95; transform:scaleX(-1) scale(.7)}100%{opacity:0; transform:translate(44px,-16px) scaleX(-1) scale(1.5)}}
+.fire{opacity:0; transform-box:fill-box; transform-origin:50% 100%; transition:opacity .25s}
+.fire.on{opacity:1; animation:flicker .35s ease-in-out infinite alternate}
+@keyframes flicker{from{transform:scale(1) rotate(-5deg)}to{transform:scale(1.18) rotate(5deg)}}
+.finish-line.danger{animation:finishGlow .5s ease-in-out infinite alternate}
+@keyframes finishGlow{from{stroke-width:7}to{stroke-width:16}}
+.mascots{font-size:clamp(2rem,5vw,3.4rem); margin:-4px 0 10px}
+.mascots span{font-size:.5em; font-weight:900; color:var(--grass-d); margin:0 .4em; vertical-align:middle}
+
+/* 飄字特效層（不影響計時與出題） */
+#fxLayer{position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden}
+.float-text{
+  position:absolute; transform:translate(-50%,-50%);
+  font-size:clamp(1.8rem,3.6vw,3rem); font-weight:900; white-space:nowrap;
+  text-shadow:0 3px 0 #fff, 0 0 12px rgba(255,255,255,.9);
+  animation:floatUp 1.1s ease-out forwards;
+}
+.float-text.red{color:var(--red-d)}
+.float-text.blue{color:var(--blue-d)}
+@keyframes floatUp{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.5)}
+  15%{opacity:1; transform:translate(-50%,-80%) scale(1.2)}
+  100%{opacity:0; transform:translate(-50%,-300%) scale(1)}
+}
+
+/* 結束畫面 */
+.winner-text{font-size:clamp(2rem,5vw,3.6rem); font-weight:900; margin:6px 0 14px; animation:pop2 .6s ease}
+@keyframes pop2{0%{transform:scale(.4); opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1); opacity:1}}
+.end-stats{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px}
+.stat-col{border-radius:16px; padding:10px 14px; border:4px solid; font-size:clamp(1.05rem,2vw,1.45rem); font-weight:800}
+.stat-col h3{margin:4px 0 8px; font-size:1.3em}
+.stat-col p{margin:6px 0}
+.stat-col b{font-size:1.25em}
+.stat-col.red{background:var(--red-l); border-color:var(--red); color:var(--red-d)}
+.stat-col.blue{background:var(--blue-l); border-color:var(--blue); color:var(--blue-d)}
+.btn-row{display:flex; justify-content:center; gap:14px; flex-wrap:wrap}
+
+/* ============================================================
+   📱 窄螢幕（直立平板 / 手機）調整
+   ============================================================ */
+@media (max-width:820px){
+  .village-grid{grid-template-columns:1fr}
+  .forge-main{grid-template-columns:1fr}
+  #topbar{padding:8px 66px 8px 12px; justify-content:flex-start}
+}
+@media (max-width:560px){
+  .tab-btn{font-size:1rem; padding:4px}
+  .name-input{width:160px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- (1) 頂部標題列 -->
+  <header id="topbar">
+    <h1>⚔️ 分數大冒險：擴分與約分</h1>
+    <button id="soundBtn" aria-label="音效開關">🔊</button>
+  </header>
+
+  <!-- (2) 頁籤列 -->
+  <nav id="tabs">
+    <button class="tab-btn active" data-tab="village">🏡 新手村</button>
+    <button class="tab-btn" data-tab="forge">🛠️ 鍛造工坊</button>
+    <button class="tab-btn" data-tab="arena">🪢 決戰競技場</button>
+  </nav>
+
+  <!-- (3) 主內容區 -->
+  <main id="content">
+
+    <!-- ===================== 🏡 新手村 ===================== -->
+    <section id="page-village" class="page active">
+      <div class="card question-banner">數字一直變大，為什麼披薩沒有變多呢？🤔</div>
+      <div class="village-grid">
+        <div class="card pizza-box">
+          <svg id="pizzaSvg" viewBox="0 0 320 320" aria-label="披薩圖"></svg>
+        </div>
+        <div class="card village-side">
+          <div class="label">🍕 目前塗色的部分是</div>
+          <div id="pizzaFrac" class="big-frac"></div>
+          <div id="pizzaInfo" class="small-info"></div>
+          <div class="slider-box">
+            <div class="label">🔪 每一塊再切成幾份：<b id="sliderVal">1</b> 份</div>
+            <input type="range" id="cutSlider" min="1" max="6" step="1" value="1" aria-label="每一塊再切成幾份">
+            <div class="slider-ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+          </div>
+          <button id="newPizzaBtn" class="btn btn-gold big">🍕 換一個披薩</button>
+        </div>
+      </div>
+      <div class="card collection">
+        <div class="label">📜 等值分數收藏欄</div>
+        <div id="collection" class="collection-row"></div>
+      </div>
+    </section>
+
+    <!-- ===================== 🛠️ 鍛造工坊 ===================== -->
+    <section id="page-forge" class="page">
+      <div class="forge-top">
+        <div class="mode-switch">
+          <button class="btn mode-btn selected" data-mode="expand">⚒️ 擴分鍛造</button>
+          <button class="btn mode-btn" data-mode="reduce">🔨 約分鍛造</button>
+        </div>
+        <div class="success-counter">🏅 鍛造成功：<b id="forgeSuccess">0</b> 次</div>
+      </div>
+
+      <div id="forgeQuestion" class="card forge-question"></div>
+
+      <div class="forge-main">
+        <div id="forgeStage" class="card">
+          <div class="legend">
+            <span class="lg target">🧋 目標分數條：<span id="targetLabel"></span></span>
+            <span class="lg mine">🍓 我的鍛造條：<span id="mineLabel"></span></span>
+          </div>
+          <svg id="forgeSvg" viewBox="0 0 1000 430" aria-label="分數條鍛造台">
+            <rect x="0" y="0" width="1000" height="430" rx="18" fill="#fffaf7"/>
+            <!-- 吸附區提示框 -->
+            <g id="snapSlot">
+              <rect x="40" y="152" width="840" height="70" rx="10" fill="none" stroke="#e2bfa8" stroke-width="3" stroke-dasharray="14 10"/>
+              <text x="460" y="196" text-anchor="middle" font-size="26" font-weight="700" fill="#c9a48c">⬆ 把鍛造條拖到這裡比一比</text>
+            </g>
+            <g id="targetGroup"></g>
+            <g id="forgeGroup" transform="translate(0,290)">
+              <g id="forgeCells"></g>
+              <g id="forgeLabels"></g>
+              <!-- 拖曳把手 -->
+              <g id="dragHandle" style="cursor:grab">
+                <rect x="895" y="-6" width="95" height="82" rx="18" fill="#f8c9d4" stroke="#c9718a" stroke-width="4"/>
+                <text x="942" y="36" text-anchor="middle" font-size="34">✋</text>
+                <text x="942" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="#8b3550">↕ 拖我</text>
+              </g>
+            </g>
+          </svg>
+          <div class="cell-ctrl">
+            <span>切成</span>
+            <button id="minusBtn" class="btn round" aria-label="減少格數">－</button>
+            <b id="cellCount">1</b>
+            <button id="plusBtn" class="btn round" aria-label="增加格數">＋</button>
+            <span>格</span>
+            <button id="clearPaintBtn" class="btn">🧽 清除塗色</button>
+          </div>
+        </div>
+
+        <div class="card forge-answer">
+          <div class="label">✍️ 寫下你的答案</div>
+          <div class="answer-frac">
+            <input id="ansNum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="分子" autocomplete="off">
+            <div class="ans-line"></div>
+            <input id="ansDen" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="分母" autocomplete="off">
+          </div>
+          <button id="checkBtn" class="btn btn-green big">✅ 確認鍛造</button>
+          <div id="forgeFeedback" class="feedback"></div>
+          <button id="nextBtn" class="btn btn-gold big hidden">➡️ 下一題</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 🪢 決戰競技場 ===================== -->
+    <section id="page-arena" class="page">
+
+      <!-- 開始畫面 -->
+      <div id="arenaStart" class="arena-screen active">
+        <div class="card arena-card">
+          <h2>🪢 數學拔河大對決</h2>
+          <div class="mascots">🐰🍓<span>VS</span>🧋🐻</div>
+          <ul class="rules">
+            <li>兩隊<b>同時</b>作答，各自有自己的題目。</li>
+            <li>答對：繩子往自己這邊拉 1 格，<b>+10 分</b>。</li>
+            <li>連續答對 3 題以上：每題拉 <b>2 格</b>、<b>+20 分</b>！🔥</li>
+            <li>答錯：繩子被對方拉 1 格，按鈕暫停 1 秒。</li>
+            <li>把旗子拉過<b>自己的終點線</b>就立刻獲勝；時間到時旗子偏向哪隊，哪隊就贏！</li>
+          </ul>
+          <div class="setting-row">
+            <span>難度：</span>
+            <button class="btn level-btn selected" data-level="easy">🌱 簡單</button>
+            <button class="btn level-btn" data-level="hard">🔥 挑戰</button>
+          </div>
+          <div class="setting-row">
+            <span>🍓</span><input id="nameRed" class="name-input red" type="text" maxlength="8" value="草莓兔兔隊" autocomplete="off">
+            <span>VS</span>
+            <span>🧋</span><input id="nameBlue" class="name-input blue" type="text" maxlength="8" value="奶茶熊熊隊" autocomplete="off">
+          </div>
+          <button id="startBtn" class="btn btn-gold big">⚔️ 開始對決</button>
+        </div>
+      </div>
+
+      <!-- 遊戲畫面 -->
+      <div id="arenaGame" class="arena-screen">
+        <div class="scene-wrap">
+          <div class="scoreboard">
+            <div class="team-score red"><span id="sbRedName"></span><b id="sbRedScore">0</b></div>
+            <div id="timer" class="timer">⏳ <span id="timeLeft">90</span></div>
+            <div class="team-score blue"><b id="sbBlueScore">0</b><span id="sbBlueName"></span></div>
+          </div>
+          <svg id="ropeSvg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-label="拔河場景">
+            <defs>
+              <linearGradient id="skyGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="232"><stop offset="0%" stop-color="#ffdce6"/><stop offset="100%" stop-color="#fff7f2"/></linearGradient>
+              <linearGradient id="groundGrad" gradientUnits="userSpaceOnUse" x1="0" y1="230" x2="0" y2="300"><stop offset="0%" stop-color="#ecd5bf"/><stop offset="100%" stop-color="#d9b596"/></linearGradient>
+            </defs>
+            <!-- 天空與奶茶色操場（畫得比畫面寬，寬螢幕也會鋪滿） -->
+            <rect x="-2400" y="-400" width="6000" height="632" fill="url(#skyGrad)"/>
+            <rect x="-2400" y="230" width="6000" height="400" fill="url(#groundGrad)"/>
+            <rect x="-2400" y="230" width="6000" height="7" fill="#c99e7a"/>
+            <rect x="-2400" y="264" width="6000" height="4" fill="#fff" opacity=".6"/>
+            <g id="bunting"></g>
+            <g fill="#fff" opacity=".95">
+              <ellipse cx="400" cy="112" rx="50" ry="17"/><ellipse cx="430" cy="100" rx="30" ry="17"/>
+              <ellipse cx="800" cy="108" rx="54" ry="17"/><ellipse cx="772" cy="97" rx="30" ry="16"/>
+            </g>
+            <text x="336" y="160" font-size="26" fill="#f4a7bd">♥</text>
+            <text x="860" y="150" font-size="22" fill="#f4a7bd">♥</text>
+            <!-- 終點線：旗子到粉色線＝草莓兔兔隊勝；到奶茶色線＝奶茶熊熊隊勝 -->
+            <line id="finishRed" class="finish-line" x1="264" y1="96" x2="264" y2="264" stroke="#e46f94" stroke-width="7" stroke-dasharray="16 9" stroke-linecap="round"/>
+            <text x="264" y="292" text-anchor="middle" font-size="22" font-weight="900" fill="#d0587e" stroke="#fff" stroke-width="5" paint-order="stroke">🍓 終點</text>
+            <line id="finishBlue" class="finish-line" x1="936" y1="96" x2="936" y2="264" stroke="#a87b55" stroke-width="7" stroke-dasharray="16 9" stroke-linecap="round"/>
+            <text x="936" y="292" text-anchor="middle" font-size="22" font-weight="900" fill="#8b5e3c" stroke="#fff" stroke-width="5" paint-order="stroke">🧋 終點</text>
+            <!-- 中線 -->
+            <line x1="600" y1="118" x2="600" y2="264" stroke="#fff" stroke-width="6" stroke-dasharray="3 9" stroke-linecap="round"/>
+            <text x="600" y="292" text-anchor="middle" font-size="20" font-weight="900" fill="#a98263" stroke="#fff" stroke-width="5" paint-order="stroke">中線</text>
+            <!-- 繩子與愛心旗（整組左右移動） -->
+            <g id="ropeGroup" transform="translate(0,0)"><g id="ropeShake">
+              <line x1="-2400" y1="200" x2="3600" y2="200" stroke="#a47551" stroke-width="15" stroke-linecap="round"/>
+              <line x1="-2400" y1="200" x2="3600" y2="200" stroke="#e7cdb3" stroke-width="5" stroke-dasharray="18 12"/>
+              <line x1="600" y1="200" x2="600" y2="124" stroke="#8b5e3c" stroke-width="6" stroke-linecap="round"/>
+              <path d="M600 124 L668 144 L600 164 Z" fill="#ff8fb1" stroke="#d0587e" stroke-width="4" stroke-linejoin="round"/>
+              <text x="623" y="151" font-size="20" font-weight="900" fill="#fff">♥</text>
+              <circle cx="600" cy="200" r="16" fill="#fff" stroke="#d0587e" stroke-width="5"/>
+              <text id="knotSpark" class="spark" x="600" y="186" text-anchor="middle" font-size="42">✨</text>
+            </g></g>
+            <g id="sceneFx"></g>
+            <!-- 🍓 草莓兔兔隊 -->
+            <g id="redTeamFig">
+              <text class="puller red-puller" x="58" y="262" text-anchor="middle" font-size="80">🐰</text>
+              <text class="puller red-puller" x="128" y="262" text-anchor="middle" font-size="80" style="animation-delay:-0.3s">🐰</text>
+              <text class="puller red-puller" x="198" y="262" text-anchor="middle" font-size="80" style="animation-delay:-0.6s">🐰</text>
+              <text id="fireRed" class="fire" x="128" y="166" text-anchor="middle" font-size="54">🔥</text>
+            </g>
+            <!-- 🧋 奶茶熊熊隊 -->
+            <g id="blueTeamFig">
+              <text class="puller blue-puller" x="1002" y="262" text-anchor="middle" font-size="80">🐻</text>
+              <text class="puller blue-puller" x="1072" y="262" text-anchor="middle" font-size="80" style="animation-delay:-0.3s">🐻</text>
+              <text class="puller blue-puller" x="1136" y="262" text-anchor="middle" font-size="80" style="animation-delay:-0.6s">🐻</text>
+              <text id="fireBlue" class="fire" x="1072" y="166" text-anchor="middle" font-size="54">🔥</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="teams">
+          <div id="panelRed" class="team-panel red">
+            <div id="comboRed" class="combo-badge hidden"></div>
+            <span id="typeRed" class="q-type"></span>
+            <div id="qRed" class="q-text"></div>
+            <div id="optRed" class="options"></div>
+          </div>
+          <div id="panelBlue" class="team-panel blue">
+            <div id="comboBlue" class="combo-badge hidden"></div>
+            <span id="typeBlue" class="q-type"></span>
+            <div id="qBlue" class="q-text"></div>
+            <div id="optBlue" class="options"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 結束畫面 -->
+      <div id="arenaEnd" class="arena-screen">
+        <div class="card arena-card">
+          <div id="winnerText" class="winner-text"></div>
+          <div class="end-stats">
+            <div class="stat-col red">
+              <h3 id="endRedName"></h3>
+              <p>分數：<b id="endRedScore">0</b></p>
+              <p>答對：<b id="endRedCorrect">0</b> 題</p>
+              <p>最高連擊：<b id="endRedCombo">0</b></p>
+            </div>
+            <div class="stat-col blue">
+              <h3 id="endBlueName"></h3>
+              <p>分數：<b id="endBlueScore">0</b></p>
+              <p>答對：<b id="endBlueCorrect">0</b> 題</p>
+              <p>最高連擊：<b id="endBlueCombo">0</b></p>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button id="againBtn" class="btn btn-gold big">🔄 再戰一場</button>
+            <button id="homeBtn" class="btn btn-sky big">🏠 回到開始畫面</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- (4) 底部提示列 -->
+  <footer id="hint"><span id="hintText"></span></footer>
+
+  <!-- 飄字特效層 -->
+  <div id="fxLayer"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ════════════════════════════════════════════════════════════
+   ⚙️ SETTINGS：老師可以修改的設定都在這裡
+   ════════════════════════════════════════════════════════════ */
+const SETTINGS = {
+  ARENA_TIME: 90,          // 決戰競技場每場秒數
+  ROPE_LIMIT: 7,           // 繩結走到 ±7（終點線）就獲勝
+  ROPE_STEP: 48,           // 每一格在畫面上移動的距離（配合終點線位置，一般不用改）
+  COMBO_START: 3,          // 連續答對幾題（含）開始連擊（拉 2 格、+20 分）
+  POINT_NORMAL: 10,        // 一般答對得分
+  POINT_COMBO: 20,         // 連擊答對得分
+  WRONG_LOCK_MS: 1000,     // 答錯後按鈕暫停幾毫秒（1000 = 1 秒）
+  NEXT_DELAY_MS: 550,      // 答對後多久換下一題（毫秒）
+  DEFAULT_RED: '草莓兔兔隊',  // 左邊（粉色）隊伍預設名稱，開始畫面也可直接改
+  DEFAULT_BLUE: '奶茶熊熊隊', // 右邊（奶茶色）隊伍預設名稱
+  FORGE_MAX_CELLS: 24,     // 鍛造條最多可以切成幾格
+  PIZZA_START: [[1,2],[1,3],[2,3],[3,4],[2,5]]  // 新手村起始分數（分子, 分母）
+};
+
+/* 出題難度設定（決戰競技場） */
+const LEVELS = {
+  easy: { dMin:2, dMax:6,  kMin:2, kMax:4, improper:false },  // 🌱 簡單：分母 2～6，倍數 2～4
+  hard: { dMin:2, dMax:10, kMin:2, kMax:6, improper:true  }   // 🔥 挑戰：分母 2～10，倍數 2～6，可出現假分數
+};
+
+/* 底部提示列文字 */
+const HINTS = {
+  village: '👆 拖動滑桿把每一塊披薩切得更細，看看塗色的部分有沒有改變？',
+  forge:   '➕➖ 調整格數，點一下或滑過格子來塗色；按住 ✋ 把鍛造條拖到目標條下方比比看長度！',
+  arena:   '🍓🧋 兩隊同時搶答！答對把繩子拉向自己，連對 3 題以上一次拉 2 格！'
+};
+
+/* ════════════════════════════════════════════════════════════
+   🧰 共用工具
+   ════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+
+/*GEN_START*/
+/* ── 數學工具：最大公因數、約成最簡、交叉相乘判斷等值 ── */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a; }
+function simplify(n,d){ const g=gcd(n,d)||1; return [n/g, d/g]; }
+function isEqual(a,b,c,d){ return a*d === b*c; }   // a/b 與 c/d 是否相等（交叉相乘，不用小數）
+
+/* ── 隨機產生最簡分數（真分數；挑戰模式偶爾出現假分數） ── */
+function genBase(cfg){
+  for(let i=0;i<300;i++){
+    const d = randInt(cfg.dMin, cfg.dMax);
+    const n = (cfg.improper && Math.random()<0.25) ? randInt(d+1, 2*d-1) : randInt(1, d-1);
+    if(gcd(n,d)===1) return [n,d];
+  }
+  return [1,2];
+}
+
+/* ── 依迷思產生陷阱選項候選（priority 1 = 迷思陷阱，priority 2 = 備用近似陷阱） ── */
+function trapCandidates(type, n, d, k){
+  const N=n*k, D=d*k;
+  const p1=[], p2=[];
+  if(type==='A'){            // 擴分填空：n/d = ?/D，選項都是 ?/D
+    p1.push({n:D-d+n, d:D});     // 🪤 加法陷阱：分母加了多少，分子也加多少
+    p1.push({n:k,     d:D});     // 🪤 填倍數本身
+    p1.push({n:n,     d:D});     // 🪤 只乘分母、分子沒變
+    p1.push({n:D,     d:D});     // 🪤 數字變大就變大
+    p2.push({n:N+1,d:D},{n:N-1,d:D},{n:n*(k+1),d:D},{n:n+k,d:D},{n:N+n,d:D});
+  }else if(type==='B'){      // 約分到最簡：N/D → ?
+    for(let j=2;j<k;j++){ if(k%j===0) p1.push({n:N/j, d:D/j, partial:true}); } // 🪤 沒約到底
+    if(N-(D-d)>0) p1.push({n:N-(D-d), d:d});                                  // 🪤 用減的
+    p1.push({n:n, d:D});                                                        // 🪤 只除分子
+    p1.push({n:N, d:d});                                                        // 🪤 只除分母
+    const c=randInt(1, Math.max(1, Math.min(N,D)-1));
+    p2.push({n:N-c,d:D-c},{n:n+1,d:d},{n:n,d:d+1},{n:N+1,d:D});
+    if(n>1) p2.push({n:n-1,d:d});
+  }else{                     // 判斷相等：哪一個和 n/d 一樣大？
+    const m=randInt(1,4);
+    p1.push({n:n+m, d:d+m});                                 // 🪤 加法陷阱
+    p1.push(Math.random()<0.5 ? {n:N,d:d} : {n:n,d:D});      // 🪤 只乘一邊
+    const k2=k+randInt(2,4);
+    p1.push(Math.random()<0.5 ? {n:n*k2+1,d:d*k2} : {n:n*k2,d:d*k2+1}); // 🪤 數字最大但不相等
+    p2.push({n:N,d:d},{n:n,d:D},{n:N+1,d:D},{n:N,d:D+1},{n:N+randInt(1,5),d:D+randInt(1,5)});
+  }
+  return shuffle(p1).concat(shuffle(p2));
+}
+
+/* ── 選出 3 個合格陷阱：不重複、只有 1 個正確答案 ── */
+function optionOK(c, chosen, type, base, qFrac, state){
+  if(!Number.isInteger(c.n)||!Number.isInteger(c.d)||c.n<=0||c.d<=0||c.n>200||c.d>200) return false;
+  if(chosen.some(o=>o.n===c.n && o.d===c.d)) return false;
+  if(isEqual(c.n,c.d,base.n,base.d)){
+    // 和答案等值的選項，只允許「題型 B 的沒約到底陷阱」（等值但不是最簡），而且最多一個
+    if(type!=='B' || !c.partial || state.hasPartial || gcd(c.n,c.d)===1) return false;
+    if(qFrac && c.n===qFrac.n && c.d===qFrac.d) return false;
+    state.hasPartial = true;
+    return true;
+  }
+  return !chosen.some(o=>isEqual(o.n,o.d,c.n,c.d));
+}
+function pickOptions(correct, list, type, base, qFrac){
+  const chosen=[correct], state={hasPartial:false};
+  for(const c of list){
+    if(chosen.length===4) break;
+    if(optionOK(c, chosen, type, base, qFrac, state)) chosen.push(c);
+  }
+  return chosen.length===4 ? chosen : null;
+}
+function fallbackOptions(correct, type, base, qFrac){
+  const chosen=[correct], state={hasPartial:false};
+  const deltas=[1,-1,2,-2,3,-3,4,5,6,7,8,9];
+  for(const dlt of deltas){
+    if(chosen.length===4) break;
+    const c={n:correct.n+dlt, d:correct.d};   // 備用陷阱：分子 ±1、±2…
+    if(optionOK(c, chosen, type, base, qFrac, state)) chosen.push(c);
+  }
+  return chosen;
+}
+
+/* ── 產生一道競技場題目（三種題型隨機混合） ── */
+function makeQuestion(level){
+  const cfg = LEVELS[level] || LEVELS.easy;
+  const type = ['A','B','C'][randInt(0,2)];
+  const [n,d] = genBase(cfg);
+  let k = randInt(cfg.kMin, cfg.kMax);
+  if(type==='B' && level==='hard' && Math.random()<0.6) k=[4,6][randInt(0,1)]; // 挑戰：多次約分題
+  const base={n:n, d:d};
+  let correct, typeLabel, prompt, qFrac=null;
+  if(type==='A'){
+    correct={n:n*k, d:d*k};
+    typeLabel='📝 擴分填空';
+    prompt=fracHTML(n,d)+'<span class="eq">=</span>'+fracHTML('<span class="qmark">?</span>', d*k);
+  }else if(type==='B'){
+    correct={n:n, d:d};
+    qFrac={n:n*k, d:d*k};
+    typeLabel='✂️ 約成最簡分數';
+    prompt='把 '+fracHTML(n*k,d*k)+' 約成最簡分數';
+  }else{
+    correct={n:n*k, d:d*k};
+    typeLabel='⚖️ 判斷相等';
+    prompt='哪一個和 '+fracHTML(n,d)+' 一樣大？';
+  }
+  let opts=null;
+  for(let t=0;t<50 && !opts;t++){                 // 最多重試 50 次
+    opts=pickOptions(correct, trapCandidates(type,n,d,k), type, base, qFrac);
+  }
+  if(!opts) opts=fallbackOptions(correct, type, base, qFrac);
+  const shuffled=shuffle(opts);                    // 選項位置隨機打亂
+  return { type:type, typeLabel:typeLabel, prompt:prompt, options:shuffled, correctIndex:shuffled.indexOf(correct) };
+}
+
+/* 分數上下排版的 HTML（只放數字或固定字串，安全） */
+function fracHTML(n,d,cls){
+  return '<span class="frac'+(cls?' '+cls:'')+'"><span class="num">'+n+'</span><span class="den">'+d+'</span></span>';
+}
+/*GEN_END*/
+
+/* ── 輕觸判定：用 Pointer Events，移動太多（在捲動）就不算點擊 ── */
+function onTap(el, handler){
+  const starts=new Map();
+  el.addEventListener('pointerdown', e=>{ starts.set(e.pointerId, {x:e.clientX, y:e.clientY, target:e.target}); });
+  el.addEventListener('pointerup', e=>{
+    const s=starts.get(e.pointerId); starts.delete(e.pointerId);
+    if(!s) return;
+    if(Math.hypot(e.clientX-s.x, e.clientY-s.y) > 18) return;
+    handler(e, s.target);
+  });
+  el.addEventListener('pointercancel', e=>starts.delete(e.pointerId));
+}
+
+/* ── 簡易補間動畫（requestAnimationFrame，不影響計時器） ── */
+function tween(from, to, ms, onUpdate, ease){
+  ease = ease || (p=>1-Math.pow(1-p,3));
+  let start=null, id=0, alive=true;
+  const step=ts=>{
+    if(!alive) return;
+    if(start===null) start=ts;
+    const p=Math.min(1,(ts-start)/ms);
+    onUpdate(from+(to-from)*ease(p));
+    if(p<1) id=requestAnimationFrame(step);
+  };
+  id=requestAnimationFrame(step);
+  return ()=>{ alive=false; cancelAnimationFrame(id); };
+}
+const easeOutBack = p=>{ const c1=1.5, c3=c1+1; return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2); };
+
+/* 重新觸發 CSS 動畫 */
+function replayAnim(el, cls){ el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
+
+/* ════════════════════════════════════════════════════════════
+   🔊 音效：Web Audio API 即時合成
+   ════════════════════════════════════════════════════════════ */
+let audioCtx=null, soundOn=true;
+function getAC(){
+  if(!audioCtx){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return null;
+    audioCtx=new AC();
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, start, dur, type, vol){
+  const c=getAC(); if(!c) return;
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type||'sine'; o.frequency.value=freq;
+  const t=c.currentTime+start;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol||0.2, t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t+dur+0.05);
+}
+const sfx={
+  correct(){ if(!soundOn) return; tone(784,0,.16,'triangle',.25); tone(1175,.12,.32,'triangle',.25); },  // 叮咚
+  wrong(){   if(!soundOn) return; tone(196,0,.3,'sawtooth',.12); tone(147,.14,.4,'sawtooth',.12); },      // 低音
+  win(){     if(!soundOn) return; [523,659,784].forEach((f,i)=>tone(f,i*.15,.22,'square',.1)); tone(1047,.45,.8,'triangle',.22); tone(784,.45,.8,'triangle',.12); }, // 勝利號角
+  click(){   if(!soundOn) return; tone(660,0,.06,'sine',.08); }
+};
+document.addEventListener('pointerdown', ()=>{ if(soundOn) getAC(); }, {once:true});
+onTap($('soundBtn'), ()=>{
+  soundOn=!soundOn;
+  $('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) sfx.click();
+});
+
+/* ════════════════════════════════════════════════════════════
+   📑 頁籤切換
+   ════════════════════════════════════════════════════════════ */
+let currentTab='village';
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  onTap(btn, ()=>switchTab(btn.dataset.tab));
+});
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+tab));
+  $('hintText').textContent=HINTS[tab];
+  $('content').scrollTop=0;
+  sfx.click();
+}
+
+/* ════════════════════════════════════════════════════════════
+   🏡 新手村：神奇披薩切切看
+   ════════════════════════════════════════════════════════════ */
+const village={ n:1, d:2, k:1, prevK:1, seen:new Set([1]), pepperoni:[] };
+const PZ={ CX:160, CY:160, R:140, START:180 };   // 從左邊（9 點鐘）順時針塗色 → 1/2 剛好是上半圓
+
+function polar(r,deg){ const a=deg*Math.PI/180; return [PZ.CX+r*Math.cos(a), PZ.CY+r*Math.sin(a)]; }
+function sectorPath(r,a0,a1){
+  const p0=polar(r,a0), p1=polar(r,a1);
+  const large=(a1-a0)>180?1:0;
+  return 'M'+PZ.CX+','+PZ.CY+' L'+p0[0].toFixed(2)+','+p0[1].toFixed(2)+' A'+r+','+r+' 0 '+large+' 1 '+p1[0].toFixed(2)+','+p1[1].toFixed(2)+' Z';
+}
+/* 產生臘腸位置（只在換披薩時產生，切片時不變 → 塗色範圍完全不變） */
+function makePepperoni(){
+  const span=360*village.n/village.d;
+  const count=Math.max(3, Math.round(span/26));
+  village.pepperoni=[];
+  for(let i=0;i<count;i++){
+    const ang=PZ.START + span*(i+0.5)/count + (Math.random()-0.5)*span/count*0.5;
+    const r=randInt(38,112);
+    const p=polar(r,ang);
+    village.pepperoni.push({x:p[0], y:p[1], s:randInt(10,14)});
+  }
+}
+function drawPizza(){
+  const {n,d,k,prevK}=village;
+  const total=d*k;
+  const sec=sectorPath(PZ.R, PZ.START, PZ.START+360*n/d);
+  let s='';
+  s+='<defs><clipPath id="shadeClip"><path d="'+sec+'"/></clipPath></defs>';
+  s+='<circle cx="160" cy="164" r="152" fill="rgba(0,0,0,.08)"/>';           // 陰影
+  s+='<circle cx="160" cy="160" r="150" fill="#d9954a"/>';                   // 餅皮
+  s+='<circle cx="160" cy="160" r="'+PZ.R+'" fill="#fdf0d2"/>';               // 原味（未塗色）
+  s+='<path d="'+sec+'" fill="#ffa24c"/>';                                   // 塗色：醬料起司
+  s+='<g clip-path="url(#shadeClip)">';
+  village.pepperoni.forEach(p=>{
+    s+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+p.s+'" fill="#d63a2f"/>';
+    s+='<circle cx="'+(p.x-3).toFixed(1)+'" cy="'+(p.y-3).toFixed(1)+'" r="'+(p.s*0.3).toFixed(1)+'" fill="#f06a5d"/>';
+  });
+  s+='</g>';
+  // 切線：只有「新出現」的切線才播放切的動畫
+  for(let j=0;j<total;j++){
+    const ang=PZ.START+360*j/total;
+    const e=polar(PZ.R+8, ang);
+    const isOld=((j*prevK)%k===0);
+    s+='<line x1="160" y1="160" x2="'+e[0].toFixed(2)+'" y2="'+e[1].toFixed(2)+'" stroke="#7a4a1e" stroke-width="3.5" stroke-linecap="round"'+(isOld?'':' class="cut-new"')+'/>';
+  }
+  s+='<circle cx="160" cy="160" r="'+PZ.R+'" fill="none" stroke="#a0612b" stroke-width="4"/>';
+  s+='<circle cx="160" cy="160" r="5" fill="#7a4a1e"/>';
+  $('pizzaSvg').innerHTML=s;
+}
+function updateVillageText(){
+  const {n,d,k}=village;
+  const el=$('pizzaFrac');
+  el.innerHTML=fracHTML(n*k, d*k);
+  replayAnim(el,'fade-in');
+  $('pizzaInfo').textContent='披薩一共切成 '+(d*k)+' 塊，塗色的有 '+(n*k)+' 塊';
+  $('sliderVal').textContent=k;
+  const ks=Array.from(village.seen).sort((a,b)=>a-b);
+  $('collection').innerHTML=ks.map(kk=>fracHTML(n*kk, d*kk, kk===k?'now':'')).join('<span class="eq">=</span>');
+}
+function setCut(k){
+  if(k===village.k) return;
+  village.prevK=village.k;
+  village.k=k;
+  village.seen.add(k);
+  drawPizza(); updateVillageText(); sfx.click();
+}
+$('cutSlider').addEventListener('input', e=>setCut(parseInt(e.target.value,10)));
+onTap($('newPizzaBtn'), ()=>{
+  const options=SETTINGS.PIZZA_START.filter(p=>!(p[0]===village.n && p[1]===village.d));
+  const pick=options[randInt(0,options.length-1)];
+  village.n=pick[0]; village.d=pick[1]; village.k=1; village.prevK=1;
+  village.seen=new Set([1]);
+  $('cutSlider').value=1;
+  makePepperoni(); drawPizza(); updateVillageText(); sfx.correct();
+});
+
+/* ════════════════════════════════════════════════════════════
+   🛠️ 鍛造工坊：分數條鍛造台
+   ════════════════════════════════════════════════════════════ */
+const FORGE={
+  BAR_X:40, BAR_W:840, BAR_H:70,
+  TARGET_Y:70,     // 目標條上緣
+  SNAP_Y:152,      // 吸附位置（緊貼在目標條下方）
+  HOME_Y:290,      // 鍛造條原位
+  MAX_Y:312,       // 往下拖的極限（不可拖出畫面）
+  SNAP_LIMIT:222   // 放開時上緣小於這個值就吸附
+};
+const forge={
+  mode:'expand', problem:null, lastKey:'',
+  count:1, painted:[false], success:0, solved:false,
+  top:FORGE.HOME_Y, drag:null, paints:new Map(), cancelTween:null, rects:[]
+};
+const forgeSvg=$('forgeSvg'), forgeGroup=$('forgeGroup');
+
+function svgEl(tag, attrs, text){
+  const el=document.createElementNS(SVGNS, tag);
+  for(const key in attrs) el.setAttribute(key, attrs[key]);
+  if(text!==undefined) el.textContent=text;
+  return el;
+}
+/* 刻度數字排版：格數多時縮小字級，還是太擠就改成間隔標示，保證數字不重疊 */
+function tickLayout(count){
+  const cellW=FORGE.BAR_W/count, digits=String(count).length;
+  let fs=Math.min(30, cellW*0.72);
+  if(digits*0.6*fs*1.3 > cellW) fs=cellW/(digits*0.6*1.3);
+  let step=1;
+  if(fs<17){ fs=17; while(step*cellW < digits*0.6*fs*1.4) step++; }
+  return {cellW:cellW, fs:fs, step:step};
+}
+/* 題目產生：分母不超過 24，配合鍛造條格數 */
+function genForgeProblem(mode){
+  for(let i=0;i<200;i++){
+    const d=randInt(2,8), n=randInt(1,d-1);
+    if(gcd(n,d)!==1) continue;
+    const k=randInt(2,6);
+    if(d*k>SETTINGS.FORGE_MAX_CELLS) continue;
+    const key=mode+n+'/'+d+'x'+k;
+    if(key===forge.lastKey) continue;
+    forge.lastKey=key;
+    return {n:n, d:d, k:k, N:n*k, D:d*k};
+  }
+  return {n:1, d:2, k:3, N:3, D:6};
+}
+function renderTarget(){
+  const p=forge.problem, g=$('targetGroup');
+  const cells = forge.mode==='expand' ? p.d : p.D;
+  const shaded= forge.mode==='expand' ? p.n : p.N;
+  g.innerHTML='';
+  const L=tickLayout(cells);
+  for(let i=0;i<cells;i++){
+    g.appendChild(svgEl('rect',{x:FORGE.BAR_X+i*L.cellW, y:FORGE.TARGET_Y, width:L.cellW, height:FORGE.BAR_H,
+      fill:i<shaded?'#d4a982':'#fffdf5', stroke:'#9c7350', 'stroke-width':3}));
+    if((i+1)%L.step===0){   // 目標條的刻度放在「上方」
+      g.appendChild(svgEl('text',{x:FORGE.BAR_X+(i+0.5)*L.cellW, y:FORGE.TARGET_Y-12, 'text-anchor':'middle',
+        'font-size':L.fs.toFixed(1), 'font-weight':800, fill:'#9c7350'}, String(i+1)));
+    }
+  }
+  g.appendChild(svgEl('rect',{x:FORGE.BAR_X, y:FORGE.TARGET_Y, width:FORGE.BAR_W, height:FORGE.BAR_H, fill:'none', stroke:'#7a5536', 'stroke-width':5, rx:4}));
+}
+function renderForgeBar(){
+  const cg=$('forgeCells'), lg=$('forgeLabels');
+  cg.innerHTML=''; lg.innerHTML=''; forge.rects=[];
+  const L=tickLayout(forge.count);
+  for(let i=0;i<forge.count;i++){
+    const r=svgEl('rect',{x:FORGE.BAR_X+i*L.cellW, y:0, width:L.cellW, height:FORGE.BAR_H,
+      fill:forge.painted[i]?'#f2a0b5':'#fffdf5', stroke:'#c9718a', 'stroke-width':3, 'data-i':i});
+    cg.appendChild(r); forge.rects.push(r);
+    if((i+1)%L.step===0){   // 鍛造條的刻度放在「下方」
+      lg.appendChild(svgEl('text',{x:FORGE.BAR_X+(i+0.5)*L.cellW, y:FORGE.BAR_H+34, 'text-anchor':'middle',
+        'font-size':L.fs.toFixed(1), 'font-weight':800, fill:'#c9718a'}, String(i+1)));
+    }
+  }
+  cg.appendChild(svgEl('rect',{x:FORGE.BAR_X, y:0, width:FORGE.BAR_W, height:FORGE.BAR_H, fill:'none', stroke:'#a5506a', 'stroke-width':5, rx:4, 'pointer-events':'none'}));
+  $('cellCount').textContent=forge.count;
+  updateMineLabel();
+}
+function updateMineLabel(){
+  const c=forge.painted.filter(Boolean).length;
+  $('mineLabel').innerHTML=fracHTML(c, forge.count);
+}
+function setCell(i, val){
+  if(i<0||i>=forge.count||forge.painted[i]===val) return;
+  forge.painted[i]=val;
+  forge.rects[i].setAttribute('fill', val?'#f2a0b5':'#fffdf5');
+  updateMineLabel();
+}
+function setForgeTop(y){
+  forge.top=y;
+  forgeGroup.setAttribute('transform','translate(0,'+y.toFixed(1)+')');
+  $('snapSlot').style.opacity = Math.abs(y-FORGE.SNAP_Y)<1 ? 0 : 1;
+}
+function animateForgeTo(y){
+  if(forge.cancelTween) forge.cancelTween();
+  forge.cancelTween=tween(forge.top, y, 380, v=>setForgeTop(v), easeOutBack);
+}
+function svgPoint(e){
+  const pt=forgeSvg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  return pt.matrixTransform(forgeSvg.getScreenCTM().inverse());
+}
+function cellIndexAt(x){
+  return Math.floor((x-FORGE.BAR_X)/(FORGE.BAR_W/forge.count));
+}
+
+/* ── 鍛造台的指標事件：拖曳把手 or 塗色（支援多點） ── */
+forgeSvg.addEventListener('pointerdown', e=>{
+  if(e.target.closest('#dragHandle')){
+    if(forge.drag) return;                       // 同時只允許一隻手拖曳
+    if(forge.cancelTween){ forge.cancelTween(); forge.cancelTween=null; }
+    forgeSvg.setPointerCapture(e.pointerId);
+    forge.drag={id:e.pointerId, startY:svgPoint(e).y, startTop:forge.top};
+    e.preventDefault();
+    return;
+  }
+  const cell=e.target.closest('[data-i]');
+  if(cell){
+    const i=parseInt(cell.getAttribute('data-i'),10);
+    const mode=!forge.painted[i];                // 這一次拖曳只塗色 or 只取消，不會閃爍
+    forgeSvg.setPointerCapture(e.pointerId);
+    forge.paints.set(e.pointerId, {mode:mode, last:i});
+    setCell(i, mode);
+    e.preventDefault();
+  }
+});
+forgeSvg.addEventListener('pointermove', e=>{
+  if(forge.drag && forge.drag.id===e.pointerId){
+    const dy=svgPoint(e).y-forge.drag.startY;
+    setForgeTop(clamp(forge.drag.startTop+dy, FORGE.SNAP_Y, FORGE.MAX_Y)); // 限制在畫面內
+    return;
+  }
+  const p=forge.paints.get(e.pointerId);
+  if(p){
+    const i=clamp(cellIndexAt(svgPoint(e).x), 0, forge.count-1);
+    const a=Math.min(i,p.last), b=Math.max(i,p.last);
+    for(let j=a;j<=b;j++) setCell(j, p.mode);   // 滑太快時把中間的格子補齊
+    p.last=i;
+  }
+});
+function endForgePointer(e){
+  if(forge.drag && forge.drag.id===e.pointerId){
+    forge.drag=null;
+    animateForgeTo(forge.top<FORGE.SNAP_LIMIT ? FORGE.SNAP_Y : FORGE.HOME_Y); // 吸附 or 彈回原位
+  }
+  forge.paints.delete(e.pointerId);
+}
+forgeSvg.addEventListener('pointerup', endForgePointer);
+forgeSvg.addEventListener('pointercancel', endForgePointer);
+
+function changeCount(delta){
+  const c=clamp(forge.count+delta, 1, SETTINGS.FORGE_MAX_CELLS);
+  if(c===forge.count) return;
+  forge.count=c; forge.painted=new Array(c).fill(false);
+  renderForgeBar(); sfx.click();
+}
+onTap($('minusBtn'), ()=>changeCount(-1));
+onTap($('plusBtn'),  ()=>changeCount(1));
+onTap($('clearPaintBtn'), ()=>{ forge.painted=new Array(forge.count).fill(false); renderForgeBar(); });
+
+/* 把學生的答案畫在鍛造條上，並對齊到目標條下方，讓學生看長度 */
+function showAnswerOnBar(a,b){
+  if(b>=1 && b<=SETTINGS.FORGE_MAX_CELLS && a>=0 && a<=b){
+    forge.count=b;
+    forge.painted=new Array(b).fill(false).map((_,i)=>i<a);
+    renderForgeBar();
+  }
+  animateForgeTo(FORGE.SNAP_Y);
+}
+
+function newForgeProblem(){
+  forge.problem=genForgeProblem(forge.mode);
+  forge.solved=false;
+  const p=forge.problem;
+  if(forge.mode==='expand'){
+    $('forgeQuestion').innerHTML='請找出和 '+fracHTML(p.n,p.d)+' 一樣大、分母是 <b style="color:#c9718a">'+p.D+'</b> 的分數';
+    $('targetLabel').innerHTML=fracHTML(p.n,p.d);
+  }else{
+    $('forgeQuestion').innerHTML='請把 '+fracHTML(p.N,p.D)+' 約成「最簡分數」';
+    $('targetLabel').innerHTML=fracHTML(p.N,p.D);
+  }
+  forge.count=1; forge.painted=[false];
+  renderTarget(); renderForgeBar();
+  if(forge.cancelTween) forge.cancelTween();
+  setForgeTop(FORGE.HOME_Y);
+  $('ansNum').value=''; $('ansDen').value='';
+  setFeedback('', '');
+  $('nextBtn').classList.add('hidden');
+  $('checkBtn').classList.remove('hidden');
+}
+function setFeedback(cls, html){
+  const fb=$('forgeFeedback');
+  fb.className='feedback'+(cls?' '+cls:'');
+  fb.innerHTML=html;
+  if(cls==='warn'||cls==='info') replayAnim(fb,'shake');
+}
+
+/* ── 判斷答案＆針對迷思給回饋（一律交叉相乘） ── */
+function checkForge(){
+  if(forge.solved) return;
+  const a=parseInt($('ansNum').value,10), b=parseInt($('ansDen').value,10);
+  if(isNaN(a)||isNaN(b)){ setFeedback('info','✏️ 請先在分子和分母都填上數字喔！'); return; }
+  if(b===0){ setFeedback('info','✏️ 分母不可以是 0 喔！'); return; }
+  const p=forge.problem;
+
+  if(forge.mode==='expand'){
+    const {n,d,D}=p;
+    if(b===D && isEqual(a,b,n,d)){ forgeSuccess(fracHTML(n,d)+'<span class="eq">=</span>'+fracHTML(a,b), a, b); return; }
+    sfx.wrong();
+    if(isEqual(a,b,n,d)){
+      setFeedback('info','👍 大小對了！但題目要的分母是 '+D+' 喔，再試試看？'); showAnswerOnBar(a,b);
+    }else if(a-n===b-d && a-n>0){
+      setFeedback('warn','⚠️ 你是不是用「加」的？擴分要分子分母「同時乘」同一個數喔！'); showAnswerOnBar(a,b);
+    }else if((b===d && a!==n && a%n===0) || (a===n && b!==d && b%d===0)){
+      setFeedback('warn','⚠️ 分子和分母要做一樣的事喔！'); showAnswerOnBar(a,b);
+    }else{
+      setFeedback('info','🤔 再看看兩條的長度一樣嗎？'); showAnswerOnBar(a,b);
+    }
+  }else{
+    const {n,d,N,D}=p;
+    if(a===n && b===d){ forgeSuccess(fracHTML(N,D)+'<span class="eq">=</span>'+fracHTML(a,b), a, b); return; }
+    sfx.wrong();
+    if(a===N && b===D){
+      setFeedback('info','🤔 這還是原本的分數喔！試試看分子分母「同時除以」同一個數。');
+    }else if(isEqual(a,b,N,D)){
+      setFeedback('info','👍 大小對了！但還能再約，再試試看？'); showAnswerOnBar(a,b);
+    }else if(N-a===D-b && N-a>0){
+      setFeedback('warn','⚠️ 你是不是用「減」的？約分要分子分母「同時除以」同一個數喔！'); showAnswerOnBar(a,b);
+    }else if((a===N && b!==D && D%b===0) || (b===D && a!==N && N%a===0)){
+      setFeedback('warn','⚠️ 分子和分母要做一樣的事喔！'); showAnswerOnBar(a,b);
+    }else{
+      setFeedback('info','🤔 再看看兩條的長度一樣嗎？'); showAnswerOnBar(a,b);
+    }
+  }
+}
+function forgeSuccess(eqHTML, a, b){
+  forge.solved=true;
+  forge.success++;
+  $('forgeSuccess').textContent=forge.success;
+  setFeedback('success','🎉 鍛造成功！'+eqHTML);
+  showAnswerOnBar(a,b);
+  replayAnim($('forgeStage'),'gold-flash');
+  $('checkBtn').classList.add('hidden');
+  $('nextBtn').classList.remove('hidden');
+  sfx.correct();
+}
+onTap($('checkBtn'), checkForge);
+onTap($('nextBtn'), newForgeProblem);
+['ansNum','ansDen'].forEach(id=>{
+  const el=$(id);
+  el.addEventListener('input', ()=>{ el.value=el.value.replace(/[^0-9]/g,'').slice(0,3); });
+  el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); if(id==='ansNum') $('ansDen').focus(); else checkForge(); } });
+});
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  onTap(btn, ()=>{
+    if(forge.mode===btn.dataset.mode) return;
+    forge.mode=btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('selected', b===btn));
+    newForgeProblem(); sfx.click();
+  });
+});
+
+/* ════════════════════════════════════════════════════════════
+   🪢 決戰競技場：數學拔河大對決
+   ════════════════════════════════════════════════════════════ */
+const game={
+  running:false, level:'easy', timeLeft:SETTINGS.ARENA_TIME, pos:0, ropeX:0,
+  timerId:null, timeouts:new Set(), token:0, cancelRope:null,
+  teams:{
+    red:{  key:'red',  name:SETTINGS.DEFAULT_RED,  score:0, correct:0, combo:0, maxCombo:0, locked:false, q:null },
+    blue:{ key:'blue', name:SETTINGS.DEFAULT_BLUE, score:0, correct:0, combo:0, maxCombo:0, locked:false, q:null }
+  }
+};
+const UI={
+  red:{  panel:$('panelRed'),  opts:$('optRed'),  q:$('qRed'),  type:$('typeRed'),  combo:$('comboRed'),  fig:$('redTeamFig'),  fire:$('fireRed') },
+  blue:{ panel:$('panelBlue'), opts:$('optBlue'), q:$('qBlue'), type:$('typeBlue'), combo:$('comboBlue'), fig:$('blueTeamFig'), fire:$('fireBlue') }
+};
+
+/* 受管理的延遲：重置遊戲時全部一起清掉，舊的回呼也會被忽略 */
+function later(fn, ms){
+  const tk=game.token;
+  const id=setTimeout(()=>{ game.timeouts.delete(id); if(tk!==game.token) return; fn(); }, ms);
+  game.timeouts.add(id);
+}
+function clearAllTimers(){
+  if(game.timerId!==null){ clearInterval(game.timerId); game.timerId=null; }
+  game.timeouts.forEach(id=>clearTimeout(id));
+  game.timeouts.clear();
+  game.token++;
+}
+function showArenaScreen(name){
+  ['arenaStart','arenaGame','arenaEnd'].forEach(id=>$(id).classList.toggle('active', id===name));
+  $('page-arena').classList.toggle('playing', name==='arenaGame');
+  $('content').scrollTop=0;
+}
+
+/* 繩子位置（平滑移動） */
+function setRope(pos, animate){
+  const target=pos*SETTINGS.ROPE_STEP;
+  if(game.cancelRope){ game.cancelRope(); game.cancelRope=null; }
+  const apply=x=>{ game.ropeX=x; $('ropeGroup').setAttribute('transform','translate('+x.toFixed(1)+',0)'); };
+  if(!animate){ apply(target); return; }
+  game.cancelRope=tween(game.ropeX, target, 520, apply, easeOutBack);
+}
+function tugAnim(key){
+  UI[key].fig.querySelectorAll('.puller').forEach(el=>replayAnim(el,'tug'));   // 角色用力拉
+  replayAnim($('ropeShake'),'shake-rope');                                     // 繩子抖動
+  replayAnim($('knotSpark'),'spark-on');                                       // 旗子閃光
+  spawnDust(key);                                                              // 腳下揚起煙塵
+}
+/* 煙塵特效：動畫結束自動移除 */
+function spawnDust(key){
+  const xs = key==='red' ? [20,92,162] : [1040,1110,1176];
+  xs.forEach((x,i)=>{
+    const t=svgEl('text',{x:x, y:262, 'font-size':36, 'text-anchor':'middle', 'class':'dust '+key}, '💨');
+    t.style.animationDelay=(i*0.06)+'s';
+    t.addEventListener('animationend', ()=>t.remove());
+    $('sceneFx').appendChild(t);
+  });
+}
+/* 快到終點時，終點線會閃爍 */
+function updateDanger(){
+  const near=SETTINGS.ROPE_LIMIT-2;
+  $('finishRed').classList.toggle('danger', game.pos<=-near);
+  $('finishBlue').classList.toggle('danger', game.pos>=near);
+}
+/* 三角旗彩帶 */
+function drawBunting(){
+  const g=$('bunting'), colors=['#f28bab','#fff','#d9b08c','#ffc7d6'];
+  const yAt=x=>22+26*Math.sin(Math.PI*((((x%600)+600)%600)/600));
+  let d='';
+  for(let x=-1200;x<=2400;x+=20) d+=(d?' L':'M')+x+' '+yAt(x).toFixed(1);
+  g.appendChild(svgEl('path',{d:d, fill:'none', stroke:'#b88d6c', 'stroke-width':3}));
+  let i=0;
+  for(let x=-1190;x<=2390;x+=44,i++){
+    const y=yAt(x);
+    g.appendChild(svgEl('path',{d:'M'+(x-13)+' '+y.toFixed(1)+' L'+(x+13)+' '+y.toFixed(1)+' L'+x+' '+(y+26).toFixed(1)+' Z',
+      fill:colors[i%4], stroke:'#e2c2ab', 'stroke-width':1.5}));
+  }
+}
+
+function renderScores(){
+  $('sbRedScore').textContent=game.teams.red.score;
+  $('sbBlueScore').textContent=game.teams.blue.score;
+}
+function renderTimer(){
+  $('timeLeft').textContent=game.timeLeft;
+  $('timer').classList.toggle('danger', game.timeLeft<=10);
+}
+function renderQuestion(key){
+  const t=game.teams[key], ui=UI[key];
+  ui.type.textContent=t.q.typeLabel;
+  ui.q.innerHTML=t.q.prompt;
+  ui.opts.innerHTML='';
+  t.q.options.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt-btn';
+    b.setAttribute('data-index', i);      // 只用 data-index，不在 HTML 內嵌事件
+    b.innerHTML=fracHTML(o.n,o.d);
+    ui.opts.appendChild(b);
+  });
+  ui.panel.classList.remove('locked');
+}
+function nextQuestion(key){
+  const t=game.teams[key];
+  t.q=makeQuestion(game.level);
+  renderQuestion(key);
+  t.locked=false;
+}
+function showCombo(key){
+  const t=game.teams[key], el=UI[key].combo;
+  if(t.combo>=SETTINGS.COMBO_START){
+    el.textContent='🔥 連擊 x'+t.combo+'！';
+    el.classList.remove('hidden');
+    replayAnim(el,'combo-badge');
+  }else{
+    el.classList.add('hidden');
+  }
+  UI[key].fire.classList.toggle('on', t.combo>=SETTINGS.COMBO_START);   // 連擊時角色頭上冒火
+}
+/* 飄字：純 CSS 動畫，結束後自動移除，不影響計時與出題 */
+function spawnFloat(btn, text, key){
+  const r=btn.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='float-text '+key;
+  el.textContent=text;
+  el.style.left=(r.left+r.width/2)+'px';
+  el.style.top=(r.top+r.height/2)+'px';
+  el.addEventListener('animationend', ()=>el.remove());
+  $('fxLayer').appendChild(el);
+}
+
+/* ── 作答 ── */
+function answer(key, idx, btn){
+  const t=game.teams[key];
+  if(!game.running || t.locked) return;
+  t.locked=true;                           // 防連點：立刻鎖定該隊
+  const ui=UI[key], other=key==='red'?'blue':'red';
+  const dirSelf = key==='red' ? -1 : 1;    // 紅隊往負方向（左），藍隊往正方向（右）
+
+  if(idx===t.q.correctIndex){
+    t.combo++; t.correct++;
+    t.maxCombo=Math.max(t.maxCombo, t.combo);
+    const isCombo=t.combo>=SETTINGS.COMBO_START;
+    const pull=isCombo?2:1, pts=isCombo?SETTINGS.POINT_COMBO:SETTINGS.POINT_NORMAL;
+    t.score+=pts;
+    btn.classList.add('right');
+    spawnFloat(btn, (isCombo?'🔥 +':'🎉 +')+pts, key);
+    showCombo(key);
+    sfx.correct();
+    tugAnim(key);
+    movePos(dirSelf*pull);
+    renderScores();
+    if(checkWin()) return;
+    later(()=>nextQuestion(key), SETTINGS.NEXT_DELAY_MS);
+  }else{
+    t.combo=0;
+    showCombo(key);
+    btn.classList.add('wrong');
+    const right=t.q.options[t.q.correctIndex];
+    const tag=document.createElement('span');
+    tag.className='reveal-tag';
+    tag.innerHTML='正解 '+fracHTML(right.n,right.d);   // 在錯誤選項上短暫顯示正確答案
+    btn.appendChild(tag);
+    const rb=ui.opts.querySelector('[data-index="'+t.q.correctIndex+'"]');
+    if(rb) rb.classList.add('reveal');
+    ui.panel.classList.add('locked');                 // 該隊按鈕變灰 1 秒
+    sfx.wrong();
+    tugAnim(other);
+    movePos(-dirSelf);
+    if(checkWin()) return;
+    later(()=>nextQuestion(key), SETTINGS.WRONG_LOCK_MS);
+  }
+}
+function movePos(delta){
+  game.pos=clamp(game.pos+delta, -SETTINGS.ROPE_LIMIT, SETTINGS.ROPE_LIMIT);
+  setRope(game.pos, true);
+  updateDanger();
+}
+function checkWin(){
+  if(game.pos<=-SETTINGS.ROPE_LIMIT){ endGame('red'); return true; }
+  if(game.pos>= SETTINGS.ROPE_LIMIT){ endGame('blue'); return true; }
+  return false;
+}
+
+/* 事件委派：每隊一個監聽器，pointerdown 讓兩隊同時按也互不干擾 */
+['red','blue'].forEach(key=>{
+  UI[key].opts.addEventListener('pointerdown', e=>{
+    const btn=e.target.closest('[data-index]');
+    if(!btn || !UI[key].opts.contains(btn)) return;
+    e.preventDefault();
+    answer(key, parseInt(btn.getAttribute('data-index'),10), btn);
+  });
+});
+
+/* ── 完美重置 ── */
+function resetGameState(){
+  clearAllTimers();                                  // 清掉所有計時器與延遲
+  $('fxLayer').innerHTML='';                         // 清掉所有飄字
+  $('sceneFx').innerHTML='';                         // 清掉場景煙塵
+  game.running=false;
+  game.timeLeft=SETTINGS.ARENA_TIME;
+  game.pos=0;
+  setRope(0,false);
+  ['red','blue'].forEach(key=>{
+    const t=game.teams[key];
+    t.score=0; t.correct=0; t.combo=0; t.maxCombo=0; t.locked=false; t.q=null;
+    UI[key].combo.classList.add('hidden');
+    UI[key].fire.classList.remove('on');
+    UI[key].panel.classList.remove('locked');
+    UI[key].opts.innerHTML='';
+  });
+  renderScores(); renderTimer(); updateDanger();
+}
+function restartGame(){
+  resetGameState();
+  $('sbRedName').textContent='🍓 '+game.teams.red.name;
+  $('sbBlueName').textContent='🧋 '+game.teams.blue.name;
+  nextQuestion('red'); nextQuestion('blue');
+  showArenaScreen('arenaGame');
+  game.running=true;
+  game.timerId=setInterval(()=>{
+    if(!game.running) return;
+    if(currentTab!=='arena') return;                 // 切到別的頁籤時暫停計時
+    game.timeLeft--;
+    renderTimer();
+    if(game.timeLeft<=0){
+      endGame(game.pos<0 ? 'red' : game.pos>0 ? 'blue' : 'tie');
+    }
+  }, 1000);
+}
+function endGame(winner){
+  if(!game.running) return;
+  game.running=false;
+  clearAllTimers();
+  ['red','blue'].forEach(k=>{ game.teams[k].locked=true; });
+  sfx.win();
+  later(()=>showEnd(winner), 900);                   // 讓繩子動畫跑完再顯示結果
+}
+function showEnd(winner){
+  const R=game.teams.red, B=game.teams.blue;
+  const wt=$('winnerText');
+  if(winner==='tie'){ wt.textContent='🤝 平手！兩隊都好強！'; wt.style.color='#8b4a5c'; }
+  else{
+    const w=game.teams[winner];
+    wt.textContent='🏆 '+(winner==='red'?'🍓 ':'🧋 ')+w.name+' 獲勝！';
+    wt.style.color = winner==='red' ? 'var(--red-d)' : 'var(--blue-d)';
+  }
+  $('endRedName').textContent='🍓 '+R.name;
+  $('endBlueName').textContent='🧋 '+B.name;
+  $('endRedScore').textContent=R.score;   $('endBlueScore').textContent=B.score;
+  $('endRedCorrect').textContent=R.correct; $('endBlueCorrect').textContent=B.correct;
+  $('endRedCombo').textContent=R.maxCombo; $('endBlueCombo').textContent=B.maxCombo;
+  $('fxLayer').innerHTML='';
+  showArenaScreen('arenaEnd');
+}
+
+/* 開始畫面的按鈕 */
+document.querySelectorAll('.level-btn').forEach(btn=>{
+  onTap(btn, ()=>{
+    game.level=btn.dataset.level;
+    document.querySelectorAll('.level-btn').forEach(b=>b.classList.toggle('selected', b===btn));
+    sfx.click();
+  });
+});
+onTap($('startBtn'), ()=>{
+  game.teams.red.name =($('nameRed').value.trim()  || SETTINGS.DEFAULT_RED);
+  game.teams.blue.name=($('nameBlue').value.trim() || SETTINGS.DEFAULT_BLUE);
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  restartGame();
+});
+onTap($('againBtn'), restartGame);
+onTap($('homeBtn'), ()=>{ resetGameState(); showArenaScreen('arenaStart'); });
+
+/* ════════════════════════════════════════════════════════════
+   🚀 初始化
+   ════════════════════════════════════════════════════════════ */
+$('nameRed').value=SETTINGS.DEFAULT_RED;
+$('nameBlue').value=SETTINGS.DEFAULT_BLUE;
+$('hintText').textContent=HINTS.village;
+makePepperoni(); drawPizza(); updateVillageText();
+drawBunting();
+newForgeProblem();
+resetGameState();
+
+})();
+</script>
+</body>
+</html>
