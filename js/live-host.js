@@ -8,8 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142107';
-import { qrSvg } from './qr.js?v=202610142107';
+} from './live-common.js?v=202610142113';
+import { qrSvg } from './qr.js?v=202610142113';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -149,7 +149,7 @@ function onJoin(p){
   const name=cleanName(p.name)||'小勇者';
   if(!pl){
     if(S.players.size>=MAX_PLAYERS){ send('full',{to:p.id}); return; }
-    pl={ id:p.id, name:uniqueName(name,p.id), team:-1, correct:0, wrong:0, score:0, last:0 };
+    pl={ id:p.id, name:uniqueName(name,p.id), team:-1, correct:0, wrong:0, score:0, streak:0, last:0 };
     S.players.set(p.id,pl);
     if(isTeamMode(S.mode)) placeInSmallest(pl);
     sound.pop();
@@ -261,7 +261,7 @@ onTap($('lobbyBtn'), backToLobby);
 function startGame(){
   if(!S.players.size) return;
   clearTimers();
-  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.score=0; });
+  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.score=0; pl.streak=0; });
   assignTeams(false);
   S.phase='play';
   if(S.mode==='tug') startTug();
@@ -559,11 +559,16 @@ function reveal(){
   S.players.forEach(pl=>{
     const a=g.answers.get(pl.id);
     const ok=!!a&&a.c===q.correctIndex;
-    const pts=ok ? Math.round(500+500*(1-a.ms/total)) : 0;
+    // 跟 Kahoot! 一樣：答對 500～1000 分，越快越高；連續答對再額外加分
+    pl.streak = ok ? (pl.streak||0)+1 : 0;
+    const speed = ok ? Math.round(500+500*(1-a.ms/total)) : 0;
+    const bonus = ok ? Math.min(LIVE.STREAK_MAX, (pl.streak-1)*LIVE.STREAK_STEP) : 0;
+    const pts = speed + bonus;
     if(a) counts[a.c]++;
     if(ok){ pl.correct++; right++; }
     pl.score+=pts;
-    res[pl.id]=[ok?1:0, pts, pl.score, a?a.c:-1, 0];
+    // [答對?, 這題得分, 總分, 選了哪個, 名次, 花了幾毫秒, 連對幾題, 連對加分]
+    res[pl.id]=[ok?1:0, pts, pl.score, a?a.c:-1, 0, a?Math.round(a.ms):-1, pl.streak, bonus];
   });
   const ranked=Array.from(S.players.values()).sort((a,b)=>b.score-a.score);
   ranked.forEach((pl,i)=>{ res[pl.id][4]=i+1; });
@@ -593,7 +598,7 @@ function showLeader(){
   $('qzOpts').classList.add('hidden');
   $('qzPromptCard').classList.add('hidden');
   const L=$('qzLeader');
-  L.innerHTML=top.map((pl,i)=>'<div class="lrow" style="animation-delay:'+(i*0.08)+'s"><span class="rk">'+medals[i]+'</span><span>'+esc(pl.name)+'</span><span>'+pl.score+'</span></div>').join('')
+  L.innerHTML=top.map((pl,i)=>'<div class="lrow" style="animation-delay:'+(i*0.08)+'s"><span class="rk">'+medals[i]+'</span><span>'+esc(pl.name)+(pl.streak>=2?' <small class="streak">🔥'+pl.streak+'</small>':'')+'</span><span>'+pl.score+'</span></div>').join('')
     || '<div class="lrow"><span class="rk">🙂</span><span>還沒有人得分</span><span></span></div>';
   L.classList.remove('hidden');
   $('qzNext').textContent= g.i+1>=g.qs.length ? '🏆 看最後結果' : '➡️ 下一題';

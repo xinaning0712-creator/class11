@@ -4,8 +4,8 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610142107';
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142107';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610142113';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142113';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -17,6 +17,8 @@ export const LIVE = {
   MARBLE_GOAL: 10,       // 玻璃球賽跑：平均每人答對幾題，球會到終點
   QUIZ_SECONDS: 20,      // 搶答：每題秒數
   QUIZ_COUNT: 10,        // 搶答：預設題數
+  STREAK_STEP: 100,      // 搶答：連對加分，連對第 2 題 +100、第 3 題 +200……
+  STREAK_MAX: 500,       // 搶答：連對加分最多加到多少
   WRONG_LOCK_MS: 1000,   // iPad 答錯後暫停幾毫秒
   NAME_MAX: 8            // 暱稱最多幾個字
 };

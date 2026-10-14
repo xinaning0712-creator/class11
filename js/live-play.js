@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142107';
+} from './live-common.js?v=202610142113';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -269,9 +269,15 @@ function showReveal(p){
   const r=p.res&&Array.isArray(p.res[P.id])?p.res[P.id]:null;
   if(!z||p.i!==z.i||!r){ resultBox('<div class="result-sub">這題沒有接到，下一題加油！💪</div>'); return; }
   const ok=r[0]===1, pts=r[1]|0, total=r[2]|0, choice=r[3], rank=r[4]|0;
+  const ms=Number.isFinite(r[5])?r[5]:-1, streak=r[6]|0, bonus=r[7]|0;
   P.score=total;
   let h;
-  if(ok){ h='<div class="result-big">✅ 答對了！</div><div class="result-sub">+'+pts+' 分</div>'; sound.correct(); }
+  if(ok){
+    h='<div class="result-big">✅ 答對了！</div><div class="result-sub">+'+pts+' 分'
+      +(ms>=0?'<span class="secs">（'+(ms/1000).toFixed(1)+' 秒）</span>':'')+'</div>';
+    if(streak>=2) h+='<div class="streak-line">🔥 連對 '+streak+' 題'+(bonus>0?'，多加 '+bonus+' 分！':'！')+'</div>';
+    sound.correct();
+  }
   else{
     const c=Number.isInteger(p.correct)&&p.correct>=0&&p.correct<z.q.options.length ? p.correct : 0;
     const o=z.q.options[c];
