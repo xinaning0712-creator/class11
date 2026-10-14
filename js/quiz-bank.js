@@ -4,7 +4,7 @@
 //  - 檢查題目格式（從資料庫或網路收到的內容都先檢查）
 //  - 整批貼上：從 Excel／Google 試算表複製的內容轉成題目
 // ============================================================
-import { SUPABASE_URL } from './config.js?v=202610142049';
+import { SUPABASE_URL } from './config.js?v=202610142055';
 
 export const SUBJECTS = ['國語', '數學', '英語', '社會', '自然', '其他'];
 export const MAX_QUESTIONS = 100;

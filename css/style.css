@@ -1019,3 +1019,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .seat.orb.green, .seat.orb.sage { color: #24451a; text-shadow: 0 1px 0 rgba(255, 255, 255, .65); }
 .seat.orb.peach { color: #5a2c10; text-shadow: 0 1px 0 rgba(255, 255, 255, .55); }
 .seat.orb.sky   { color: #1d3b57; text-shadow: 0 1px 0 rgba(255, 255, 255, .55); }
+
+/* 聯絡簿：裁切框（圓角、陰影放在框上；Canva 畫面稍微放大，邊緣深色底線被裁掉） */
+.contact-clip { overflow: hidden; border-radius: 10px; box-shadow: 0 6px 24px rgba(60, 20, 35, .12); line-height: 0; }
+.contact-frame .contact-clip iframe { display: block; border: 0; border-radius: 0; box-shadow: none; max-width: none; }

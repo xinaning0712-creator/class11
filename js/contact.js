@@ -1,8 +1,8 @@
 // 聯絡簿頁：顯示 Canva 設計（連結在後台設定）
-import { CLASS_NAME } from './config.js?v=202610142049';
-import { configured, classroomDb, friendlyError } from './db.js?v=202610142049';
-import { el, startClock, canvaEmbedUrl } from './ui.js?v=202610142049';
-import { watchCountdowns, renderPanel } from './countdown.js?v=202610142049';
+import { CLASS_NAME } from './config.js?v=202610142055';
+import { configured, classroomDb, friendlyError } from './db.js?v=202610142055';
+import { el, startClock, canvaEmbedUrl } from './ui.js?v=202610142055';
+import { watchCountdowns, renderPanel } from './countdown.js?v=202610142055';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
@@ -34,25 +34,32 @@ async function load() {
   if (!url) return show(setting.contact_book_url ? `聯絡簿連結有問題：${bad}` : '老師還沒有設定聯絡簿連結 📒');
   if (url === current) return;   // 同一個連結就不重新載入，避免翻到的頁被跳回第一頁
   current = url;
-  $('frame').replaceChildren(el('iframe', {
+  // 外面包一層裁切框：Canva 畫面放大幾個像素、邊緣裁掉，左右才不會露出 Canva 的深色底線
+  $('frame').replaceChildren(el('div', { class: 'contact-clip' }, el('iframe', {
     src: url,
     title: '聯絡簿',
     loading: 'eager',
     allowfullscreen: true,
     allow: 'fullscreen',
-  }));
+  })));
   fit();
 }
 
 // 讓聯絡簿剛好貼齊可用空間，不留黑邊
+const BLEED = 4;   // Canva 畫面往外多出幾個像素（被裁掉的部分）
 function fit() {
   const frame = $('frame');
+  const clip = frame.querySelector('.contact-clip');
   const iframe = frame.querySelector('iframe');
-  if (!iframe) return;
+  if (!clip || !iframe) return;
   const w = frame.clientWidth, h = frame.clientHeight;
-  const width = Math.min(w, h * ratio);
-  iframe.style.width = `${Math.floor(width)}px`;
-  iframe.style.height = `${Math.floor(width / ratio)}px`;
+  const width = Math.floor(Math.min(w, h * ratio));
+  const height = Math.floor(width / ratio);
+  clip.style.width = `${width}px`;
+  clip.style.height = `${height}px`;
+  iframe.style.width = `${width + BLEED * 2}px`;
+  iframe.style.height = `${height + BLEED * 2}px`;
+  iframe.style.margin = `${-BLEED}px`;
 }
 new ResizeObserver(fit).observe($('frame'));
 
