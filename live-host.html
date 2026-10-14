@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610142323">
+<link rel="stylesheet" href="css/live.css?v=202610142330">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -33,6 +33,8 @@
   background:#fff; border:3px solid var(--cream-d); animation:pop .35s ease;
 }
 .chip .seat{display:inline-block; min-width:1.5em; margin-right:6px; padding:0 6px; border-radius:999px; background:var(--cream); color:#8b3550; font-size:.85em; text-align:center}
+.icon-btn.music{right:70px}
+.icon-btn.music.off{opacity:.45}
 .save-state{margin-top:6px; font-size:.8rem; color:var(--muted); opacity:.6}
 .save-state.ok{color:var(--ok)} .save-state.warn{color:#b26a00}
 .end-save{margin-top:6px; font-size:.8rem; color:var(--muted); text-align:right; opacity:.6}
@@ -170,6 +172,7 @@
   <header class="topbar">
     <a class="icon-btn left" href="index.html" aria-label="回班網">🏠</a>
     <h1>🎮 分數大冒險・全班連線</h1>
+    <button id="musicBtn" class="icon-btn right music" aria-label="背景音樂開關" title="背景音樂">🎵</button>
     <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
   </header>
 
@@ -342,6 +345,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610142323"></script>
+<script type="module" src="js/live-host.js?v=202610142330"></script>
 </body>
 </html>

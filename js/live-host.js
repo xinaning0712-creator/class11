@@ -8,9 +8,10 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142323';
-import { qrSvg } from './qr.js?v=202610142323';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142323';
+} from './live-common.js?v=202610142330';
+import { qrSvg } from './qr.js?v=202610142330';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142330';
+import { music } from './live-music.js?v=202610142330';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -270,7 +271,7 @@ onTap($('lobbyBtn'), backToLobby);
 
 function startGame(){
   if(!S.players.size) return;
-  clearTimers();
+  clearTimers(); music.stop();
   S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; });
   assignTeams(false);
   S.phase='play';
@@ -279,7 +280,7 @@ function startGame(){
   else startQuiz();
 }
 function backToLobby(){
-  clearTimers();
+  clearTimers(); music.stop();
   S.phase='lobby'; S.game=null;
   assignTeams(false);
   renderLobby(); showScreen('scrLobby');
@@ -344,9 +345,10 @@ function startTug(){
   showScreen('scrTug');
   g.set=setPayload();
   send('start',{ mode:'tug', level:S.level, set:g.set, left:LIVE.TUG_SECONDS, teamN:2, map:teamMap() });
+  music.play('think');
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
-    if(left!==g.left){ g.left=left; renderTimer('tugTimer',left); }
+    if(left!==g.left){ g.left=left; renderTimer('tugTimer',left); if(left===10) music.speed(1.3); }
     if(left<=0) endTeamGame(g.pos<0?0:g.pos>0?1:-1);
   },250);
 }
@@ -382,9 +384,10 @@ function startMarble(){
   showScreen('scrMarble');
   g.set=setPayload();
   send('start',{ mode:'marble', level:S.level, set:g.set, left:LIVE.MARBLE_SECONDS, teamN:n, map:teamMap() });
+  music.play('think');
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
-    if(left!==g.left){ g.left=left; renderTimer('mbTimer',left); }
+    if(left!==g.left){ g.left=left; renderTimer('mbTimer',left); if(left===10) music.speed(1.3); }
     if(left<=0) startRace();
   },250);
 }
@@ -403,7 +406,7 @@ function perCapita(g){
 function startRace(){
   const g=S.game; if(!g||g.mode!=='marble'||!g.collecting) return;
   g.collecting=false; g.racing=true;
-  clearTimers();
+  clearTimers(); music.stop();
   send('race',{});
   $('mbTimer').classList.add('hidden');
   $('mbStop').disabled=true;
@@ -420,6 +423,7 @@ function startRace(){
   later(()=>{
     cnt.classList.add('hidden');
     $('mbBanner').textContent='🔮 衝啊！';
+    music.play('race');
     let lastLead=-1;
     g.stopRace=playRace(g.track, plan, {
       onLead:t=>{
@@ -483,7 +487,7 @@ function onAns(p){
 function endTeamGame(winner,raceOrder){
   const g=S.game; if(!g||!g.running) return;
   g.running=false; g.racing=false;
-  clearTimers();
+  clearTimers(); music.stop();
   sound.win();
   const res={}; S.players.forEach(pl=>{ res[pl.id]=pl.correct; });
   const n=g.mode==='tug'?2:g.n;
@@ -561,11 +565,13 @@ function nextQuestion(){
   g.endsAt=performance.now()+LIVE.QUIZ_SECONDS*1000; g.left=LIVE.QUIZ_SECONDS;
   const t=$('qzTimer'); t.textContent=g.left; t.classList.remove('danger');
   send('q',{ i:g.i, total:g.qs.length, left:LIVE.QUIZ_SECONDS, q:publicQ(q) });
+  music.play('think');
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
     if(left!==g.left){
       g.left=left; t.textContent=left; t.classList.toggle('danger',left<=5);
       if(left<=5&&left>0) sound.tick();
+      if(left===5) music.speed(1.3);
     }
     if(left<=0) reveal();
   },200);
@@ -583,6 +589,7 @@ function reveal(){
   const g=S.game; if(!g||g.qPhase!=='q') return;
   clearTimers();
   g.qPhase='reveal';
+  music.stop();
   const q=g.qs[g.i], counts=[0,0,0,0], res={}, total=LIVE.QUIZ_SECONDS*1000;
   let right=0;
   S.players.forEach(pl=>{
@@ -643,7 +650,7 @@ onTap($('qzStop'), ()=>confirmBox('要結束這次搶答嗎？', ()=>{ if(S.game
 function endQuiz(){
   const g=S.game; if(!g||!g.running) return;
   g.running=false;
-  clearTimers();
+  clearTimers(); music.stop();
   const ranked=Array.from(S.players.values()).sort((a,b)=>b.score-a.score);
   const res={}; ranked.forEach((pl,i)=>{ res[pl.id]=[pl.score,i+1,pl.correct]; });
   send('end',{ mode:'quiz', res, total:g.stats.length });
@@ -678,7 +685,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610142323');
+    const m=await import('./db.js?v=202610142330');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
@@ -759,7 +766,12 @@ let modalYes=null;
 function confirmBox(html,yes){ $('modalText').innerHTML=html; modalYes=yes; $('modal').classList.remove('hidden'); }
 onTap($('modalYes'), ()=>{ $('modal').classList.add('hidden'); const f=modalYes; modalYes=null; if(f) f(); });
 onTap($('modalNo'),  ()=>{ $('modal').classList.add('hidden'); modalYes=null; });
-onTap($('soundBtn'), ()=>{ sound.on=!sound.on; $('soundBtn').textContent=sound.on?'🔊':'🔇'; });
+onTap($('soundBtn'), ()=>{ sound.on=!sound.on; $('soundBtn').textContent=sound.on?'🔊':'🔇'; if(!sound.on) music.stop(); });
+onTap($('musicBtn'), ()=>{
+  music.on=!music.on;
+  $('musicBtn').classList.toggle('off',!music.on);
+  if(!music.on) music.stop();
+});
 document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { once:true });
 
 renderLobby();
