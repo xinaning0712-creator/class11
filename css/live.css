@@ -8,13 +8,15 @@
   --ink:#5b4038; --muted:#9a7a6c; --white:#fffdfb;
   --ok:#4fa96a; --bad:#d64d4d;
   --shadow:0 4px 0 rgba(120,80,60,.13), 0 8px 18px rgba(120,80,60,.09);
-  --font:"PingFang TC","Microsoft JhengHei","Noto Sans TC","Heiti TC",system-ui,sans-serif;
+  /* 字體：jf open 粉圓（從 Google Fonts 載入；沒網路時自動改用內建字體） */
+  --font:"Huninn","PingFang TC","Microsoft JhengHei","Noto Sans TC","Heiti TC",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{
   margin:0; padding:0; width:100%; height:100%; overflow:hidden; touch-action:none; overscroll-behavior:none;
   user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
   font-family:var(--font); color:var(--ink); background:#fbeee9;
+  font-synthesis-weight:none;   /* 粉圓只有一種粗細：不要讓瀏覽器硬加粗，字才不會糊 */
 }
 input{user-select:text; -webkit-user-select:text; font-family:inherit}
 #app{

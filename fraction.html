@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>分數大冒險：擴分與約分</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
 <!--
   ════════════════════════════════════════════════════════════
   ⚔️ 分數大冒險：擴分與約分（五年級數學互動教學網頁）
   ────────────────────────────────────────────────────────────
-  ・純 Vanilla JS / CSS / SVG，單一檔案，無任何外部資源
+  ・純 Vanilla JS / CSS / SVG，單一檔案；只有字體「粉圓」從 Google Fonts 載入（沒網路時自動改用內建字體）
   ・可直接用瀏覽器開啟、放上電子白板、iPad，或嵌入 Google 協作平台
   ・老師想修改「秒數、格數、隊名」等設定，請搜尋本檔案中的
     「SETTINGS」區塊（在 <script> 的最上方），每一項都有中文說明
@@ -32,7 +35,8 @@
   --ok:#3fae5a; --warn:#e8892b;
   --radius:18px;
   --shadow:0 4px 0 rgba(90,70,30,.15), 0 8px 18px rgba(90,70,30,.10);
-  --font:"PingFang TC","Microsoft JhengHei","Noto Sans TC","Heiti TC",system-ui,sans-serif;
+  /* 字體：jf open 粉圓（從 Google Fonts 載入；沒網路時自動改用內建字體） */
+  --font:"Huninn","PingFang TC","Microsoft JhengHei","Noto Sans TC","Heiti TC",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 
@@ -45,6 +49,7 @@ html,body{
   user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
   -webkit-tap-highlight-color:transparent;
   font-family:var(--font); color:var(--ink); background:#fbeee9;
+  font-synthesis-weight:none;   /* 粉圓只有一種粗細：不要讓瀏覽器硬加粗，字才不會糊 */
 }
 /* 輸入框仍需要能輸入文字 */
 input{user-select:text; -webkit-user-select:text; font-family:inherit}
