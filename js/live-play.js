@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142055';
+} from './live-common.js?v=202610142100';
 
 const $ = id => document.getElementById(id);
 const P = {

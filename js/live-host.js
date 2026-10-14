@@ -8,7 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142055';
+} from './live-common.js?v=202610142100';
+import { qrSvg } from './qr.js?v=202610142100';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -47,6 +48,12 @@ function joinUrl(){
   const base=location.href.split('?')[0].replace(/[^/]*$/,'');
   return base+'live.html'+(isTestMode?'?test=1':'');
 }
+/* QR code 裡放「加入網址＋房間代碼」，孩子掃完只要輸入暱稱 */
+function renderQR(){
+  const url=joinUrl()+(isTestMode?'&':'?')+'code='+S.code;
+  try{ $('qrBox').innerHTML=qrSvg(url,{ level:'M', margin:2 }); }
+  catch(e){ $('qrBox').innerHTML=''; }
+}
 function setNet(st){
   const dot=$('netDot');
   dot.classList.remove('ok','bad');
@@ -59,6 +66,7 @@ async function openRoom(){
   store.set('fr-host-code', S.code);
   $('roomCode').textContent=S.code;
   $('joinUrl').textContent=joinUrl().replace(/^https?:\/\//,'');
+  renderQR();
   $('testBadge').classList.toggle('hidden', !isTestMode);
   setNet('CONNECTING');
   try{

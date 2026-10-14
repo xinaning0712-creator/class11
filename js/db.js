@@ -3,7 +3,7 @@
 //  - 教室模式：一直記在這台裝置上。
 //  - 老師登入：勾「記住我」才會一直記住，否則關掉分頁就登出。
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610142055';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610142100';
 
 export const configured = SUPABASE_URL.startsWith('https://') && SUPABASE_KEY.length > 20;
 

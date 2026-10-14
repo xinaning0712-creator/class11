@@ -7,16 +7,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610142055">
+<link rel="stylesheet" href="css/live.css?v=202610142100">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
 .join-card{text-align:center}
 .join-url{font-size:clamp(1rem,1.6vw,1.35rem); font-weight:800; color:var(--rose-d); word-break:break-all; background:var(--white); border-radius:12px; padding:8px; margin-bottom:12px}
-.room-code{font-size:clamp(4rem,9vw,7rem); font-weight:900; letter-spacing:.12em; color:#8b3550; line-height:1.1; margin:4px 0 10px;
+.room-code{font-size:clamp(3rem,min(6.2vw,9cqh),6.5rem); font-weight:900; letter-spacing:.08em; color:#8b3550; line-height:1.1; margin:4px 0 10px;
   background:var(--white); border:4px dashed var(--rose); border-radius:20px}
 .path{margin-top:8px; font-weight:800; font-size:.95rem; color:var(--muted)}
 .path.ok{color:var(--ok)} .path.warn{color:#b26a00}
+.qr-box{width:min(100%,250px); margin:0 auto 12px; padding:8px; background:#fff; border:3px solid var(--rose); border-radius:18px}
+.qr-box svg{display:block; width:100%; height:auto}
+.qr-box:empty{display:none}
 .test-badge{display:inline-block; margin-top:8px; padding:4px 12px; border-radius:999px; background:#fff3c4; color:#8a5a00; font-weight:800}
 .players-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap}
 .players-head b{font-size:1.4em; color:#8b3550}
@@ -156,7 +159,9 @@
     <section id="scrLobby" class="screen active">
       <div class="lobby-grid">
         <div class="card join-card">
-          <div class="label">📱 用 iPad 打開</div>
+          <div class="label">📷 用 iPad 相機掃一下</div>
+          <div id="qrBox" class="qr-box"></div>
+          <div class="label">或打開網址</div>
           <div id="joinUrl" class="join-url"></div>
           <div class="label">輸入房間代碼</div>
           <div id="roomCode" class="room-code">----</div>
@@ -308,6 +313,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610142055"></script>
+<script type="module" src="js/live-host.js?v=202610142100"></script>
 </body>
 </html>
