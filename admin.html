@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610142100">
+  <link rel="stylesheet" href="css/style.css?v=202610142107">
 </head>
 <body class="admin">
   <!-- 登入 -->
@@ -226,7 +226,13 @@
           <span id="qz-count" class="muted"></span>
         </div>
         <div id="qz-bulk" class="card qz-bulk" hidden>
-          <p class="form-title">從 Excel／Google 試算表整批貼上</p>
+          <p class="form-title">從 Excel 匯入，或從試算表整批貼上</p>
+          <div class="qz-file-row">
+            <a class="btn" href="templates/quiz-template.xlsx" download="題庫範本.xlsx">📥 下載 Excel 範本</a>
+            <button id="qz-file-pick" class="btn primary" type="button">📂 從檔案匯入（.xlsx／.csv）</button>
+            <input id="qz-sheet-file" type="file" accept=".xlsx,.xlsm,.csv,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>
+          </div>
+          <p class="hint">填好範本存檔後，按「從檔案匯入」選它；或是在試算表選取題目複製，貼到下面也可以。</p>
           <p class="hint">在試算表裡排好：<strong>題目｜選項A｜選項B｜選項C｜選項D｜正確答案</strong>（一列一題），選起來複製，貼到下面。<br>
             正確答案寫 A～D、1～4，或直接寫正確選項的文字都可以。選項可以只有 2～3 個（例如是非題：⭕ 對｜❌ 錯）。第一列是標題「題目」也沒關係，會自動跳過。</p>
           <textarea id="qz-bulk-text" rows="7" placeholder="3/4 和哪一個分數一樣大？	6/8	4/5	3/8	6/4	A"></textarea>
@@ -243,6 +249,6 @@
     </main>
   </section>
 
-  <script type="module" src="js/admin.js?v=202610142100"></script>
+  <script type="module" src="js/admin.js?v=202610142107"></script>
 </body>
 </html>

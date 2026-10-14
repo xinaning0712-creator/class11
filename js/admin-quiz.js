@@ -1,11 +1,12 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202610142100';
-import { el, toast } from './ui.js?v=202610142100';
+import { friendlyError } from './db.js?v=202610142107';
+import { el, toast } from './ui.js?v=202610142107';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202610142100';
+} from './quiz-bank.js?v=202610142107';
+import { readSheetFile } from './sheet-import.js?v=202610142107';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -66,6 +67,8 @@ export function init(client) {
   $('qz-bulk-cancel').addEventListener('click', () => { $('qz-bulk').hidden = true; });
   $('qz-bulk-text').addEventListener('input', previewBulk);
   $('qz-bulk-add').addEventListener('click', addBulk);
+  $('qz-file-pick').addEventListener('click', () => { $('qz-sheet-file').value = ''; $('qz-sheet-file').click(); });
+  $('qz-sheet-file').addEventListener('change', onSheetFile);
 
   // 圖片
   $('qz-file').addEventListener('change', onFile);
@@ -282,6 +285,26 @@ function previewBulk() {
   box.replaceChildren(...parts);
   $('qz-bulk-add').disabled = !rows.length || room <= 0;
 }
+/* 從 Excel／CSV 匯入：讀成一列一列的文字，放進上面的框框，用同一套檢查與預覽 */
+async function onSheetFile(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const rows = await readSheetFile(file);
+    const lines = rows
+      .map((r) => r.map((c) => String(c ?? '').replace(/[\t\r\n]+/g, ' ').trim()))
+      .filter((r) => r.some((c) => c))
+      .map((r) => r.join('\t'));
+    if (!lines.length) return toast('這個檔案裡沒有題目', { tone: 'error' });
+    $('qz-bulk').hidden = false;
+    $('qz-bulk-text').value = lines.join('\n');
+    previewBulk();
+    toast(`從「${file.name}」讀到 ${lines.length} 列，確認下面的結果後按「加入題目」`, { seconds: 5 });
+  } catch (err) {
+    toast(`匯入失敗：${err.message || err}`, { tone: 'error', seconds: 7 });
+  }
+}
+
 function addBulk() {
   if (!bulkRows.length) return;
   // 如果編輯器裡只有一題空白的，直接取代掉

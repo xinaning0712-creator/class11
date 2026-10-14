@@ -1,0 +1,67 @@
+<!doctype html><html lang="zh-Hant-TW" data-theme="rose"><head><meta charset="utf-8"><link rel="stylesheet" href="css/style.css?v=202610142107">
+<script type="importmap">{"imports":{"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm":"data:text/javascript,export const createClient=()=>null;"}}</script></head>
+<body class="admin"><section id="app-view" style="padding:16px"><main id="tab-quiz" class="tab-panel">
+      <!-- 題組列表 -->
+      <section id="qz-list-view">
+        <div class="card qz-setup" id="qz-setup" hidden>
+          <p class="form-title">還差一步：先建立題庫資料表</p>
+          <ol>
+            <li>打開 Supabase 專案，左邊選 <strong>SQL Editor</strong> → <strong>New query</strong>。</li>
+            <li>把專案裡的 <code>supabase/06_題庫.sql</code> 整份複製貼上，按 <strong>Run</strong>。</li>
+            <li>回到這裡重新整理頁面。</li>
+          </ol>
+        </div>
+        <div class="qz-toolbar">
+          <button id="qz-new" class="btn primary" type="button">＋ 新增題組</button>
+          <a class="btn" href="live-host.html" target="_blank" rel="noopener">打開全班對戰 ↗</a>
+        </div>
+        <p class="hint">建好的題組會出現在「全班對戰」的白板上，搶答、全班拔河、玻璃球賽跑都能用。</p>
+        <section id="qz-list" class="qz-list"></section>
+      </section>
+
+      <!-- 編輯題組 -->
+      <section id="qz-edit-view" hidden>
+        <div class="qz-editbar">
+          <button id="qz-back" class="btn" type="button">← 題組列表</button>
+          <span id="qz-status" class="muted"></span>
+          <button id="qz-save" class="btn primary" type="button">💾 儲存</button>
+        </div>
+        <div class="card qz-meta">
+          <label class="field wide"><span>題組名稱</span><input id="qz-title" type="text" maxlength="40" placeholder="例如：五上 第三單元 分數"></label>
+          <label class="field"><span>科目</span><select id="qz-subject"></select></label>
+          <label class="check"><input id="qz-frac" type="checkbox"> 把 3/4 顯示成上下排版的分數</label>
+          <label class="check"><input id="qz-shuffle" type="checkbox"> 選項順序打亂（建議打勾，比較難猜）</label>
+        </div>
+        <div class="qz-toolbar">
+          <button id="qz-add" class="btn" type="button">＋ 新增一題</button>
+          <button id="qz-bulk-toggle" class="btn" type="button">📋 整批貼上</button>
+          <span id="qz-count" class="muted"></span>
+        </div>
+        <div id="qz-bulk" class="card qz-bulk" hidden>
+          <p class="form-title">從 Excel 匯入，或從試算表整批貼上</p>
+          <div class="qz-file-row">
+            <a class="btn" href="templates/quiz-template.xlsx" download="題庫範本.xlsx">📥 下載 Excel 範本</a>
+            <button id="qz-file-pick" class="btn primary" type="button">📂 從檔案匯入（.xlsx／.csv）</button>
+            <input id="qz-sheet-file" type="file" accept=".xlsx,.xlsm,.csv,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>
+          </div>
+          <p class="hint">填好範本存檔後，按「從檔案匯入」選它；或是在試算表選取題目複製，貼到下面也可以。</p>
+          <p class="hint">在試算表裡排好：<strong>題目｜選項A｜選項B｜選項C｜選項D｜正確答案</strong>（一列一題），選起來複製，貼到下面。<br>
+            正確答案寫 A～D、1～4，或直接寫正確選項的文字都可以。選項可以只有 2～3 個（例如是非題：⭕ 對｜❌ 錯）。第一列是標題「題目」也沒關係，會自動跳過。</p>
+          <textarea id="qz-bulk-text" rows="7" placeholder="3/4 和哪一個分數一樣大？	6/8	4/5	3/8	6/4	A"></textarea>
+          <div id="qz-bulk-preview" class="qz-bulk-preview"></div>
+          <div class="row-actions">
+            <button id="qz-bulk-add" class="btn primary" type="button" disabled>加入題目</button>
+            <button id="qz-bulk-cancel" class="btn ghost" type="button">取消</button>
+          </div>
+        </div>
+        <section id="qz-questions" class="qz-questions"></section>
+        <button id="qz-add-bottom" class="btn qz-add-bottom" type="button">＋ 再新增一題</button>
+      </section>
+      <input id="qz-file" type="file" accept="image/*" hidden>
+    </main></section>
+<script type="module">
+const rows=[];let nid=1;
+function q(){const st={};const api={select(){return api},order(){return api},eq(k,v){st.f=[k,v];return api},insert(r){st.op='i';st.row=r;return api},update(r){st.op='u';st.row=r;return api},delete(){st.op='d';return api},single(){return api},
+ then(res){let data=rows;if(st.op==='i'){const r={id:nid++,updated_at:new Date().toISOString(),...st.row};rows.push(r);data={id:r.id}}return Promise.resolve({data,error:null}).then(res)}};return api}
+const m=await import('./js/admin-quiz.js'); m.init({from:q,storage:{from:()=>({})}}); await m.load(); window.__ready=true;
+</script></body></html>
