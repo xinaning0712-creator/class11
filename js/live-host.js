@@ -8,10 +8,10 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142330';
-import { qrSvg } from './qr.js?v=202610142330';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142330';
-import { music } from './live-music.js?v=202610142330';
+} from './live-common.js?v=202610142341';
+import { qrSvg } from './qr.js?v=202610142341';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142341';
+import { music } from './live-music.js?v=202610142341';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -685,7 +685,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610142330');
+    const m=await import('./db.js?v=202610142341');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

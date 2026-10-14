@@ -5,11 +5,11 @@
 // 想換成自己的 mp3：把檔案放進 music 資料夾，填在下面的 FILES（例如 'music/think.mp3'），
 // 留空白就用合成的音樂。
 // ============================================================
-import { sound } from './live-common.js?v=202610142330';
+import { sound } from './live-common.js?v=202610142341';
 
 export const FILES = {
   think: '',   // 例如 'music/think.mp3'
-  race: ''     // 例如 'music/race.mp3'
+  race: 'music/race.mp3'   // 「Cutscene Crush」Blue Deer Studio（老師提供，剪掉前奏和結尾的安靜段落）
 };
 const VOLUME = 0.55;   // 音樂音量（0～1）
 
@@ -68,7 +68,12 @@ export const music = {
   stop() {
     if (!cur) return;
     const old = cur; cur = null;
-    if (old.audio) { old.audio.pause(); return; }
+    if (old.audio) {          // 音樂檔：0.3 秒淡出再停
+      const a = old.audio, v0 = a.volume;
+      let k = 0;
+      const id = setInterval(() => { k++; a.volume = Math.max(0, v0 * (1 - k / 6)); if (k >= 6) { clearInterval(id); a.pause(); a.volume = VOLUME; } }, 50);
+      return;
+    }
     clearInterval(old.timer);
     try {
       old.gain.gain.cancelScheduledValues(old.c.currentTime);
@@ -79,9 +84,17 @@ export const music = {
   }
 };
 
+/* 音樂檔先載好，喊 GO! 的瞬間才能馬上響 */
+const audios = {};
+function audioFor(name) {
+  if (!audios[name]) { const a = new Audio(FILES[name]); a.preload = 'auto'; a.loop = true; audios[name] = a; }
+  return audios[name];
+}
+Object.keys(FILES).forEach(n => { if (FILES[n]) audioFor(n); });
 function playFile(name) {
-  const a = new Audio(FILES[name]);
-  a.loop = true; a.volume = VOLUME;
+  const a = audioFor(name);
+  a.volume = VOLUME; a.playbackRate = 1;
+  try { a.currentTime = 0; } catch (e) { /* 還沒載好 */ }
   a.play().catch(() => {});
   cur = { name, audio: a };
 }

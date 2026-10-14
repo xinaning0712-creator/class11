@@ -2,9 +2,9 @@
 //  - 👧 每個孩子：依座號統計參加場數、答對、答錯、答對率、搶答平均名次；點一列看每一場
 //  - 🎮 每一場：每場的結果、每個人的成績；搶答另外列出每一題全班答對率
 //  - 匯出 Excel（.csv，Excel 可以直接打開）、刪除單場、清除半年前的紀錄
-import { SEAT_COUNT } from './config.js?v=202610142330';
-import { friendlyError } from './db.js?v=202610142330';
-import { el, toast } from './ui.js?v=202610142330';
+import { SEAT_COUNT } from './config.js?v=202610142341';
+import { friendlyError } from './db.js?v=202610142341';
+import { el, toast } from './ui.js?v=202610142341';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'game_results';
