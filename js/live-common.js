@@ -4,9 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142127';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142307';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142127';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142307';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -14,8 +14,7 @@ export const LIVE = {
   TUG_SECONDS: 120,      // 全班拔河：每場秒數
   TUG_LIMIT: 10,         // 全班拔河：旗子走到 ±10 格就獲勝
   TUG_PULL: 2.5,         // 全班拔河：一隊「每個人」答對一題，旗子平均移動幾格 ÷ 隊伍人數（人數不同也公平）
-  MARBLE_SECONDS: 180,   // 玻璃球賽跑：時間上限（秒），時間到時跑最前面的隊伍獲勝
-  MARBLE_GOAL: 10,       // 玻璃球賽跑：平均每人答對幾題，球會到終點
+  MARBLE_SECONDS: 120,   // 玻璃球賽跑：答題時間（秒），時間到就開始賽跑動畫（賽道設定在 live-marble.js）
   QUIZ_SECONDS: 20,      // 搶答：每題秒數
   QUIZ_COUNT: 10,        // 搶答：預設題數
   STREAK_STEP: 100,      // 搶答：連對加分，連對第 2 題 +100、第 3 題 +200……

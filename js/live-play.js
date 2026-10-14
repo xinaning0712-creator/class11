@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142127';
+} from './live-common.js?v=202610142307';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -148,6 +148,7 @@ function handle(event,p){
       if(P.team<0){ showWait(); send('join',joinInfo()); break; }  // 剛好晚一步加入：再報到一次拿隊伍
       startPlay({ left:p.left, correct:0 });
       break;
+    case 'race': showRace(); break;
     case 'q': showQuizQ(p); break;
     case 'reveal': showReveal(p); break;
     case 'end': showEnd(p); break;
@@ -158,6 +159,8 @@ function applySync(s){
     P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN; useSet(s.set);
     P.team=Number.isInteger(s.team)?s.team:-1;
     if(P.team>=0){ startPlay({ left:s.left, correct:s.correct }); return; }
+  }else if(s.phase==='race'){
+    P.mode='marble'; showRace(); return;
   }else if(s.phase==='quiz-q'){
     P.mode='quiz'; P.score=s.score||0; showQuizQ(s); return;
   }else if(s.phase==='quiz-wait'){
@@ -312,6 +315,15 @@ function showReveal(p){
   }
   h+='<div class="score-line">目前 '+total+' 分'+(total>0&&rank>0&&rank<=3?'・第 '+rank+' 名 🎉':'・繼續加油！')+'</div>';
   resultBox(h);
+}
+
+/* 🔮 答題時間結束，白板開始比賽 */
+function showRace(){
+  endPlaying();
+  $('endBox').innerHTML='<div class="result-big">🏁 比賽開始！</div><div class="wait-anim">🔮</div>'
+    +'<div class="result-sub">快看白板！</div>'
+    +(P.team>=0?'<div class="score-line">'+TEAMS[P.team].emoji+' '+TEAMS[P.team].name+' 加油！你答對了 '+P.correct+' 題 💪</div>':'');
+  showScreen('pEnd');
 }
 
 /* ============================================================

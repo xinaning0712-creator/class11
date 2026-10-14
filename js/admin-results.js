@@ -2,9 +2,9 @@
 //  - 👧 每個孩子：依座號統計參加場數、答對、答錯、答對率、搶答平均名次；點一列看每一場
 //  - 🎮 每一場：每場的結果、每個人的成績；搶答另外列出每一題全班答對率
 //  - 匯出 Excel（.csv，Excel 可以直接打開）、刪除單場、清除半年前的紀錄
-import { SEAT_COUNT } from './config.js?v=202610142127';
-import { friendlyError } from './db.js?v=202610142127';
-import { el, toast } from './ui.js?v=202610142127';
+import { SEAT_COUNT } from './config.js?v=202610142307';
+import { friendlyError } from './db.js?v=202610142307';
+import { el, toast } from './ui.js?v=202610142307';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'game_results';
@@ -235,7 +235,7 @@ function gameBody(r) {
   const quiz = r.mode === 'quiz';
   if (!quiz && Array.isArray(r.summary.teams)) {
     parts.push(el('div', { class: 'rs-teams' }, r.summary.teams.map((t, i) => el('span', { class: 'rs-team' },
-      `${i === 0 && r.summary.winner >= 0 ? '🏆 ' : ''}${TEAM_NAMES[t.team] || t.name || ''}：答對 ${t.correct | 0} 題（${t.members | 0} 人）${Number.isFinite(t.progress) ? `・${t.progress}%` : ''}`))));
+      `${i === 0 && r.summary.winner >= 0 ? '🏆 ' : ''}${TEAM_NAMES[t.team] || t.name || ''}：答對 ${t.correct | 0} 題（${t.members | 0} 人）${Number.isFinite(t.perCapita) ? `・平均每人 ${t.perCapita} 題` : ''}`))));
   }
   if (quiz && Array.isArray(r.summary.questions) && r.summary.questions.length) {
     parts.push(el('p', { class: 'form-title' }, '每一題全班答對率'));

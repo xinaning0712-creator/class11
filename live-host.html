@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610142127">
+<link rel="stylesheet" href="css/live.css?v=202610142307">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -33,9 +33,10 @@
   background:#fff; border:3px solid var(--cream-d); animation:pop .35s ease;
 }
 .chip .seat{display:inline-block; min-width:1.5em; margin-right:6px; padding:0 6px; border-radius:999px; background:var(--cream); color:#8b3550; font-size:.85em; text-align:center}
-.save-state{margin-top:6px; font-weight:800; font-size:.95rem; color:var(--muted)}
+.save-state{margin-top:6px; font-size:.8rem; color:var(--muted); opacity:.6}
 .save-state.ok{color:var(--ok)} .save-state.warn{color:#b26a00}
-.end-save{margin-top:10px; font-weight:800; font-size:1rem; color:var(--muted); text-align:center}
+.end-save{margin-top:6px; font-size:.8rem; color:var(--muted); text-align:right; opacity:.6}
+.end-save .btn{min-height:32px; padding:2px 10px; font-size:.8rem}
 .end-save.ok{color:var(--ok)} .end-save.warn{color:#b26a00}
 .empty-hint{color:var(--muted); font-weight:700; padding:16px 4px}
 .mode-list{display:flex; flex-direction:column; gap:10px}
@@ -96,10 +97,22 @@
 
 /* ── 玻璃球賽跑 ── */
 .race-head{display:flex; justify-content:center; align-items:center; gap:16px; flex:0 0 auto}
-.race-wrap{flex:1 1 0; min-height:200px; border-radius:24px; overflow:hidden; border:4px solid #fff; box-shadow:var(--shadow); background:linear-gradient(180deg,#fff7f2,#fbe9ee)}
+.race-wrap{position:relative; flex:1 1 0; min-height:200px; border-radius:24px; overflow:hidden; border:4px solid #fff; box-shadow:var(--shadow); background:linear-gradient(180deg,#fff7f2,#fbe9ee)}
 .race-wrap svg{width:100%; height:100%; display:block}
+.mb-banner{flex:1; min-width:0; text-align:center; font-weight:900; font-size:clamp(1.2rem,2.6vw,2.6rem); color:#8b3550; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.mb-total{flex:0 0 auto; font-weight:900; font-size:clamp(1.1rem,2.2vw,2.2rem); padding:2px 20px; border-radius:999px; background:#fff; border:4px solid #e2ad4f; color:#9a6a12}
+.mb-legend{flex:0 0 auto; display:flex; justify-content:center; flex-wrap:wrap; gap:10px}
+.mb-leg{padding:4px 16px; border-radius:999px; border:3px solid; background:#fff; font-weight:900; font-size:clamp(1rem,1.7vw,1.5rem)}
+.mb-count{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;
+  font-size:clamp(5rem,16vw,14rem); font-weight:900; color:#d0587e; text-shadow:0 6px 0 #fff, 0 0 30px rgba(255,255,255,.9)}
+.pop-in{animation:popIn .8s ease}
+@keyframes popIn{0%{transform:scale(2.2); opacity:0}30%{transform:scale(.9); opacity:1}100%{transform:scale(1); opacity:.95}}
+#mbSvg .bob{animation:mbBob 1.4s ease-in-out infinite}
+#mbSvg.racing .bob{animation:none}
+@keyframes mbBob{50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion: reduce){ #mbSvg .bob{animation:none} }
 .ticker{flex:0 0 auto; display:flex; gap:8px; overflow:hidden; min-height:52px; align-items:center; padding:4px 2px}
-.tick{flex:0 0 auto; padding:6px 14px; border-radius:999px; font-weight:800; font-size:clamp(1rem,1.6vw,1.3rem); background:#fff; border:3px solid; animation:slideIn .35s ease}
+.tick{flex:0 0 auto; padding:6px 14px; border-radius:999px; font-weight:800; font-size:clamp(1rem,1.6vw,1.3rem); background:#fff; border:3px solid #f2d7a5; color:#8b5e3c; animation:slideIn .35s ease}
 @keyframes slideIn{from{transform:translateX(-30px); opacity:0}to{transform:none; opacity:1}}
 .boost{animation:boost .5s ease}
 @keyframes boost{40%{transform:scale(1.25)}}
@@ -192,7 +205,7 @@
           <div class="mode-list">
             <button class="mode-btn selected" data-mode="tug"><span class="m-ico">🪢</span><b>全班拔河</b><small>兩隊對抗，各自答題拉繩子</small></button>
             <button class="mode-btn" data-mode="quiz"><span class="m-ico">🎯</span><b>搶答大挑戰</b><small>全班同一題，又對又快分數高</small></button>
-            <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>每隊一顆玻璃球，看哪隊先到終點</small></button>
+            <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>先專心答題收集能量，最後玻璃球在彎彎賽道上比賽！</small></button>
           </div>
           <div class="opt-row src-row">題目
             <select id="srcSel" class="src-sel" aria-label="題目來源"><option value="auto">🎲 自動出題：分數擴分約分</option></select>
@@ -271,8 +284,16 @@
 
     <!-- ================= 玻璃球賽跑 ================= -->
     <section id="scrMarble" class="screen game">
-      <div class="race-head"><div id="mbTimer" class="timer">⏳ 180</div></div>
-      <div class="race-wrap"><svg id="mbSvg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-label="玻璃球賽道"></svg></div>
+      <div class="race-head">
+        <div id="mbTimer" class="timer">⏳ 120</div>
+        <div id="mbBanner" class="mb-banner"></div>
+        <div id="mbTotalBox" class="mb-total">全班 ⭐ <b id="mbTotal">0</b></div>
+      </div>
+      <div id="mbLegend" class="mb-legend"></div>
+      <div class="race-wrap">
+        <svg id="mbSvg" viewBox="0 0 1200 680" preserveAspectRatio="xMidYMid meet" aria-label="玻璃球賽道"></svg>
+        <div id="mbCount" class="mb-count hidden">3</div>
+      </div>
       <div id="mbTicker" class="ticker"></div>
       <div class="game-ctrl"><button id="mbStop" class="btn">⏹ 提早結束</button></div>
     </section>
@@ -321,6 +342,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610142127"></script>
+<script type="module" src="js/live-host.js?v=202610142307"></script>
 </body>
 </html>

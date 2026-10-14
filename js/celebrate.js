@@ -1,5 +1,5 @@
 // 慶祝動畫：滿天彩帶＋大大的訊息
-import * as sound from './sound.js?v=202610142127';
+import * as sound from './sound.js?v=202610142307';
 
 const COLORS = ['#f39bb4', '#e86f92', '#f7c6d4', '#f5cd7a', '#9fd0b0', '#9fc0e8', '#d3a8e0', '#ffffff'];
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;

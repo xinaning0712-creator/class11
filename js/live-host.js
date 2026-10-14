@@ -8,8 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142127';
-import { qrSvg } from './qr.js?v=202610142127';
+} from './live-common.js?v=202610142307';
+import { qrSvg } from './qr.js?v=202610142307';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142307';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -174,6 +175,7 @@ function onLeave(p){
 function syncFor(pl){
   const g=S.game;
   if(S.phase==='play'&&g){
+    if(g.mode==='marble'&&!g.collecting) return { phase:'race' };
     if(g.mode==='quiz'){
       if(g.qPhase==='q') return { phase:'quiz-q', i:g.i, total:g.qs.length, q:publicQ(g.qs[g.i]), left:Math.max(1,Math.ceil((g.endsAt-performance.now())/1000)), score:pl.score };
       return { phase:'quiz-wait', total:g.qs.length, score:pl.score };
@@ -352,53 +354,30 @@ function renderTimer(id,left){ const el=$(id); el.textContent='⏳ '+left; el.cl
 
 /* ============================================================
    🔮 玻璃球賽跑
+   ・答題時間：玻璃球在起點待命，看不出哪隊領先（大家專心答題）
+   ・時間到（或老師按「開始賽跑」）：3、2、1、GO！彎彎曲曲的賽道比賽
+   ・速度看「每隊平均每人答對幾題」，人數不同也公平
    ============================================================ */
-const MX0=276, MX1=1084, MR=30;
-function buildMarble(n){
-  const laneH=130, top=16, H=top*2+n*laneH, svg=$('mbSvg');
-  svg.setAttribute('viewBox','0 0 1200 '+H);
-  let h='<defs>';
-  for(let i=0;i<n;i++){
-    const T=TEAMS[i];
-    h+='<radialGradient id="mg'+i+'" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="'+T.light+'"/><stop offset="72%" stop-color="'+T.color+'"/><stop offset="100%" stop-color="'+T.deep+'"/></radialGradient>';
-  }
-  h+='</defs>';
-  for(let i=0;i<n;i++){
-    const T=TEAMS[i], y0=top+i*laneH, cy=y0+laneH/2;
-    h+='<rect x="10" y="'+(y0+8)+'" width="1180" height="'+(laneH-16)+'" rx="26" fill="'+T.light+'" opacity=".85"/>';
-    h+='<text x="46" y="'+(cy+16)+'" text-anchor="middle" font-size="44">'+T.emoji+'</text>';
-    h+='<text x="84" y="'+(cy-6)+'" font-size="26" font-weight="900" fill="'+T.deep+'">'+T.name+'</text>';
-    h+='<text id="mbCnt'+i+'" x="84" y="'+(cy+28)+'" font-size="22" font-weight="800" fill="'+T.deep+'">⭐ 答對 0</text>';
-    h+='<rect x="240" y="'+(cy-36)+'" width="880" height="72" rx="36" fill="#fff" stroke="'+T.color+'" stroke-width="4"/>';
-    h+='<rect id="mbFill'+i+'" x="240" y="'+(cy-36)+'" width="72" height="72" rx="36" fill="'+T.color+'" opacity=".28"/>';
-    h+='<line x1="270" y1="'+(cy-24)+'" x2="1090" y2="'+(cy-24)+'" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".9"/>';
-    for(let r=0;r<4;r++) for(let c=0;c<2;c++) h+='<rect x="'+(1084+c*12)+'" y="'+(cy-24+r*12)+'" width="12" height="12" fill="'+((r+c)%2?'#5b4038':'#fff')+'"/>';
-    h+='<text id="mbMedal'+i+'" x="1158" y="'+(cy+16)+'" text-anchor="middle" font-size="44">🏁</text>';
-    h+='<g id="mb'+i+'" transform="translate('+MX0+','+cy+')">'
-      +'<ellipse cx="0" cy="'+(MR+4)+'" rx="'+(MR*0.8)+'" ry="6" fill="rgba(90,60,40,.18)"/>'
-      +'<circle r="'+MR+'" fill="url(#mg'+i+')" stroke="'+T.deep+'" stroke-width="2"/>'
-      +'<g id="mbSpin'+i+'"><path d="M-19 7 Q0 -24 19 7" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".65"/><circle cx="9" cy="12" r="5" fill="#fff" opacity=".5"/></g>'
-      +'<ellipse cx="-10" cy="-12" rx="10" ry="6" fill="#fff" opacity=".85"/>'
-      +'</g>';
-  }
-  svg.innerHTML=h;
-  return Array.from({length:n},(_,i)=>top+i*laneH+laneH/2);
-}
-function setMarble(i,prog){
-  const g=S.game, x=MX0+(MX1-MX0)*Math.min(100,prog)/100;
-  const el=$('mb'+i); if(!el) return;
-  const cy=g.cy[i];
-  el.setAttribute('transform','translate('+x.toFixed(1)+','+cy+')');
-  $('mbSpin'+i).setAttribute('transform','rotate('+((x-MX0)/MR*57.3).toFixed(1)+')');
-  $('mbFill'+i).setAttribute('width',(x-240+36).toFixed(1));
-  g.shown[i]=prog;
+function marbleLegend(n){
+  let h='';
+  for(let i=0;i<n;i++){ const T=TEAMS[i]; h+='<span id="mbLeg'+i+'" class="mb-leg" style="border-color:'+T.color+';color:'+T.deep+'">'+T.emoji+' '+T.name+'<b></b></span>'; }
+  $('mbLegend').innerHTML=h;
 }
 function startMarble(){
   const n=S.teamN;
-  const cy=buildMarble(n);
-  const g=S.game={ mode:'marble', n, cy, prog:new Array(n).fill(0), shown:new Array(n).fill(0), counts:new Array(n).fill(0),
-                   cancels:new Array(n).fill(null), running:true, endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS };
+  const g=S.game={ mode:'marble', n, counts:new Array(n).fill(0), total:0, running:true, collecting:true, racing:false,
+                   endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS, stopRace:null };
+  g.track=buildTrack($('mbSvg'), n);
+  $('mbSvg').classList.remove('racing');
+  marbleLegend(n);
   $('mbTicker').innerHTML='';
+  $('mbTotal').textContent='0';
+  $('mbBanner').textContent='🔮 收集能量中！答對越多，玻璃球跑越快';
+  $('mbBanner').className='mb-banner';
+  $('mbCount').classList.add('hidden');
+  $('mbStop').textContent='🏁 現在開始賽跑';
+  $('mbStop').disabled=false;
+  $('mbTimer').classList.remove('hidden');
   renderTimer('mbTimer',g.left);
   showScreen('scrMarble');
   g.set=setPayload();
@@ -406,24 +385,72 @@ function startMarble(){
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
     if(left!==g.left){ g.left=left; renderTimer('mbTimer',left); }
-    if(left<=0){
-      let best=0; for(let i=1;i<n;i++) if(g.prog[i]>g.prog[best]) best=i;
-      endTeamGame(g.prog.every(p=>p===g.prog[best])&&n>1 ? -1 : best);
-    }
+    if(left<=0) startRace();
   },250);
 }
 function addTicker(pl){
-  const T=TEAMS[pl.team], el=document.createElement('span');
-  el.className='tick'; el.style.borderColor=T.color; el.style.color=T.deep;
-  el.textContent=T.emoji+' '+pl.name+' 推了一下！';
+  const el=document.createElement('span');
+  el.className='tick';
+  el.textContent='⭐ '+pl.name+' 答對了！';
   const box=$('mbTicker'); box.insertBefore(el, box.firstChild);
   while(box.children.length>8) box.removeChild(box.lastChild);
+}
+/* 每隊平均每人答對幾題 */
+function perCapita(g){
+  const size=teamSizes();
+  return g.counts.map((c,i)=>c/Math.max(1,size[i]||0));
+}
+function startRace(){
+  const g=S.game; if(!g||g.mode!=='marble'||!g.collecting) return;
+  g.collecting=false; g.racing=true;
+  clearTimers();
+  send('race',{});
+  $('mbTimer').classList.add('hidden');
+  $('mbStop').disabled=true;
+  $('mbBanner').textContent='🏁 準備好了嗎？';
+  const scores=perCapita(g);
+  g.scores=scores;
+  const plan=planRace(scores);
+  const cnt=$('mbCount');
+  const seq=['3','2','1','GO!'];
+  seq.forEach((txt,i)=>later(()=>{
+    cnt.textContent=txt; cnt.classList.remove('hidden'); replayAnim(cnt,'pop-in');
+    if(i<3) sound.tone(660,0,.18,'square',.12); else sound.tone(1047,0,.4,'triangle',.22);
+  }, 300+i*900));
+  later(()=>{
+    cnt.classList.add('hidden');
+    $('mbBanner').textContent='🔮 衝啊！';
+    let lastLead=-1;
+    g.stopRace=playRace(g.track, plan, {
+      onLead:t=>{
+        if(t===lastLead) return; lastLead=t;
+        const T=TEAMS[t];
+        $('mbBanner').textContent=T.emoji+' '+T.name+' 超前了！';
+        $('mbBanner').style.color=T.deep;
+        replayAnim($('mbBanner'),'boost');
+        sound.pop();
+      },
+      onFinish:(t,rank)=>{
+        setMedal(g.track,t,rank);
+        const leg=$('mbLeg'+t); if(leg) leg.querySelector('b').textContent=' '+(['','🥇','🥈','🥉','🏅'][rank]||'🏅');
+        if(rank===1){ const T=TEAMS[t]; $('mbBanner').textContent='🏁 '+T.emoji+' '+T.name+' 衝過終點！'; $('mbBanner').style.color=T.deep; sound.correct(); }
+      },
+      onDone:ranks=>{
+        const order=Array.from({length:g.n},(_,i)=>i).sort((a,b)=>ranks[a]-ranks[b]||a-b);
+        const tieTop=ranks.filter(r=>r===1).length>1;
+        endTeamGame(tieTop?-1:order[0], order);
+      }
+    });
+    // 最後衝刺提示
+    later(()=>{ if(g.racing&&$('mbBanner').textContent.indexOf('終點')<0){ $('mbBanner').textContent='🔥 最後衝刺！'; $('mbBanner').style.color='#d9531e'; replayAnim($('mbBanner'),'boost'); } }, (Math.min(...plan.finish)-3)*1000);
+  }, 300+3*900+500);
 }
 
 /* ── 拔河與賽跑共用：收到答題 ── */
 function onAns(p){
   const g=S.game, pl=S.players.get(p.id);
   if(!pl||S.phase!=='play'||!g||!g.running||g.mode==='quiz') return;
+  if(g.mode==='marble'&&!g.collecting) return;
   const now=performance.now();
   if(now-pl.last<250) return;                   // 防止連點灌分
   pl.last=now;
@@ -446,27 +473,23 @@ function onAns(p){
     if(g.pos<=-LIVE.TUG_LIMIT) endTeamGame(0);
     else if(g.pos>=LIVE.TUG_LIMIT) endTeamGame(1);
   }else{
-    g.counts[t]++;
-    g.prog[t]=Math.min(100, g.prog[t]+100/(LIVE.MARBLE_GOAL*size));
-    $('mbCnt'+t).textContent='⭐ 答對 '+g.counts[t];
-    if(g.cancels[t]) g.cancels[t]();
-    const from=g.shown[t], to=g.prog[t];
-    g.cancels[t]=tween(from,to,500,v=>setMarble(t,v));
+    g.counts[t]++; g.total++;
+    $('mbTotal').textContent=g.total;
+    replayAnim($('mbTotalBox'),'boost');
     addTicker(pl);
-    if(g.prog[t]>=100){ $('mbMedal'+t).textContent='🥇'; endTeamGame(t); }
   }
 }
 
-function endTeamGame(winner){
+function endTeamGame(winner,raceOrder){
   const g=S.game; if(!g||!g.running) return;
-  g.running=false;
+  g.running=false; g.racing=false;
   clearTimers();
   sound.win();
   const res={}; S.players.forEach(pl=>{ res[pl.id]=pl.correct; });
   const n=g.mode==='tug'?2:g.n;
-  // 名次：拔河看勝負；賽跑依進度排
-  const order=Array.from({length:n},(_,i)=>i);
-  if(g.mode==='marble') order.sort((a,b)=>g.prog[b]-g.prog[a]);
+  // 名次：拔河看勝負；賽跑照抵達順序
+  let order=Array.from({length:n},(_,i)=>i);
+  if(g.mode==='marble'&&raceOrder) order=raceOrder.slice();
   else if(winner===1) order.reverse();
   send('end',{ mode:g.mode, winner, order, teamN:n, res });
   saveTeamGame(g,winner,order);
@@ -484,7 +507,7 @@ function showTeamEnd(g,winner,order){
   let h='<div class="rank-list">';
   order.forEach((t,i)=>{
     const T=TEAMS[t];
-    const extra= g.mode==='marble' ? '（'+Math.round(g.prog[t])+'%）' : '';
+    const extra= g.mode==='marble'&&g.scores ? '（平均每人 '+(Math.round(g.scores[t]*10)/10)+' 題）' : '';
     h+='<div class="rank-item" style="border-color:'+T.color+';color:'+T.deep+'"><span>'+(winner<0&&g.mode==='tug'?'🤝':medals[i])+' '+T.emoji+' '+T.name+'</span><span>答對 '+g.counts[t]+' 題'+extra+'</span></div>';
   });
   h+='</div>';
@@ -494,10 +517,7 @@ function showTeamEnd(g,winner,order){
   showScreen('scrEnd');
 }
 onTap($('tugStop'), ()=>confirmBox('要提早結束這一場嗎？',()=>{ const g=S.game; endTeamGame(g.pos<0?0:g.pos>0?1:-1); }));
-onTap($('mbStop'), ()=>confirmBox('要提早結束這一場嗎？',()=>{
-  const g=S.game; let best=0; for(let i=1;i<g.n;i++) if(g.prog[i]>g.prog[best]) best=i;
-  endTeamGame(g.prog.every(v=>v===g.prog[best]) ? -1 : best);
-}));
+onTap($('mbStop'), ()=>confirmBox('要現在結束答題、開始賽跑嗎？',()=>startRace()));
 
 /* ============================================================
    🎯 搶答大挑戰
@@ -658,7 +678,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610142127');
+    const m=await import('./db.js?v=202610142307');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
@@ -666,11 +686,12 @@ async function getSaver(force){
 }
 async function showSaveState(){
   const el=$('saveState');
-  if(noSave){ el.textContent='🧪 測試模式不會存成績'; el.className='save-state'; return; }
-  el.textContent='🔎 檢查成績紀錄…'; el.className='save-state';
+  // 白板是投影給孩子看的，只顯示小小的符號；滑鼠移上去才看得到說明
+  if(noSave){ el.textContent='💾 –'; el.title='測試模式不會存成績'; el.className='save-state'; return; }
+  el.textContent='💾 …'; el.title=''; el.className='save-state';
   const sv=await getSaver(true);
-  if(sv){ el.textContent='💾 比賽成績會自動存到後台'; el.className='save-state ok'; }
-  else{ el.textContent='⚠️ 這台電腦沒有開教室模式，成績不會存'; el.className='save-state warn'; }
+  if(sv){ el.textContent='💾 ✓'; el.title='比賽成績會自動存到後台'; el.className='save-state ok'; }
+  else{ el.textContent='💾 ✕'; el.title='這台電腦沒有開教室模式，成績不會存（到班網主畫面的 ⚙️ 開啟）'; el.className='save-state warn'; }
 }
 function qLabel(q){
   if(q.custom){
@@ -693,25 +714,27 @@ function saveTeamGame(g,winner,order){
   const n=g.mode==='tug'?2:g.n;
   const teams=order.map(t=>({ team:t, name:TEAMS[t].name, emoji:TEAMS[t].emoji, correct:g.counts[t],
     members:Array.from(S.players.values()).filter(pl=>pl.team===t).length,
-    progress:g.mode==='marble'?Math.round(g.prog[t]):undefined }));
+    perCapita:g.mode==='marble'&&g.scores?Math.round(g.scores[t]*10)/10:undefined }));
   const players=playerRows('correct');
-  if(!players.some(p=>p.correct+p.wrong>0)) return endSave('🙂 這一場沒有人作答，不用存成績','');
+  if(!players.some(p=>p.correct+p.wrong>0)) return endSave('','');
   record(g,{ mode:g.mode, source:sourceName(), player_count:players.length, players,
     summary:{ level:S.src?null:S.level, winner, winnerName:winner>=0?TEAMS[winner].name:null, teamN:n, teams } });
 }
 function saveQuiz(g){
-  if(!g.stats.length) return endSave('🙂 還沒有出題就結束了，不用存成績','');
+  if(!g.stats.length) return endSave('','');
   const players=playerRows('score');
   record(g,{ mode:'quiz', source:sourceName(), player_count:players.length, players,
     summary:{ level:S.src?null:S.level, total:g.stats.length, questions:g.stats.map(s=>({ label:s.label, answered:s.answered, right:s.right })) } });
 }
+/* 結算畫面右下角的小符號（白板投影給孩子看，所以不寫字；滑鼠移上去才看得到說明） */
 function endSave(text,cls,retry){
   const el=$('endSave');
   el.className='end-save'+(cls?' '+cls:'');
-  el.textContent=text;
+  el.title=text;
+  el.textContent= cls==='ok' ? '💾 ✓' : cls==='warn' ? '💾 ✕' : text ? '💾 …' : '';
   if(retry){
     const b=document.createElement('button');
-    b.className='btn'; b.style.marginLeft='10px'; b.textContent='🔄 再存一次';
+    b.className='btn'; b.style.marginLeft='8px'; b.textContent='↻'; b.title='再存一次';
     onTap(b, retry);
     el.appendChild(b);
   }
