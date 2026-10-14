@@ -1,8 +1,8 @@
 // 聯絡簿頁：顯示 Canva 設計（連結在後台設定）
-import { CLASS_NAME } from './config.js?v=202610111429';
-import { configured, classroomDb, friendlyError } from './db.js?v=202610111429';
-import { el, startClock, canvaEmbedUrl } from './ui.js?v=202610111429';
-import { watchCountdowns, renderPanel } from './countdown.js?v=202610111429';
+import { CLASS_NAME } from './config.js?v=202610141924';
+import { configured, classroomDb, friendlyError } from './db.js?v=202610141924';
+import { el, startClock, canvaEmbedUrl } from './ui.js?v=202610141924';
+import { watchCountdowns, renderPanel } from './countdown.js?v=202610141924';
 
 const $ = (id) => document.getElementById(id);
 let current = null;

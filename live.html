@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>分數大冒險・加入對戰</title>
+<link rel="stylesheet" href="css/live.css?v=202610141924">
+<style>
+.center{max-width:720px; margin:0 auto; text-align:center}
+.join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
+.big-emoji{font-size:clamp(3rem,10vw,5rem)}
+.field{display:block; text-align:left; font-weight:900; font-size:1.25rem; margin:14px 0 6px; color:#9a6b55}
+.inp{width:100%; height:72px; font-size:2rem; font-weight:900; text-align:center; color:var(--ink);
+  border:3px solid var(--cream-d); border-radius:16px; background:#fff; outline:none}
+.inp:focus{border-color:var(--rose-d); box-shadow:0 0 0 4px rgba(236,140,168,.35)}
+#codeIn{letter-spacing:.3em}
+.msg{min-height:1.6em; margin-top:12px; font-weight:800; font-size:1.15rem; color:#b2453f}
+#joinBtn{width:100%; margin-top:18px}
+.team-badge{display:inline-flex; align-items:center; gap:10px; padding:8px 22px; border-radius:999px; border:4px solid; font-size:clamp(1.3rem,3.6vw,2rem); font-weight:900; background:#fff}
+.wait-anim{font-size:4rem; animation:bob 1.4s ease-in-out infinite; margin:12px 0}
+@keyframes bob{50%{transform:translateY(-12px) rotate(8deg)}}
+.hello{font-size:clamp(1.5rem,4.6vw,2.4rem); font-weight:900; margin-bottom:14px}
+.wait-text{font-size:clamp(1.2rem,3.4vw,1.7rem); font-weight:800; color:var(--muted)}
+
+/* 作答畫面 */
+.screen.play.active{display:flex; flex-direction:column; gap:12px; height:100%; max-width:900px}
+.play-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex:0 0 auto}
+.mini-badge{display:inline-flex; align-items:center; gap:6px; padding:4px 14px; border-radius:999px; border:3px solid; font-weight:900; font-size:clamp(1rem,2.6vw,1.4rem); background:#fff}
+.pill{background:#fff; border:3px solid var(--cream-d); border-radius:999px; padding:4px 14px; font-weight:900; font-size:clamp(1rem,2.6vw,1.4rem)}
+.qcard{text-align:center; flex:0 0 auto}
+.q-type{display:inline-block; font-weight:800; padding:2px 14px; border-radius:999px; background:#fff; color:#8b3550; font-size:clamp(.95rem,2.4vw,1.2rem)}
+.q-text{font-size:clamp(1.7rem,min(6vw,7cqh),3rem); font-weight:900; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.2em; min-height:2.5em}
+.opts{flex:1 1 0; min-height:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:12px; touch-action:none}
+.opt{position:relative; border-radius:20px; border:4px solid #fff; background:#fff; box-shadow:0 5px 0 rgba(0,0,0,.12);
+  font-size:clamp(1.8rem,min(6.4vw,8cqh),3.4rem); font-weight:900; display:flex; align-items:center; justify-content:center; gap:.4em; min-height:90px; overflow:hidden}
+.opt.color{color:#fff}
+.opt .shape{font-size:.8em}
+.opt.right{background:#c9f5c4 !important; border-color:var(--ok) !important; color:var(--ink) !important}
+.opt.wrong{background:#ffd2cc !important; border-color:var(--bad) !important; color:var(--ink) !important; animation:shake .4s}
+.opt.reveal{box-shadow:0 0 0 5px var(--ok)}
+.opts.locked .opt:not(.wrong):not(.reveal):not(.picked){filter:grayscale(1); opacity:.5}
+.float{position:fixed; z-index:60; pointer-events:none; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:900; color:var(--ok);
+  text-shadow:0 3px 0 #fff; animation:floatUp 1s ease-out forwards}
+@keyframes floatUp{0%{opacity:0; transform:translate(-50%,-50%) scale(.5)}15%{opacity:1; transform:translate(-50%,-80%) scale(1.2)}100%{opacity:0; transform:translate(-50%,-260%)}}
+.timeup{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,250,248,.92); font-size:2rem; font-weight:900; border-radius:20px; z-index:3}
+.opts-wrap{position:relative; flex:1 1 0; min-height:0; display:flex}
+.opts-wrap .opts{flex:1}
+
+/* 搶答結果 */
+.result-big{font-size:clamp(2.4rem,9vw,4.4rem); font-weight:900; margin:8px 0; animation:pop .5s ease}
+.result-sub{font-size:clamp(1.3rem,4vw,2rem); font-weight:900; margin:8px 0}
+.score-line{font-size:clamp(1.2rem,3.6vw,1.8rem); font-weight:800; color:#8b3550; margin-top:12px}
+.picked-shape{display:inline-flex; align-items:center; justify-content:center; width:110px; height:110px; border-radius:24px; color:#fff; font-size:3.4rem; margin:10px auto}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <h1>🎮 分數大冒險</h1>
+    <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
+  </header>
+
+  <main class="main" id="main">
+    <!-- 加入 -->
+    <section id="pJoin" class="screen active">
+      <div class="card center join-box">
+        <div class="big-emoji">🐰🧋🐻</div>
+        <h2>加入全班對戰</h2>
+        <label class="field" for="codeIn">🔢 房間代碼（看白板）</label>
+        <input id="codeIn" class="inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
+        <label class="field" for="nameIn">😊 你的暱稱</label>
+        <input id="nameIn" class="inp" type="text" maxlength="8" autocomplete="off" placeholder="最多 8 個字">
+        <button id="joinBtn" class="btn btn-rose big">🚀 加入</button>
+        <div id="joinMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- 等待 -->
+    <section id="pWait" class="screen">
+      <div class="card center">
+        <div id="waitHello" class="hello"></div>
+        <div id="waitTeam"></div>
+        <div class="wait-anim">⏳</div>
+        <div id="waitText" class="wait-text">等老師開始…</div>
+        <div style="margin-top:14px"><span id="netDot" class="net-dot ok">已連線</span></div>
+      </div>
+    </section>
+
+    <!-- 拔河／賽跑作答 -->
+    <section id="pPlay" class="screen play">
+      <div class="play-head">
+        <span id="playTeam" class="mini-badge"></span>
+        <span id="playTimer" class="pill">⏳</span>
+        <span id="playCount" class="pill">⭐ 0</span>
+      </div>
+      <div class="card qcard">
+        <span id="playType" class="q-type"></span>
+        <div id="playPrompt" class="q-text"></div>
+      </div>
+      <div class="opts-wrap">
+        <div id="playOpts" class="opts"></div>
+        <div id="playTimeup" class="timeup hidden">⏰ 時間到！看白板～</div>
+      </div>
+    </section>
+
+    <!-- 搶答作答 -->
+    <section id="pQuiz" class="screen play">
+      <div class="play-head">
+        <span id="quizIndex" class="pill"></span>
+        <span id="quizTimer" class="pill">⏳</span>
+        <span id="quizScore" class="pill">0 分</span>
+      </div>
+      <div class="card qcard">
+        <span id="quizType" class="q-type"></span>
+        <div id="quizPrompt" class="q-text"></div>
+      </div>
+      <div class="opts-wrap">
+        <div id="quizOpts" class="opts"></div>
+        <div id="quizTimeup" class="timeup hidden">⏰ 時間到！</div>
+      </div>
+    </section>
+
+    <!-- 搶答：送出後／公布結果 -->
+    <section id="pResult" class="screen">
+      <div class="card center" id="resultBox"></div>
+    </section>
+
+    <!-- 結束 -->
+    <section id="pEnd" class="screen">
+      <div class="card center" id="endBox"></div>
+    </section>
+  </main>
+</div>
+<script type="module" src="js/live-play.js?v=202610141924"></script>
+</body>
+</html>

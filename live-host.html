@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>分數大冒險・全班連線（白板）</title>
+<link rel="stylesheet" href="css/live.css?v=202610141924">
+<style>
+/* ── 大廳 ── */
+.lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
+.join-card{text-align:center}
+.join-url{font-size:clamp(1rem,1.6vw,1.35rem); font-weight:800; color:var(--rose-d); word-break:break-all; background:var(--white); border-radius:12px; padding:8px; margin-bottom:12px}
+.room-code{font-size:clamp(4rem,9vw,7rem); font-weight:900; letter-spacing:.12em; color:#8b3550; line-height:1.1; margin:4px 0 10px;
+  background:var(--white); border:4px dashed var(--rose); border-radius:20px}
+.path{margin-top:8px; font-weight:800; font-size:.95rem; color:var(--muted)}
+.path.ok{color:var(--ok)} .path.warn{color:#b26a00}
+.test-badge{display:inline-block; margin-top:8px; padding:4px 12px; border-radius:999px; background:#fff3c4; color:#8a5a00; font-weight:800}
+.players-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap}
+.players-head b{font-size:1.4em; color:#8b3550}
+.tip{color:var(--muted); font-weight:700; font-size:.95rem}
+.team-cols{display:grid; gap:10px; margin:8px 0 12px}
+.team-col{border-radius:16px; border:3px solid; padding:8px; min-height:110px}
+.team-col h3{margin:0 0 6px; font-size:clamp(1rem,1.8vw,1.35rem)}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  min-height:44px; padding:4px 14px; border-radius:999px; font-size:clamp(1rem,1.6vw,1.3rem); font-weight:800;
+  background:#fff; border:3px solid var(--cream-d); animation:pop .35s ease;
+}
+.empty-hint{color:var(--muted); font-weight:700; padding:16px 4px}
+.mode-list{display:flex; flex-direction:column; gap:10px}
+.mode-btn{
+  display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; column-gap:12px; text-align:left; align-items:center;
+  padding:10px 14px; border-radius:16px; border:3px solid var(--cream-d); background:#fff; box-shadow:0 4px 0 var(--cream-d);
+}
+.mode-btn .m-ico{grid-row:1 / 3; font-size:2.3rem}
+.mode-btn b{font-size:clamp(1.1rem,2vw,1.45rem)}
+.mode-btn small{font-size:.95rem; color:var(--muted); font-weight:700}
+.mode-btn.selected{background:linear-gradient(180deg,#fff,#fde3ea); border-color:var(--rose-d); box-shadow:0 4px 0 var(--rose-d),0 0 0 4px rgba(236,140,168,.3)}
+.opt-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-weight:800; font-size:1.1rem}
+.opt-row .btn{padding:6px 14px; min-height:48px}
+#startBtn{width:100%; margin-top:14px}
+
+/* ── 遊戲畫面共用 ── */
+.screen.game.active{display:flex; flex-direction:column; gap:10px; height:100%}
+.timer{font-size:clamp(1.6rem,3.4vw,3.4rem); font-weight:900; padding:2px 22px; border-radius:999px; background:#fff; border:4px solid var(--rose); color:#8b4a5c; min-width:130px; text-align:center}
+.timer.danger{color:#d62828; border-color:#d62828; animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.game-ctrl{display:flex; justify-content:center; gap:12px; flex-wrap:wrap; flex:0 0 auto}
+
+/* ── 拔河 ── */
+.scene-wrap{position:relative; flex:1 1 0; min-height:180px; max-height:620px; border-radius:24px; overflow:hidden; border:4px solid #fff; box-shadow:var(--shadow); background:#fff6f1}
+.scene-wrap svg{width:100%; height:100%; display:block}
+.scoreboard{position:absolute; top:8px; left:10px; right:10px; z-index:2; pointer-events:none; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px}
+.team-score{justify-self:start; display:flex; align-items:center; gap:10px; max-width:100%; font-size:clamp(1.05rem,2.1vw,2.2rem); font-weight:900; padding:4px 16px; border-radius:999px; background:rgba(255,255,255,.9); border:3px solid; white-space:nowrap; overflow:hidden}
+.team-score.right{justify-self:end}
+.team-score b{font-size:1.3em}
+.tug-teams{display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:0 0 auto}
+.chip-box{border-radius:16px; border:3px solid; padding:8px; max-height:30cqh; overflow:hidden}
+.chip-box .chip{position:relative}
+.chip .cnt{display:inline-block; min-width:1.6em; margin-left:6px; padding:0 6px; border-radius:999px; background:var(--cream); font-size:.85em; text-align:center}
+.chip.flash{animation:chipFlash .7s ease}
+@keyframes chipFlash{0%{transform:scale(1)}30%{transform:scale(1.25); background:var(--fl,#ffe9f0)}100%{transform:scale(1)}}
+.puller{transform-box:fill-box; transform-origin:50% 90%}
+.p0{animation:idle0 1.2s ease-in-out infinite}
+.p1{animation:idle1 1.2s ease-in-out infinite}
+@keyframes idle0{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-14deg) translateY(-5px)}}
+@keyframes idle1{0%,100%{transform:rotate(8deg)}50%{transform:rotate(14deg) translateY(-5px)}}
+.p0.tug{animation:tug0 .6s ease; animation-delay:0s !important}
+.p1.tug{animation:tug1 .6s ease; animation-delay:0s !important}
+@keyframes tug0{30%{transform:translateX(-18px) rotate(-30deg) scale(1.1)}}
+@keyframes tug1{30%{transform:translateX(18px) rotate(30deg) scale(1.1)}}
+.shake-rope{animation:ropeShake .45s ease}
+@keyframes ropeShake{20%{transform:translateY(-7px)}40%{transform:translateY(6px)}60%{transform:translateY(-3px)}}
+.finish-line.danger{animation:finishGlow .5s ease-in-out infinite alternate}
+@keyframes finishGlow{from{stroke-width:7}to{stroke-width:16}}
+
+/* ── 玻璃球賽跑 ── */
+.race-head{display:flex; justify-content:center; align-items:center; gap:16px; flex:0 0 auto}
+.race-wrap{flex:1 1 0; min-height:200px; border-radius:24px; overflow:hidden; border:4px solid #fff; box-shadow:var(--shadow); background:linear-gradient(180deg,#fff7f2,#fbe9ee)}
+.race-wrap svg{width:100%; height:100%; display:block}
+.ticker{flex:0 0 auto; display:flex; gap:8px; overflow:hidden; min-height:52px; align-items:center; padding:4px 2px}
+.tick{flex:0 0 auto; padding:6px 14px; border-radius:999px; font-weight:800; font-size:clamp(1rem,1.6vw,1.3rem); background:#fff; border:3px solid; animation:slideIn .35s ease}
+@keyframes slideIn{from{transform:translateX(-30px); opacity:0}to{transform:none; opacity:1}}
+.boost{animation:boost .5s ease}
+@keyframes boost{40%{transform:scale(1.25)}}
+
+/* ── 搶答 ── */
+.quiz-head{display:flex; justify-content:space-between; align-items:center; gap:12px; flex:0 0 auto; font-size:clamp(1.1rem,2vw,1.7rem); font-weight:900}
+.quiz-head .pill{background:#fff; border:3px solid var(--cream-d); border-radius:999px; padding:4px 16px}
+.quiz-prompt{text-align:center; flex:0 0 auto}
+.q-type{display:inline-block; font-weight:800; padding:2px 14px; border-radius:999px; background:#fff; color:#8b3550; font-size:clamp(.95rem,1.6vw,1.4rem)}
+.q-text{font-size:clamp(2rem,min(4.4vw,8cqh),4.6rem); font-weight:900; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.2em; min-height:2.6em}
+.quiz-opts{flex:1 1 0; min-height:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:12px}
+.tile{position:relative; border-radius:20px; color:#fff; display:flex; align-items:center; justify-content:center; gap:.5em; overflow:hidden;
+  font-size:clamp(1.8rem,min(3.6vw,6.5cqh),3.8rem); font-weight:900; box-shadow:0 5px 0 rgba(0,0,0,.15); min-height:80px; transition:opacity .3s, filter .3s}
+.tile .shape{font-size:.8em; opacity:.9}
+.tile .bar{position:absolute; left:0; bottom:0; height:12px; background:rgba(255,255,255,.75); width:0; transition:width .6s ease}
+.tile .count{position:absolute; right:16px; top:10px; font-size:.55em; background:rgba(255,255,255,.3); padding:0 12px; border-radius:999px}
+.tile .trap{position:absolute; left:14px; top:10px; font-size:.45em; background:rgba(70,35,30,.55); padding:4px 14px; border-radius:999px}
+.tile.dim{opacity:.62}
+.tile.right{box-shadow:0 0 0 6px #fff,0 0 0 11px var(--ok); }
+.tile.right::after{content:"✔"; position:absolute; left:16px; bottom:16px; font-size:.7em}
+.leader{flex:1 1 0; display:flex; flex-direction:column; gap:10px; justify-content:center; max-width:900px; width:100%; margin:0 auto}
+.lrow{display:grid; grid-template-columns:3.2em 1fr auto; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:10px 20px; border:3px solid var(--cream-d);
+  font-size:clamp(1.3rem,2.6vw,2.4rem); font-weight:900; animation:fadeUp .4s ease both}
+.lrow .rk{font-size:1.1em; text-align:center}
+.lrow:nth-child(1){border-color:#e9c46a; background:#fff9e6}
+
+/* ── 結算 ── */
+.end-card{max-width:1100px; margin:0 auto; text-align:center}
+.end-title{font-size:clamp(2.2rem,5vw,4rem); font-weight:900; margin:6px 0 14px; animation:pop .6s ease}
+.end-body{font-size:clamp(1.1rem,2vw,1.6rem); font-weight:800}
+.rank-list{display:flex; flex-direction:column; gap:10px; max-width:760px; margin:0 auto 14px}
+.rank-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 20px; border-radius:16px; border:3px solid; background:#fff}
+.stars{margin:10px 0 16px}
+.stars span{display:inline-block; margin:4px 6px; padding:6px 16px; border-radius:999px; background:#fff; border:3px solid #e9c46a}
+.podium{display:flex; justify-content:center; align-items:flex-end; gap:14px; margin:10px 0 18px}
+.pod{width:min(30%,220px); border-radius:16px 16px 0 0; background:linear-gradient(180deg,#fde3ea,#f7c5d1); border:3px solid var(--rose-d); padding:10px 6px; font-weight:900}
+.pod .medal{font-size:2.6rem}
+.pod .nm{font-size:clamp(1.1rem,2vw,1.6rem); word-break:break-all}
+.pod .pt{color:#8b3550}
+.acc{display:flex; gap:8px; align-items:flex-end; justify-content:center; height:130px; margin:34px 0 16px}
+.acc .col{width:min(7%,46px); background:var(--rose); border-radius:8px 8px 0 0; position:relative}
+.acc .col span{position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); font-size:.9rem}
+.acc .col b{position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:.85rem; color:#8b3550}
+.btn-row{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:30px}
+
+@media (max-width:1000px){
+  .lobby-grid{grid-template-columns:1fr 1fr}
+  .mode-card{grid-column:1 / -1}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <a class="icon-btn left" href="index.html" aria-label="回班網">🏠</a>
+    <h1>🎮 分數大冒險・全班連線</h1>
+    <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
+  </header>
+
+  <main class="main" id="main">
+    <!-- ================= 大廳 ================= -->
+    <section id="scrLobby" class="screen active">
+      <div class="lobby-grid">
+        <div class="card join-card">
+          <div class="label">📱 用 iPad 打開</div>
+          <div id="joinUrl" class="join-url"></div>
+          <div class="label">輸入房間代碼</div>
+          <div id="roomCode" class="room-code">----</div>
+          <span id="netDot" class="net-dot">連線中…</span>
+          <div id="pathCheck" class="path"></div>
+          <div><span id="testBadge" class="test-badge hidden">🧪 測試模式（同一台電腦）</span></div>
+          <button id="retryBtn" class="btn hidden" style="margin-top:10px">🔄 重新連線</button>
+        </div>
+
+        <div class="card players-card">
+          <div class="players-head">
+            <span class="label">👋 已加入 <b id="playerCount">0</b> 人</span>
+            <span class="tip">點名字可以請他重新取名</span>
+          </div>
+          <div id="lobbyPlayers"></div>
+          <button id="reshuffleBtn" class="btn">🔀 重新分隊</button>
+        </div>
+
+        <div class="card mode-card">
+          <div class="label">🎲 選玩法</div>
+          <div class="mode-list">
+            <button class="mode-btn selected" data-mode="tug"><span class="m-ico">🪢</span><b>全班拔河</b><small>兩隊對抗，各自答題拉繩子</small></button>
+            <button class="mode-btn" data-mode="quiz"><span class="m-ico">🎯</span><b>搶答大挑戰</b><small>全班同一題，又對又快分數高</small></button>
+            <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>每隊一顆玻璃球，看哪隊先到終點</small></button>
+          </div>
+          <div class="opt-row">難度
+            <button class="btn level-btn selected" data-level="easy">🌱 簡單</button>
+            <button class="btn level-btn" data-level="hard">🔥 挑戰</button>
+          </div>
+          <div id="optMarble" class="opt-row hidden">隊伍數
+            <button class="btn teamn-btn" data-n="2">2 隊</button>
+            <button class="btn teamn-btn selected" data-n="3">3 隊</button>
+            <button class="btn teamn-btn" data-n="4">4 隊</button>
+          </div>
+          <div id="optQuiz" class="opt-row hidden">題數
+            <button class="btn qn-btn" data-n="5">5 題</button>
+            <button class="btn qn-btn selected" data-n="10">10 題</button>
+            <button class="btn qn-btn" data-n="15">15 題</button>
+          </div>
+          <button id="startBtn" class="btn btn-rose big" disabled>▶️ 開始！</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 全班拔河 ================= -->
+    <section id="scrTug" class="screen game">
+      <div class="scene-wrap">
+        <div class="scoreboard">
+          <div class="team-score" id="tugScore0"><span class="tname"></span><b>0</b></div>
+          <div id="tugTimer" class="timer">⏳ 120</div>
+          <div class="team-score right" id="tugScore1"><b>0</b><span class="tname"></span></div>
+        </div>
+        <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-label="拔河場景">
+          <defs>
+            <linearGradient id="tSky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="232"><stop offset="0%" stop-color="#ffdce6"/><stop offset="100%" stop-color="#fff7f2"/></linearGradient>
+            <linearGradient id="tGround" gradientUnits="userSpaceOnUse" x1="0" y1="230" x2="0" y2="300"><stop offset="0%" stop-color="#ecd5bf"/><stop offset="100%" stop-color="#d9b596"/></linearGradient>
+          </defs>
+          <rect x="-2400" y="-400" width="6000" height="632" fill="url(#tSky)"/>
+          <rect x="-2400" y="230" width="6000" height="400" fill="url(#tGround)"/>
+          <rect x="-2400" y="230" width="6000" height="7" fill="#c99e7a"/>
+          <rect x="-2400" y="264" width="6000" height="4" fill="#fff" opacity=".6"/>
+          <g id="bunting"></g>
+          <g fill="#fff" opacity=".95">
+            <ellipse cx="400" cy="112" rx="50" ry="17"/><ellipse cx="430" cy="100" rx="30" ry="17"/>
+            <ellipse cx="800" cy="108" rx="54" ry="17"/><ellipse cx="772" cy="97" rx="30" ry="16"/>
+          </g>
+          <line id="finish0" class="finish-line" x1="264" y1="96" x2="264" y2="264" stroke="#e46f94" stroke-width="7" stroke-dasharray="16 9" stroke-linecap="round"/>
+          <text id="finishLabel0" x="264" y="292" text-anchor="middle" font-size="22" font-weight="900" fill="#d0587e" stroke="#fff" stroke-width="5" paint-order="stroke">終點</text>
+          <line id="finish1" class="finish-line" x1="936" y1="96" x2="936" y2="264" stroke="#a87b55" stroke-width="7" stroke-dasharray="16 9" stroke-linecap="round"/>
+          <text id="finishLabel1" x="936" y="292" text-anchor="middle" font-size="22" font-weight="900" fill="#8b5e3c" stroke="#fff" stroke-width="5" paint-order="stroke">終點</text>
+          <line x1="600" y1="118" x2="600" y2="264" stroke="#fff" stroke-width="6" stroke-dasharray="3 9" stroke-linecap="round"/>
+          <text x="600" y="292" text-anchor="middle" font-size="20" font-weight="900" fill="#a98263" stroke="#fff" stroke-width="5" paint-order="stroke">中線</text>
+          <g id="ropeGroup" transform="translate(0,0)"><g id="ropeShake">
+            <line x1="-2400" y1="200" x2="3600" y2="200" stroke="#a47551" stroke-width="15" stroke-linecap="round"/>
+            <line x1="-2400" y1="200" x2="3600" y2="200" stroke="#e7cdb3" stroke-width="5" stroke-dasharray="18 12"/>
+            <line x1="600" y1="200" x2="600" y2="124" stroke="#8b5e3c" stroke-width="6" stroke-linecap="round"/>
+            <path d="M600 124 L668 144 L600 164 Z" fill="#ff8fb1" stroke="#d0587e" stroke-width="4" stroke-linejoin="round"/>
+            <text x="623" y="151" font-size="20" font-weight="900" fill="#fff">♥</text>
+            <circle cx="600" cy="200" r="16" fill="#fff" stroke="#d0587e" stroke-width="5"/>
+          </g></g>
+          <g id="fig0"></g>
+          <g id="fig1"></g>
+        </svg>
+      </div>
+      <div class="tug-teams">
+        <div id="tugBox0" class="chip-box"><div class="chips"></div></div>
+        <div id="tugBox1" class="chip-box"><div class="chips"></div></div>
+      </div>
+      <div class="game-ctrl"><button id="tugStop" class="btn">⏹ 提早結束</button></div>
+    </section>
+
+    <!-- ================= 玻璃球賽跑 ================= -->
+    <section id="scrMarble" class="screen game">
+      <div class="race-head"><div id="mbTimer" class="timer">⏳ 180</div></div>
+      <div class="race-wrap"><svg id="mbSvg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-label="玻璃球賽道"></svg></div>
+      <div id="mbTicker" class="ticker"></div>
+      <div class="game-ctrl"><button id="mbStop" class="btn">⏹ 提早結束</button></div>
+    </section>
+
+    <!-- ================= 搶答 ================= -->
+    <section id="scrQuiz" class="screen game">
+      <div class="quiz-head">
+        <span id="qzIndex" class="pill">第 1 / 10 題</span>
+        <span id="qzTimer" class="timer">20</span>
+        <span id="qzAnswered" class="pill">已作答 0 / 0</span>
+      </div>
+      <div id="qzPromptCard" class="card quiz-prompt">
+        <span id="qzType" class="q-type"></span>
+        <div id="qzPrompt" class="q-text"></div>
+      </div>
+      <div id="qzOpts" class="quiz-opts"></div>
+      <div id="qzLeader" class="leader hidden"></div>
+      <div class="game-ctrl">
+        <button id="qzNext" class="btn btn-rose big">⏩ 提早公布</button>
+        <button id="qzStop" class="btn">⏹ 結束搶答</button>
+      </div>
+    </section>
+
+    <!-- ================= 結算 ================= -->
+    <section id="scrEnd" class="screen">
+      <div class="card end-card">
+        <div id="endTitle" class="end-title"></div>
+        <div id="endBody" class="end-body"></div>
+        <div class="btn-row">
+          <button id="againBtn" class="btn btn-rose big">🔄 再玩一次</button>
+          <button id="lobbyBtn" class="btn btn-milk big">🏠 回大廳換玩法</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="card">
+    <div id="modalText"></div>
+    <div class="row">
+      <button id="modalYes" class="btn btn-rose big">確定</button>
+      <button id="modalNo" class="btn big">取消</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/live-host.js?v=202610141924"></script>
+</body>
+</html>

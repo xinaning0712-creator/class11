@@ -7,6 +7,9 @@
 | 聯絡簿 | 白板投影：Canva 聯絡簿 | https://xinaning0712-creator.github.io/class11/contact.html |
 | 抽籤 | 白板投影：樂透機抽座號 | https://xinaning0712-creator.github.io/class11/roll.html |
 | 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | https://xinaning0712-creator.github.io/class11/gacha.html |
+| 分數冒險 | 單機版擴分約分（新手村、鍛造工坊、雙人拔河） | https://xinaning0712-creator.github.io/class11/fraction.html |
+| 全班對戰（白板） | 開房間、選玩法：全班拔河／搶答／玻璃球賽跑 | https://xinaning0712-creator.github.io/class11/live-host.html |
+| 全班對戰（iPad） | 孩子輸入房間代碼和暱稱加入 | https://xinaning0712-creator.github.io/class11/live.html |
 | 老師後台 | 需密碼 | https://xinaning0712-creator.github.io/class11/admin.html |
 
 ## 教室電腦第一次使用
@@ -51,3 +54,10 @@
   - 老師：全部功能。
 - **secret / service_role 鑰匙、老師與教室密碼，絕對不要寫進任何檔案。**
 - 網頁上只顯示座號，不放孩子姓名。
+
+## 全班對戰（分數大冒險連線版）
+- 白板打開「全班對戰」頁，會出現四位數房間代碼；孩子用 iPad 打開 `live.html`，輸入代碼和暱稱加入。
+- 用 Supabase 的「即時廣播」連線，**不用新增資料表、不存任何資料**，玩完就結束。
+- 白板左邊會顯示「✅ iPad 連線路徑正常」；如果顯示 ⚠️，一樣能玩，只是人多時可能較慢。
+- 想在同一台電腦先試玩：兩個網址後面都加上 `?test=1`（白板開一個分頁、iPad 頁開幾個分頁）。
+- 秒數、題數等設定在 `js/live-common.js` 最上面的 `LIVE` 區塊。
