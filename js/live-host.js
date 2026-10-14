@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142003';
+} from './live-common.js?v=202610142049';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;

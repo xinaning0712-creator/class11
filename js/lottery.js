@@ -73,7 +73,7 @@ function ballMarkup(id, n) {
     <g class="ball-spin">
       <circle r="${BR * 0.52}" fill="#fff" fill-opacity=".9"/>
       <text text-anchor="middle" dominant-baseline="central" font-size="${n > 9 ? 17 : 20}"
-            font-weight="700" fill="#3f2830" font-family="Noto Sans TC, sans-serif">${n}</text>
+            fill="#3f2830" font-family="Huninn, PingFang TC, Microsoft JhengHei, sans-serif">${n}</text>
     </g>
     <circle r="${BR}" fill="url(#${id}-shade)"/>
     <ellipse cx="-8" cy="-10" rx="7" ry="4" fill="#fff" opacity=".85" transform="rotate(-35 -8 -10)"/>`;

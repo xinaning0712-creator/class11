@@ -1,10 +1,10 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610142003';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610142003';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610142003';
-import * as gacha from './admin-gacha.js?v=202610142003';
-import * as countdown from './admin-countdown.js?v=202610142003';
-import * as quizbank from './admin-quiz.js?v=202610142003';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610142049';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610142049';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610142049';
+import * as gacha from './admin-gacha.js?v=202610142049';
+import * as countdown from './admin-countdown.js?v=202610142049';
+import * as quizbank from './admin-quiz.js?v=202610142049';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
@@ -209,6 +209,23 @@ async function setArchived(a, archived) {
   toast(archived ? `已封存「${a.title}」` : `已還原「${a.title}」`);
   load();
 }
+
+// ---------- 🧹 清除一學期前的封存 ----------
+$('purge-btn').addEventListener('click', async () => {
+  const missing = (e) => /purge_old_archived|PGRST202|Could not find the function/i.test(`${e?.code} ${e?.message}`);
+  const { data: n, error } = await db.rpc('purge_old_archived', { p_dry_run: true });
+  if (error) {
+    return toast(missing(error)
+      ? '還差一步：請先在 Supabase 執行 supabase/07_自動封存與清除.sql'
+      : `查詢失敗：${friendlyError(error)}`, { tone: 'error', seconds: 7 });
+  }
+  if (!n) return toast('沒有超過一學期的封存作業，不用清除 ✨');
+  if (!confirm(`將刪除 ${n} 項封存超過 6 個月的作業（連同燈號紀錄）。\n刪掉就救不回來，確定要清除嗎？`)) return;
+  const { data: done, error: e2 } = await db.rpc('purge_old_archived', { p_dry_run: false });
+  if (e2) return toast(`清除失敗：${friendlyError(e2)}`, { tone: 'error', seconds: 5 });
+  toast(`已清除 ${done} 項舊的封存作業`);
+  load();
+});
 
 async function rename(a) {
   const title = prompt('新的作業名稱：', a.title)?.trim();

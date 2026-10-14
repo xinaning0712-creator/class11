@@ -43,7 +43,8 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-family: "Huninn", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  font-synthesis-weight: none;   /* 粉圓只有一種粗細，不要硬加粗 */
   line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
 }
@@ -129,7 +130,7 @@ input:focus-visible, button:focus-visible, a:focus-visible {
   margin-bottom: clamp(12px, 1.2vw, 24px);
 }
 .board-title h1 {
-  font-family: "Noto Serif TC", serif;
+  font-family: inherit;
   font-size: clamp(1.8rem, 3.2vw, 3.6rem);
   letter-spacing: .06em;
 }
@@ -221,7 +222,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 
 .login { min-height: 90vh; display: grid; place-items: center; }
 .login-card { width: min(400px, 100%); display: grid; gap: .6rem; }
-.login-card h1 { font-family: "Noto Serif TC", serif; font-size: 1.8rem; }
+.login-card h1 { font-family: inherit; font-size: 1.8rem; }
 .check { display: flex; align-items: center; gap: .5rem; margin-top: .3rem; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 .hint { margin: 0; font-size: .9rem; color: var(--muted); }
@@ -231,7 +232,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
   margin-bottom: 1rem;
 }
-.admin-header h1 { font-family: "Noto Serif TC", serif; font-size: 1.6rem; }
+.admin-header h1 { font-family: inherit; font-size: 1.6rem; }
 .admin-actions { display: flex; gap: .5rem; }
 
 .tabs { display: flex; gap: .4rem; overflow-x: auto; margin-bottom: 1rem; }
@@ -314,7 +315,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
   padding-bottom: clamp(8px, 1vw, 20px);
   margin-bottom: clamp(16px, 2vw, 32px);
 }
-.gacha-header h1 { font-family: "Noto Serif TC", serif; font-size: clamp(1.6rem, 3vw, 3rem); letter-spacing: .05em; }
+.gacha-header h1 { font-family: inherit; font-size: clamp(1.6rem, 3vw, 3rem); letter-spacing: .05em; }
 .gacha-hint {
   background: var(--surface); border: 1px dashed var(--line); border-radius: 14px;
   padding: .8rem 1.2rem; font-size: 1.1rem; text-align: center; color: var(--muted);
@@ -416,7 +417,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .result-seat { margin: 0; font-size: clamp(1.2rem, 2.2vw, 2.2rem); color: var(--muted); font-weight: 500; }
 .result-name {
   margin: .3rem 0 0;
-  font-family: "Noto Serif TC", serif;
+  font-family: inherit;
   font-size: clamp(2rem, 4.6vw, 4.6rem); font-weight: 700; line-height: 1.25;
 }
 .result-list {
@@ -429,7 +430,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .result-note { margin: .8rem 0 0; font-size: clamp(1rem, 1.6vw, 1.5rem); color: var(--red-bg); font-weight: 500; }
 
 .controls { align-self: center; display: grid; gap: clamp(12px, 1.6vw, 24px); }
-.controls h2 { font-family: "Noto Serif TC", serif; font-size: clamp(1.6rem, 3vw, 3rem); }
+.controls h2 { font-family: inherit; font-size: clamp(1.6rem, 3vw, 3rem); }
 .controls.locked .step { opacity: .45; pointer-events: none; }
 .step-label { margin: 0 0 .5rem; font-size: clamp(1.1rem, 1.7vw, 1.7rem); font-weight: 700; }
 .seat-picker { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(6px, .8vw, 12px); }
@@ -674,7 +675,7 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .celebrate-emoji { font-size: clamp(3rem, 7vw, 7rem); line-height: 1; }
 .celebrate-main {
   margin: .4rem 0 .2rem;
-  font-family: "Noto Serif TC", serif;
+  font-family: inherit;
   font-size: clamp(2.4rem, 6vw, 6.4rem); font-weight: 700; color: var(--accent);
   letter-spacing: .08em;
 }
@@ -895,17 +896,126 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .qz-q > .btn { justify-self: start; }
 
 /* ============================================================
-   字體預覽：jf open 粉圓（網址加 ?font=huninn 才會套用）
+   新風格（2026-10）：玫瑰橫幅＋記憶球櫃子
    ============================================================ */
-html[data-font="huninn"] body,
-html[data-font="huninn"] body * {
-  font-family: "Huninn", "PingFang TC", "Microsoft JhengHei", sans-serif !important;
-  font-synthesis-weight: none;
+
+/* ---------- 上方玫瑰橫幅（作業燈號、聯絡簿、抽籤共用） ---------- */
+.board .board-header {
+  background: var(--accent); color: #fff7f9;
+  border-bottom: none; border-radius: clamp(18px, 1.8vw, 30px);
+  padding: clamp(8px, min(1.1vw, 1.6vh), 20px) clamp(16px, 1.8vw, 30px);
+  margin-bottom: clamp(8px, min(1vw, 1.4vh), 18px);
+  align-items: center;
 }
-.font-preview-badge {
-  position: fixed; z-index: 999;
-  left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  padding: .45rem 1rem; border-radius: 999px; background: #fff3c4; color: #7a5200;
-  border: 1px solid #e8c766; font-size: .95rem; font-weight: 700; text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+.board .board-header h1 { font-weight: 400; letter-spacing: .04em; }
+.board .board-header .date { color: #fbdbe5; }
+.board .board-header .clock { color: #fff7f9; font-weight: 400; }
+.board .board-header .board-nav { flex-wrap: wrap; }
+.board .board-header .board-nav a {
+  background: rgba(255, 247, 249, .2); border-color: transparent; color: #fff7f9;
 }
+.board .board-header .board-nav a:hover { background: rgba(255, 247, 249, .32); }
+.board .board-header .board-nav a.active { background: #fff7f9; border-color: #fff7f9; color: var(--accent); }
+
+/* 作業燈號頁：時鐘＋日期｜分隔線｜班名＋頁籤｜倒數日 */
+.band { justify-content: flex-start; gap: clamp(14px, 1.6vw, 28px); }
+.band-time { display: flex; flex-direction: column; gap: .15rem; flex-shrink: 0; }
+.band .clock { font-size: clamp(2.4rem, min(4.8vw, 7.5vh), 5.4rem); }
+.band .date { margin: 0; font-size: clamp(.95rem, 1.2vw, 1.4rem); }
+.band-divider { width: 2px; align-self: stretch; background: rgba(255, 247, 249, .35); flex-shrink: 0; }
+.band .board-title { flex: 1; min-width: 0; }
+.band .board-title h1 { font-size: clamp(1.7rem, 2.8vw, 3.2rem); }
+.band .countdown-strip { flex: 0 1 auto; flex-direction: column; align-items: stretch; justify-content: center; }
+.board-header .cd-chip { background: #fff7f9; border: none; color: #9c3d5f; font-weight: 400; }
+
+/* ---------- 燈號說明 ---------- */
+.board .legend { justify-content: center; }
+.orb-dot { display: inline-block; width: 1.15em; height: 1.15em; border-radius: 50%; vertical-align: -.2em; margin-right: .4em; }
+
+/* ---------- 櫃子（每項作業一個） ---------- */
+.board .assignments {
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  align-items: start; gap: clamp(12px, 1.3vw, 22px);
+}
+.cabinet {
+  display: flex; flex-direction: column; gap: clamp(6px, .6vw, 10px);
+  border: 2px solid var(--line); border-radius: 24px;
+  padding: clamp(10px, 1vw, 16px); overflow: hidden;
+}
+.cabinet .assignment-head { flex-direction: column; gap: .4rem; margin: 0; text-align: center; }
+.cabinet .assignment-head h2 { font-weight: 400; font-size: clamp(1.2rem, 1.7vw, 2rem); color: #5c3242; }
+.board .cabinet .badges { justify-content: center; flex-wrap: wrap; font-size: clamp(.9rem, 1.1vw, 1.3rem); }
+.board .badge { font-weight: 400; }
+.board .badge.red    { background: #fde2ea; color: #a3304f; }
+.board .badge.yellow { background: #fff0d4; color: #865600; }
+.board .badge.done   { background: #e6f3e2; color: #3b6b33; }
+
+/* 小層架：每一層下面一條粉色的架子 */
+.shelves { display: flex; flex-direction: column; gap: clamp(4px, .45vw, 7px); }
+.shelf {
+  display: grid; grid-template-columns: repeat(var(--per-row, 4), minmax(0, 1fr));
+  gap: clamp(6px, .6vw, 10px); padding: 3px 6px 6px;
+  border-bottom: 5px solid #ecc4d1; border-radius: 0 0 6px 6px;
+  background: linear-gradient(180deg, rgba(240, 200, 214, 0) 55%, rgba(240, 200, 214, .35) 100%);
+}
+
+/* ---------- 記憶球（柔亮版：反光點＋中心透光＋底部暖光＋外圈光暈） ---------- */
+.cabinet .seat {
+  width: 100%; max-width: clamp(40px, min(4.6vw, 6.3vh), 76px); justify-self: center;   /* 也看螢幕高度，矮螢幕不會被切掉 */
+  border: none; font-weight: 400; font-size: clamp(1rem, 1.5vw, 1.65rem);
+}
+.seat.orb, .orb-dot {
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .85) 9%, rgba(255, 255, 255, 0) 24%),
+    radial-gradient(circle at 50% 62%, var(--c0) 0%, var(--c1) 32%, var(--c2) 74%, var(--c3) 100%);
+  box-shadow: 0 0 12px 2px rgb(var(--glow) / .45), 0 4px 6px rgba(60, 40, 30, .2),
+    inset 0 -6px 9px rgba(255, 250, 240, .65), inset 0 2px 4px rgba(255, 255, 255, .6);
+}
+.orb-dot { box-shadow: 0 0 6px 1px rgb(var(--glow) / .45), inset 0 2px 3px rgba(255, 255, 255, .6); }
+.seat.orb { color: #fff; text-shadow: 0 1px 3px rgba(40, 25, 20, .8); animation: orbGlow 3.4s ease-in-out infinite; }
+.seat.orb:nth-child(2n) { animation-delay: -1.2s; }
+.seat.orb:nth-child(3n) { animation-delay: -2.3s; }
+@keyframes orbGlow { 50% { filter: brightness(1.07); } }
+
+.orb.green,  .orb-dot.green  { --c0: #f2faea; --c1: #bde0a4; --c2: #7cb663; --c3: #528a40; --glow: 124 182 99; }
+.orb.yellow, .orb-dot.yellow { --c0: #fffae8; --c1: #f8dd94; --c2: #e6b74c; --c3: #b18222; --glow: 230 183 76; }
+.orb.red,    .orb-dot.red    { --c0: #fdece7; --c1: #f0a596; --c2: #d6604f; --c3: #973629; --glow: 214 96 79; }
+.seat.orb.yellow, .seat.orb.honey { color: #4a3410; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); }
+/* 全班完成時的彩色記憶球 */
+.orb.pink     { --c0: #fdeff4; --c1: #f6bccd; --c2: #e486a3; --c3: #a9506e; --glow: 228 134 163; }
+.orb.peach    { --c0: #fff2e9; --c1: #f9c9a6; --c2: #ec9d68; --c3: #b2683a; --glow: 236 157 104; }
+.orb.honey    { --c0: #fffae8; --c1: #f8dd94; --c2: #e6b74c; --c3: #b18222; --glow: 230 183 76; }
+.orb.sage     { --c0: #f2faea; --c1: #bde0a4; --c2: #7cb663; --c3: #528a40; --glow: 124 182 99; }
+.orb.sky      { --c0: #eef6fd; --c1: #b7d8f2; --c2: #78aedc; --c3: #46789f; --glow: 120 174 220; }
+.orb.lavender { --c0: #f5f0fc; --c1: #d2c3ef; --c2: #a38bd7; --c3: #6d579f; --glow: 163 139 215; }
+
+/* ---------- 全班完成動畫 ---------- */
+.cabinet.celebrating { border-color: #e7b9c9; box-shadow: 0 0 0 4px rgba(236, 196, 209, .35), 0 8px 24px rgba(194, 93, 124, .15); }
+.seat.orb.party { animation: orbParty 2.4s ease-in-out infinite; }
+@keyframes orbParty { 50% { filter: brightness(1.12); transform: translateY(-2px); } }
+/* 架子只斜 4 度，右端不會沉到下一層，球球不會穿過別層的線 */
+.shelf.tilt { animation: shelfTilt 1.6s ease-in-out both; transform-origin: 0% 100%; }
+@keyframes shelfTilt { 0% { transform: rotate(0); } 15%, 82% { transform: rotate(4deg); } 100% { transform: rotate(0); } }
+/* 沿著自己的架子往右滾，從櫃子右邊離開 */
+.seat.orb.roll { animation: orbRoll 1s cubic-bezier(.55, 0, .85, .55) both; }
+@keyframes orbRoll { 0% { transform: translateX(0) rotate(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(300px) rotate(640deg); opacity: 0; } }
+.cabinet.vanish { animation: cabinetOut .7s ease-in both; }
+@keyframes cabinetOut { to { opacity: 0; transform: scale(.86) translateY(10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .seat.orb, .seat.orb.party, .seat.orb.roll, .shelf.tilt, .cabinet.vanish { animation: none; }
+}
+
+/* 窄螢幕（直立平板）：櫃子改成兩欄 */
+@media (max-width: 900px) {
+  .board .assignments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .band { flex-wrap: wrap; }
+  .band .countdown-strip { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* 後台：清除舊封存 */
+.purge-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.board .legend .mode-hint:empty { display: none; }
+/* 淺色球（綠、鼠尾草、蜜桃、天空）用深色數字，坐後排也看得清楚 */
+.seat.orb.green, .seat.orb.sage { color: #24451a; text-shadow: 0 1px 0 rgba(255, 255, 255, .65); }
+.seat.orb.peach { color: #5a2c10; text-shadow: 0 1px 0 rgba(255, 255, 255, .55); }
+.seat.orb.sky   { color: #1d3b57; text-shadow: 0 1px 0 rgba(255, 255, 255, .55); }
