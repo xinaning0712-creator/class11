@@ -1027,3 +1027,47 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 /* 後台題庫：Excel 範本與匯入 */
 .qz-file-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
 .qz-file-row a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* ---------- 📊 成績紀錄 ---------- */
+.rs-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin: .2rem 0 .6rem; }
+.rs-switch { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.rs-pill { border: 0; background: transparent; font: inherit; padding: .4rem 1rem; border-radius: 999px; color: var(--muted); cursor: pointer; min-height: 40px; }
+.rs-pill.active { background: var(--accent); color: var(--accent-ink); }
+.rs-filter { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); }
+.rs-filter select { font: inherit; padding: .35rem .6rem; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.rs-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+.rs-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.rs-table th, .rs-table td { padding: .55rem .7rem; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.rs-table th { font-weight: 400; color: var(--muted); background: var(--bg); position: sticky; top: 0; }
+.rs-table tbody tr:last-child td { border-bottom: 0; }
+.rs-num { text-align: right !important; }
+.rs-seat span { display: inline-flex; align-items: center; justify-content: center; min-width: 2em; height: 2em; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); }
+.rs-seat-row { cursor: pointer; }
+.rs-seat-row:hover td, .rs-seat-row.open td { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.rs-seat-row.none { cursor: default; opacity: .6; }
+.rs-seat-row.none:hover td { background: none; }
+.rs-rate { display: flex; align-items: center; gap: .5rem; }
+.rs-rate b { font-weight: 400; min-width: 3em; }
+.rs-bar { display: inline-block; width: 90px; height: 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; vertical-align: middle; flex: 0 0 auto; }
+.rs-bar i { display: block; height: 100%; border-radius: 999px; background: var(--muted); }
+.rs-bar.good i { background: #7fbf6a; }
+.rs-bar.mid i { background: #e6b94a; }
+.rs-bar.low i { background: #e0786a; }
+.rs-detail td { background: var(--bg); white-space: normal; }
+.rs-seat-games { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.rs-seat-games li { display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+.rs-when { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rs-src { color: var(--accent); }
+#rs-game-view { display: grid; gap: .6rem; }
+.rs-game { padding: 0; }
+.rs-game summary { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem 1rem; padding: .8rem 1rem; cursor: pointer; list-style-position: inside; }
+.rs-head { margin-left: auto; }
+.rs-body { padding: 0 1rem 1rem; display: grid; gap: .7rem; }
+.rs-teams { display: flex; flex-wrap: wrap; gap: .5rem; }
+.rs-team { padding: .3rem .8rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.rs-qs { margin: 0; padding-left: 1.6rem; display: grid; gap: .35rem; }
+.rs-qs li { padding-left: .2rem; }
+.rs-qs li > * { vertical-align: middle; margin-right: .6rem; }
+.rs-qs .rs-qlabel { display: inline-block; min-width: 12em; max-width: 26em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-qs b { font-weight: 400; }
+.rs-qs li.low b { color: #c0453a; }

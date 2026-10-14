@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610142113">
+  <link rel="stylesheet" href="css/style.css?v=202610142127">
 </head>
 <body class="admin">
   <!-- 登入 -->
@@ -47,6 +47,7 @@
       <button class="tab" type="button" data-tab="contact">📒 聯絡簿</button>
       <button class="tab" type="button" data-tab="countdown">⏳ 倒數日</button>
       <button class="tab" type="button" data-tab="quiz">🎮 題庫</button>
+      <button class="tab" type="button" data-tab="results">📊 成績紀錄</button>
       <a class="tab" href="gacha.html">扭蛋頁 ↗</a>
     </nav>
 
@@ -247,8 +248,51 @@
       </section>
       <input id="qz-file" type="file" accept="image/*" hidden>
     </main>
+
+    <!-- 📊 成績紀錄（全班對戰） -->
+    <main id="tab-results" class="tab-panel" hidden>
+      <div class="card qz-setup" id="rs-setup" hidden>
+        <p class="form-title">還差一步：先建立成績資料表</p>
+        <ol>
+          <li>打開 Supabase 專案，左邊選 <strong>SQL Editor</strong> → <strong>New query</strong>。</li>
+          <li>把專案裡的 <code>supabase/08_成績紀錄.sql</code> 整份複製貼上，按 <strong>Run</strong>。</li>
+          <li>回到這裡按「🔄 重新整理」。</li>
+        </ol>
+      </div>
+      <div class="rs-toolbar">
+        <div class="rs-switch" role="tablist" aria-label="檢視方式">
+          <button id="rs-view-seat" class="rs-pill active" type="button">👧 每個孩子</button>
+          <button id="rs-view-game" class="rs-pill" type="button">🎮 每一場</button>
+        </div>
+        <label class="rs-filter">期間
+          <select id="rs-range">
+            <option value="7">最近 7 天</option>
+            <option value="30">最近 30 天</option>
+            <option value="term" selected>這學期</option>
+            <option value="all">全部</option>
+          </select>
+        </label>
+        <label class="rs-filter">玩法
+          <select id="rs-mode">
+            <option value="">全部</option>
+            <option value="quiz">🎯 搶答</option>
+            <option value="tug">🪢 拔河</option>
+            <option value="marble">🔮 賽跑</option>
+          </select>
+        </label>
+        <button id="rs-refresh" class="btn" type="button">🔄 重新整理</button>
+        <button id="rs-export" class="btn primary" type="button">📥 匯出 Excel</button>
+      </div>
+      <p id="rs-summary" class="hint"></p>
+      <section id="rs-seat-view"></section>
+      <section id="rs-game-view" hidden></section>
+      <div class="purge-row">
+        <button id="rs-purge" class="btn ghost" type="button">🧹 清除半年前的成績</button>
+        <span class="hint">比賽結束時白板會自動存（白板電腦要開教室模式）。只存座號和暱稱，不存姓名。</span>
+      </div>
+    </main>
   </section>
 
-  <script type="module" src="js/admin.js?v=202610142113"></script>
+  <script type="module" src="js/admin.js?v=202610142127"></script>
 </body>
 </html>

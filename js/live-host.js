@@ -6,10 +6,10 @@
 // ============================================================
 import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
-  optionHTML, loadSets, toGameQuestion,
+  optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142113';
-import { qrSvg } from './qr.js?v=202610142113';
+} from './live-common.js?v=202610142127';
+import { qrSvg } from './qr.js?v=202610142127';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -147,9 +147,16 @@ function onJoin(p){
   if(S.kicked.has(p.id)){ send('kick',{to:p.id}); return; }
   let pl=S.players.get(p.id);
   const name=cleanName(p.name)||'小勇者';
-  if(!pl){
+  const seat=cleanSeat(p.seat);
+  // 同一個座號只能有一個人（成績才對得起來）
+  if(seat){
+    const other=Array.from(S.players.values()).find(o=>o.id!==p.id&&o.seat===seat);
+    if(other){ send('seat-taken',{ to:p.id, seat, name:other.name }); return; }
+  }
+  if(pl){ if(seat&&pl.seat!==seat){ pl.seat=seat; if(S.phase==='lobby') renderLobby(); } }
+  else{
     if(S.players.size>=MAX_PLAYERS){ send('full',{to:p.id}); return; }
-    pl={ id:p.id, name:uniqueName(name,p.id), team:-1, correct:0, wrong:0, score:0, streak:0, last:0 };
+    pl={ id:p.id, name:uniqueName(name,p.id), seat, team:-1, correct:0, wrong:0, answered:0, score:0, streak:0, last:0 };
     S.players.set(p.id,pl);
     if(isTeamMode(S.mode)) placeInSmallest(pl);
     sound.pop();
@@ -180,14 +187,15 @@ function syncFor(pl){
 /* ============================================================
    大廳
    ============================================================ */
-function chipHTML(pl){ return '<button class="chip" data-id="'+esc(pl.id)+'">'+esc(pl.name)+'</button>'; }
+function chipHTML(pl){ return '<button class="chip" data-id="'+esc(pl.id)+'">'+(pl.seat?'<span class="seat">'+pl.seat+'</span>':'')+esc(pl.name)+'</button>'; }
+const bySeat=(a,b)=>(a.seat||99)-(b.seat||99);
 function renderLobby(){
   $('playerCount').textContent=S.players.size;
   $('startBtn').disabled=S.players.size===0;
   const box=$('lobbyPlayers');
   $('reshuffleBtn').classList.toggle('hidden', !isTeamMode(S.mode));
   if(!S.players.size){ box.innerHTML='<div class="empty-hint">等待大家加入中…</div>'; return; }
-  const list=Array.from(S.players.values());
+  const list=Array.from(S.players.values()).sort(bySeat);
   if(isTeamMode(S.mode)){
     const n=teamCount(S.mode);
     let h='<div class="team-cols" style="grid-template-columns:repeat('+n+',1fr)">';
@@ -204,7 +212,7 @@ function renderLobby(){
 onTap($('lobbyPlayers'), (e,target)=>{
   const chip=target.closest('[data-id]'); if(!chip) return;
   const pl=S.players.get(chip.getAttribute('data-id')); if(!pl) return;
-  confirmBox('要請「'+esc(pl.name)+'」重新取一個暱稱嗎？', ()=>{
+  confirmBox('要把「'+esc(pl.name)+'」移出房間嗎？<br><small>（例如暱稱不適當，或同一個人重複加入）他可以重新加入。</small>', ()=>{
     S.players.delete(pl.id);
     send('kick',{to:pl.id});
     renderLobby(); broadcastTeams();
@@ -261,7 +269,7 @@ onTap($('lobbyBtn'), backToLobby);
 function startGame(){
   if(!S.players.size) return;
   clearTimers();
-  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.score=0; pl.streak=0; });
+  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; });
   assignTeams(false);
   S.phase='play';
   if(S.mode==='tug') startTug();
@@ -461,6 +469,7 @@ function endTeamGame(winner){
   if(g.mode==='marble') order.sort((a,b)=>g.prog[b]-g.prog[a]);
   else if(winner===1) order.reverse();
   send('end',{ mode:g.mode, winner, order, teamN:n, res });
+  saveTeamGame(g,winner,order);
   later(()=>showTeamEnd(g,winner,order), 1300);
 }
 function stars(){
@@ -564,7 +573,7 @@ function reveal(){
     const speed = ok ? Math.round(500+500*(1-a.ms/total)) : 0;
     const bonus = ok ? Math.min(LIVE.STREAK_MAX, (pl.streak-1)*LIVE.STREAK_STEP) : 0;
     const pts = speed + bonus;
-    if(a) counts[a.c]++;
+    if(a){ counts[a.c]++; pl.answered++; if(!ok) pl.wrong++; }
     if(ok){ pl.correct++; right++; }
     pl.score+=pts;
     // [答對?, 這題得分, 總分, 選了哪個, 名次, 花了幾毫秒, 連對幾題, 連對加分]
@@ -572,7 +581,7 @@ function reveal(){
   });
   const ranked=Array.from(S.players.values()).sort((a,b)=>b.score-a.score);
   ranked.forEach((pl,i)=>{ res[pl.id][4]=i+1; });
-  g.stats.push({ answered:g.answers.size, right });
+  g.stats.push({ answered:g.answers.size, right, label:qLabel(q) });
   send('reveal',{ i:g.i, correct:q.correctIndex, res });
   const max=Math.max(1,...counts);
   document.querySelectorAll('#qzOpts .tile').forEach((tile,i)=>{
@@ -618,6 +627,7 @@ function endQuiz(){
   const ranked=Array.from(S.players.values()).sort((a,b)=>b.score-a.score);
   const res={}; ranked.forEach((pl,i)=>{ res[pl.id]=[pl.score,i+1,pl.correct]; });
   send('end',{ mode:'quiz', res, total:g.stats.length });
+  saveQuiz(g,ranked);
   sound.win();
   S.phase='end';
   $('endTitle').textContent='🏆 搶答結果';
@@ -638,6 +648,88 @@ function endQuiz(){
 }
 
 /* ============================================================
+   📊 成績紀錄：比賽結束自動存到後台
+   ・要這台電腦已經「開教室模式」或「老師登入」才存得進去
+   ・只存座號和暱稱，不存姓名
+   ============================================================ */
+let saver=null;           // { db, role }；null = 還沒檢查或沒登入
+const noSave = isTestMode && !new URLSearchParams(location.search).has('save');   // 測試模式預設不存（網址加 &save=1 才存）
+async function getSaver(force){
+  if(noSave) return null;
+  if(saver&&!force) return saver;
+  try{
+    const m=await import('./db.js?v=202610142127');
+    const r=await m.findOperator();
+    saver= r.db ? r : null;
+  }catch(e){ saver=null; }
+  return saver;
+}
+async function showSaveState(){
+  const el=$('saveState');
+  if(noSave){ el.textContent='🧪 測試模式不會存成績'; el.className='save-state'; return; }
+  el.textContent='🔎 檢查成績紀錄…'; el.className='save-state';
+  const sv=await getSaver(true);
+  if(sv){ el.textContent='💾 比賽成績會自動存到後台'; el.className='save-state ok'; }
+  else{ el.textContent='⚠️ 這台電腦沒有開教室模式，成績不會存'; el.className='save-state warn'; }
+}
+function qLabel(q){
+  if(q.custom){
+    const t=String(q.text||'').replace(/\s+/g,' ').trim();
+    return t ? Array.from(t).slice(0,60).join('') : '（圖片題）';
+  }
+  if(q.type==='A') return '擴分 '+q.n+'/'+q.d+' = ?/'+(q.d*q.k);
+  if(q.type==='B') return '約分 '+(q.n*q.k)+'/'+(q.d*q.k);
+  return '和 '+q.n+'/'+q.d+' 相等';
+}
+function sourceName(){
+  return S.src ? Array.from(S.src.title).slice(0,70).join('') : '自動出題（'+(S.level==='hard'?'🔥 挑戰':'🌱 簡單')+'）';
+}
+function playerRows(sortKey){
+  const list=Array.from(S.players.values()).sort((a,b)=>b[sortKey]-a[sortKey]||bySeat(a,b));
+  return list.map((pl,i)=>({ seat:pl.seat||null, name:pl.name, team:isTeamMode(S.game&&S.game.mode)?pl.team:null,
+    correct:pl.correct, wrong:pl.wrong, answered:pl.answered||0, score:pl.score||0, rank:i+1 }));
+}
+function saveTeamGame(g,winner,order){
+  const n=g.mode==='tug'?2:g.n;
+  const teams=order.map(t=>({ team:t, name:TEAMS[t].name, emoji:TEAMS[t].emoji, correct:g.counts[t],
+    members:Array.from(S.players.values()).filter(pl=>pl.team===t).length,
+    progress:g.mode==='marble'?Math.round(g.prog[t]):undefined }));
+  const players=playerRows('correct');
+  if(!players.some(p=>p.correct+p.wrong>0)) return endSave('🙂 這一場沒有人作答，不用存成績','');
+  record(g,{ mode:g.mode, source:sourceName(), player_count:players.length, players,
+    summary:{ level:S.src?null:S.level, winner, winnerName:winner>=0?TEAMS[winner].name:null, teamN:n, teams } });
+}
+function saveQuiz(g){
+  if(!g.stats.length) return endSave('🙂 還沒有出題就結束了，不用存成績','');
+  const players=playerRows('score');
+  record(g,{ mode:'quiz', source:sourceName(), player_count:players.length, players,
+    summary:{ level:S.src?null:S.level, total:g.stats.length, questions:g.stats.map(s=>({ label:s.label, answered:s.answered, right:s.right })) } });
+}
+function endSave(text,cls,retry){
+  const el=$('endSave');
+  el.className='end-save'+(cls?' '+cls:'');
+  el.textContent=text;
+  if(retry){
+    const b=document.createElement('button');
+    b.className='btn'; b.style.marginLeft='10px'; b.textContent='🔄 再存一次';
+    onTap(b, retry);
+    el.appendChild(b);
+  }
+}
+async function record(g,row){
+  if(g.saved) return;
+  if(noSave){ endSave('🧪 測試模式不會存成績',''); return; }
+  endSave('💾 成績儲存中…','');
+  const sv=await getSaver(false);
+  if(!sv){ endSave('⚠️ 成績沒有存：這台電腦沒有開教室模式（到班網主畫面的 ⚙️ 設定開啟）','warn',()=>{ saver=null; record(g,row); }); return; }
+  const { error }=await sv.db.from('game_results').insert(row);
+  if(!error){ g.saved=true; endSave('✅ 成績已存到後台（📊 成績紀錄）','ok'); return; }
+  const m=String(error.code||'')+' '+String(error.message||'');
+  if(/game_results|42P01|PGRST205|does not exist/i.test(m)) endSave('⚠️ 成績沒有存：還沒建立成績資料表（請先執行 08_成績紀錄.sql）','warn',()=>record(g,row));
+  else endSave('⚠️ 成績沒有存好（網路不穩？）','warn',()=>record(g,row));
+}
+
+/* ============================================================
    小工具：確認框、音效開關
    ============================================================ */
 let modalYes=null;
@@ -650,3 +742,4 @@ document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { on
 renderLobby();
 openRoom();
 refreshSets();
+showSaveState();

@@ -10,7 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 VERSION = time.strftime('%Y%m%d%H%M')
 
 HTML_REF = re.compile(r'((?:href|src)="(?:css|js)/[^"?]+\.(?:css|js))(?:\?v=[^"]*)?"')
-JS_IMPORT = re.compile(r"""(from\s+'\./[^'?]+\.js)(?:\?v=[^']*)?'""")
+JS_IMPORT = re.compile(r"""((?:from\s+|import\(\s*)'\./[^'?]+\.js)(?:\?v=[^']*)?'""")
 
 changed = []
 for path in ROOT.glob('*.html'):

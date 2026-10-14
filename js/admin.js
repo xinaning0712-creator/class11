@@ -1,10 +1,11 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610142113';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610142113';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610142113';
-import * as gacha from './admin-gacha.js?v=202610142113';
-import * as countdown from './admin-countdown.js?v=202610142113';
-import * as quizbank from './admin-quiz.js?v=202610142113';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610142127';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610142127';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610142127';
+import * as gacha from './admin-gacha.js?v=202610142127';
+import * as countdown from './admin-countdown.js?v=202610142127';
+import * as quizbank from './admin-quiz.js?v=202610142127';
+import * as results from './admin-results.js?v=202610142127';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
@@ -29,7 +30,8 @@ async function showApp() {
   gacha.init(db);
   countdown.init(db);
   quizbank.init(db);
-  await Promise.all([load(), gacha.load(), loadContact(), countdown.load(), quizbank.load()]);
+  results.init(db);
+  await Promise.all([load(), gacha.load(), loadContact(), countdown.load(), quizbank.load(), results.load()]);
   const reloadGacha = debounce(gacha.load, 300);
   db.channel('admin')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lights' }, reload)

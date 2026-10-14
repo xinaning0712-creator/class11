@@ -4,8 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610142113';
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142113';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142127';
+export { SEAT_COUNT };
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142127';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -198,6 +199,11 @@ export async function loadSets(){
 export function cleanName(s){
   const t=String(s||'').replace(/\s+/g,' ').trim();
   return Array.from(t).slice(0,LIVE.NAME_MAX).join('');
+}
+/* 座號：1～SEAT_COUNT 的整數，其他一律當作沒選（0） */
+export function cleanSeat(v){
+  const n=Number(v);
+  return Number.isInteger(n)&&n>=1&&n<=SEAT_COUNT ? n : 0;
 }
 export function randomId(){
   return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);

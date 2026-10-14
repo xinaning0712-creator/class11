@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610142113">
+<link rel="stylesheet" href="css/live.css?v=202610142127">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -32,6 +32,11 @@
   min-height:44px; padding:4px 14px; border-radius:999px; font-size:clamp(1rem,1.6vw,1.3rem); font-weight:800;
   background:#fff; border:3px solid var(--cream-d); animation:pop .35s ease;
 }
+.chip .seat{display:inline-block; min-width:1.5em; margin-right:6px; padding:0 6px; border-radius:999px; background:var(--cream); color:#8b3550; font-size:.85em; text-align:center}
+.save-state{margin-top:6px; font-weight:800; font-size:.95rem; color:var(--muted)}
+.save-state.ok{color:var(--ok)} .save-state.warn{color:#b26a00}
+.end-save{margin-top:10px; font-weight:800; font-size:1rem; color:var(--muted); text-align:center}
+.end-save.ok{color:var(--ok)} .end-save.warn{color:#b26a00}
 .empty-hint{color:var(--muted); font-weight:700; padding:16px 4px}
 .mode-list{display:flex; flex-direction:column; gap:10px}
 .mode-btn{
@@ -168,6 +173,7 @@
           <div id="roomCode" class="room-code">----</div>
           <span id="netDot" class="net-dot">連線中…</span>
           <div id="pathCheck" class="path"></div>
+          <div id="saveState" class="save-state"></div>
           <div><span id="testBadge" class="test-badge hidden">🧪 測試模式（同一台電腦）</span></div>
           <button id="retryBtn" class="btn hidden" style="margin-top:10px">🔄 重新連線</button>
         </div>
@@ -295,6 +301,7 @@
       <div class="card end-card">
         <div id="endTitle" class="end-title"></div>
         <div id="endBody" class="end-body"></div>
+        <div id="endSave" class="end-save"></div>
         <div class="btn-row">
           <button id="againBtn" class="btn btn-rose big">🔄 再玩一次</button>
           <button id="lobbyBtn" class="btn btn-milk big">🏠 回大廳換玩法</button>
@@ -314,6 +321,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610142113"></script>
+<script type="module" src="js/live-host.js?v=202610142127"></script>
 </body>
 </html>

@@ -7,13 +7,13 @@
 import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
-  cleanName, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142113';
+  cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store
+} from './live-common.js?v=202610142127';
 
 const $ = id => document.getElementById(id);
 const P = {
   id: store.get('fr-id') || randomId(),
-  name:'', code:'', net:null, joined:false, tries:0, joinTimer:null,
+  name:'', seat:0, code:'', net:null, joined:false, tries:0, joinTimer:null,
   mode:null, level:'easy', team:-1, teamN:2, set:null, deck:null,
   q:null, locked:false, playing:false, correct:0, score:0, quiz:null,
   timerId:null, endsAt:0, token:0, screen:'pJoin'
@@ -53,11 +53,32 @@ function stopCountdown(){ if(P.timerId){ clearInterval(P.timerId); P.timerId=nul
 /* ============================================================
    加入房間
    ============================================================ */
+/* ── 座號按鈕 ── */
+function buildSeats(){
+  const box=$('seatGrid'); let h='';
+  for(let i=1;i<=SEAT_COUNT;i++) h+='<button type="button" class="seat-btn" data-seat="'+i+'">'+i+'</button>';
+  box.innerHTML=h;
+  markSeat();
+}
+function markSeat(){
+  $('seatGrid').querySelectorAll('[data-seat]').forEach(b=>{
+    const on=Number(b.getAttribute('data-seat'))===P.seat;
+    b.classList.toggle('selected',on); b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+onTap($('seatGrid'), (e,target)=>{
+  const b=target.closest('[data-seat]'); if(!b) return;
+  P.seat=cleanSeat(b.getAttribute('data-seat')); markSeat(); sound.pop();
+  if(/座號/.test($('joinMsg').textContent)) msg('');
+});
+const joinInfo=()=>({ id:P.id, name:P.name, seat:P.seat });
+
 async function doJoin(){
   const code=$('codeIn').value.replace(/\D/g,'').slice(0,4);
   const name=cleanName($('nameIn').value);
   if(code.length!==4){ msg('請輸入白板上的 4 位數代碼'); return; }
   if(!name){ msg('請幫自己取一個暱稱'); return; }
+  if(!P.seat){ msg('請點選你的座號'); return; }
   P.code=code; P.name=name; P.joined=false;
   $('joinBtn').disabled=true; msg('連線中…');
   try{
@@ -67,7 +88,7 @@ async function doJoin(){
   P.tries=0; sendJoin();
 }
 function sendJoin(){
-  send('join',{ id:P.id, name:P.name });
+  send('join',joinInfo());
   clearTimeout(P.joinTimer);
   P.joinTimer=setTimeout(()=>{
     if(P.joined) return;
@@ -98,13 +119,17 @@ function handle(event,p){
     case 'welcome':
       P.joined=true; clearTimeout(P.joinTimer);
       P.name=cleanName(p.name)||P.name;
-      store.set('fr-code',P.code); store.set('fr-name',P.name);
+      store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
       $('joinBtn').disabled=false; msg('');
       applySync(p.sync||{});
       return;
     case 'kick': kicked(); return;
     case 'full': fail('房間人數已滿，請找老師幫忙'); return;
-    case 'rollcall': if(P.joined) send('join',{ id:P.id, name:P.name }); return;
+    case 'seat-taken':
+      P.joined=false; clearTimeout(P.joinTimer); store.del('fr-code');
+      fail(cleanSeat(p.seat)+' 號已經有人加入了（'+(cleanName(p.name)||'？')+'）。請確認座號；如果真的是你，請老師在白板上點那個名字移除，再加入一次。');
+      return;
+    case 'rollcall': if(P.joined) send('join',joinInfo()); return;
   }
   if(!P.joined) return;
   switch(event){
@@ -120,7 +145,7 @@ function handle(event,p){
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
       P.level=LEVELS[p.level]?p.level:'easy';
       useSet(p.set);
-      if(P.team<0){ showWait(); send('join',{ id:P.id, name:P.name }); break; }  // 剛好晚一步加入：再報到一次拿隊伍
+      if(P.team<0){ showWait(); send('join',joinInfo()); break; }  // 剛好晚一步加入：再報到一次拿隊伍
       startPlay({ left:p.left, correct:0 });
       break;
     case 'q': showQuizQ(p); break;
@@ -151,7 +176,7 @@ function kicked(){
   store.del('fr-code'); store.del('fr-name');
   $('nameIn').value='';
   $('joinBtn').disabled=false;
-  msg('老師請你換一個暱稱再加入喔 🙂');
+  msg('老師請你重新加入一次（可以換一個暱稱）🙂');
   showScreen('pJoin');
 }
 
@@ -161,7 +186,7 @@ function teamBadgeHTML(t,cls){
   return '<span class="'+(cls||'team-badge')+'" style="border-color:'+T.color+';color:'+T.deep+'">'+T.emoji+' '+T.name+' '+T.animal+'</span>';
 }
 function showWait(){
-  $('waitHello').textContent='嗨，'+P.name+'！';
+  $('waitHello').textContent='嗨，'+P.name+'！'+(P.seat?'（'+P.seat+' 號）':'');
   const teamMode=(P.mode==='tug'||P.mode==='marble')&&P.team>=0;
   $('waitTeam').innerHTML= teamMode ? '你是 '+teamBadgeHTML(P.team) : '';
   const label={ tug:'🪢 準備全班拔河！', marble:'🔮 準備玻璃球賽跑！', quiz:'🎯 準備搶答大挑戰！' }[P.mode]||'';
@@ -324,4 +349,6 @@ document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { on
 const urlCode=(new URLSearchParams(location.search).get('code')||'').replace(/\D/g,'').slice(0,4);
 $('codeIn').value=urlCode||store.get('fr-code')||'';
 $('nameIn').value=store.get('fr-name')||'';
-if(store.get('fr-code')&&store.get('fr-name')) doJoin();   // 重新整理後自動回到房間
+P.seat=cleanSeat(store.get('fr-seat'));
+buildSeats();
+if(store.get('fr-code')&&store.get('fr-name')&&P.seat) doJoin();   // 重新整理後自動回到房間

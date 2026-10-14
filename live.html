@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610142113">
+<link rel="stylesheet" href="css/live.css?v=202610142127">
 <style>
 .center{max-width:720px; margin:0 auto; text-align:center}
 .join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
@@ -20,6 +20,11 @@
 #codeIn{letter-spacing:.3em}
 .msg{min-height:1.6em; margin-top:12px; font-weight:800; font-size:1.15rem; color:#b2453f}
 #joinBtn{width:100%; margin-top:18px}
+.seat-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
+.seat-btn{height:56px; border-radius:14px; border:3px solid var(--cream-d); background:#fff; color:var(--ink);
+  font:inherit; font-size:1.5rem; font-weight:900; font-variant-numeric:tabular-nums; box-shadow:0 3px 0 var(--cream-d)}
+.seat-btn.selected{background:var(--rose-d); border-color:var(--rose-d); color:#fff; box-shadow:0 3px 0 #b8476a; transform:translateY(1px)}
+.seat-note{font-size:.95rem; font-weight:700; color:var(--muted); text-align:left; margin-top:6px}
 .team-badge{display:inline-flex; align-items:center; gap:10px; padding:8px 22px; border-radius:999px; border:4px solid; font-size:clamp(1.3rem,3.6vw,2rem); font-weight:900; background:#fff}
 .wait-anim{font-size:4rem; animation:bob 1.4s ease-in-out infinite; margin:12px 0}
 @keyframes bob{50%{transform:translateY(-12px) rotate(8deg)}}
@@ -79,6 +84,9 @@
         <input id="codeIn" class="inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
         <label class="field" for="nameIn">😊 你的暱稱</label>
         <input id="nameIn" class="inp" type="text" maxlength="8" autocomplete="off" placeholder="最多 8 個字">
+        <div class="field">🪑 你的座號</div>
+        <div id="seatGrid" class="seat-grid" role="group" aria-label="選座號"></div>
+        <div class="seat-note">座號是給老師登記成績用的，選自己的號碼喔！</div>
         <button id="joinBtn" class="btn btn-rose big">🚀 加入</button>
         <div id="joinMsg" class="msg"></div>
       </div>
@@ -140,6 +148,6 @@
     </section>
   </main>
 </div>
-<script type="module" src="js/live-play.js?v=202610142113"></script>
+<script type="module" src="js/live-play.js?v=202610142127"></script>
 </body>
 </html>
