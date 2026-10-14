@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>分數大冒險・全班連線（白板）</title>
-<link rel="stylesheet" href="css/live.css?v=202610141924">
+<link rel="stylesheet" href="css/live.css?v=202610141948">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -38,6 +38,15 @@
 .mode-btn.selected{background:linear-gradient(180deg,#fff,#fde3ea); border-color:var(--rose-d); box-shadow:0 4px 0 var(--rose-d),0 0 0 4px rgba(236,140,168,.3)}
 .opt-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-weight:800; font-size:1.1rem}
 .opt-row .btn{padding:6px 14px; min-height:48px}
+.src-row{flex-wrap:nowrap}
+.src-sel{flex:1; min-width:0; min-height:52px; font:inherit; font-size:1.05rem; font-weight:800; color:var(--ink); padding:6px 10px;
+  border:3px solid var(--cream-d); border-radius:14px; background:#fff}
+.src-info{margin-top:6px; color:var(--muted); font-weight:800}
+.src-info:empty{display:none}
+.q-img{display:block; max-width:100%; max-height:32cqh; margin:6px auto 0; border-radius:14px; object-fit:contain}
+.q-words{display:block}
+.opt-words{line-height:1.25; word-break:break-word}
+.tile .opt-words{font-size:.8em; padding:0 .6em; text-align:center}
 #startBtn{width:100%; margin-top:14px}
 
 /* ── 遊戲畫面共用 ── */
@@ -170,7 +179,12 @@
             <button class="mode-btn" data-mode="quiz"><span class="m-ico">🎯</span><b>搶答大挑戰</b><small>全班同一題，又對又快分數高</small></button>
             <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>每隊一顆玻璃球，看哪隊先到終點</small></button>
           </div>
-          <div class="opt-row">難度
+          <div class="opt-row src-row">題目
+            <select id="srcSel" class="src-sel" aria-label="題目來源"><option value="auto">🎲 自動出題：分數擴分約分</option></select>
+            <button id="srcRefresh" class="btn" aria-label="重新讀取題組" title="重新讀取題組">🔄</button>
+          </div>
+          <div id="srcInfo" class="src-info"></div>
+          <div id="optLevel" class="opt-row">難度
             <button class="btn level-btn selected" data-level="easy">🌱 簡單</button>
             <button class="btn level-btn" data-level="hard">🔥 挑戰</button>
           </div>
@@ -183,6 +197,10 @@
             <button class="btn qn-btn" data-n="5">5 題</button>
             <button class="btn qn-btn selected" data-n="10">10 題</button>
             <button class="btn qn-btn" data-n="15">15 題</button>
+          </div>
+          <div id="optOrder" class="opt-row hidden">順序
+            <button class="btn order-btn selected" data-order="1">照題組順序</button>
+            <button class="btn order-btn" data-order="0">打亂</button>
           </div>
           <button id="startBtn" class="btn btn-rose big" disabled>▶️ 開始！</button>
         </div>
@@ -287,6 +305,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610141924"></script>
+<script type="module" src="js/live-host.js?v=202610141948"></script>
 </body>
 </html>

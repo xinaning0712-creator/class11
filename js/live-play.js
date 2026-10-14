@@ -6,14 +6,15 @@
 // ============================================================
 import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
+  optionHTML, cleanSet, makeDeck,
   cleanName, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610141924';
+} from './live-common.js?v=202610141948';
 
 const $ = id => document.getElementById(id);
 const P = {
   id: store.get('fr-id') || randomId(),
   name:'', code:'', net:null, joined:false, tries:0, joinTimer:null,
-  mode:null, level:'easy', team:-1, teamN:2,
+  mode:null, level:'easy', team:-1, teamN:2, set:null, deck:null,
   q:null, locked:false, playing:false, correct:0, score:0, quiz:null,
   timerId:null, endsAt:0, token:0, screen:'pJoin'
 };
@@ -118,6 +119,7 @@ function handle(event,p){
     case 'start':
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
       P.level=LEVELS[p.level]?p.level:'easy';
+      useSet(p.set);
       if(P.team<0){ showWait(); send('join',{ id:P.id, name:P.name }); break; }  // 剛好晚一步加入：再報到一次拿隊伍
       startPlay({ left:p.left, correct:0 });
       break;
@@ -128,7 +130,7 @@ function handle(event,p){
 }
 function applySync(s){
   if(s.phase==='play'){
-    P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN;
+    P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN; useSet(s.set);
     P.team=Number.isInteger(s.team)?s.team:-1;
     if(P.team>=0){ startPlay({ left:s.left, correct:s.correct }); return; }
   }else if(s.phase==='quiz-q'){
@@ -166,6 +168,8 @@ function showWait(){
   $('waitText').textContent=(label?label+' ':'')+'等老師按開始…';
   showScreen('pWait');
 }
+/* 老師選了自訂題組：在 iPad 上建一台抽題機 */
+function useSet(raw){ P.set=raw?cleanSet(raw):null; P.deck=P.set?makeDeck(P.set):null; }
 function endPlaying(){ P.playing=false; P.token++; stopCountdown(); }
 
 /* ============================================================
@@ -186,11 +190,11 @@ function startPlay(s){
 }
 function nextPlayQ(){
   if(!P.playing) return;
-  P.q=makeQuestion(P.level);
+  P.q=P.deck ? P.deck() : makeQuestion(P.level);
   $('playType').textContent=typeLabel(P.q);
   $('playPrompt').innerHTML=promptHTML(P.q);
   const T=TEAMS[P.team]||TEAMS[0];
-  $('playOpts').innerHTML=P.q.options.map((o,i)=>'<button class="opt" data-index="'+i+'" style="border-color:'+T.light+'">'+fracHTML(o.n,o.d)+'</button>').join('');
+  $('playOpts').innerHTML=P.q.options.map((o,i)=>'<button class="opt" data-index="'+i+'" style="border-color:'+T.light+'">'+optionHTML(o,P.q)+'</button>').join('');
   $('playOpts').classList.remove('locked');
   P.locked=false;
 }
@@ -241,7 +245,7 @@ function showQuizQ(s){
   $('quizType').textContent=typeLabel(q);
   $('quizPrompt').innerHTML=promptHTML(q);
   $('quizOpts').innerHTML=q.options.map((o,i)=>
-    '<button class="opt color" data-index="'+i+'" style="background:'+CHOICES[i].color+';border-color:'+CHOICES[i].color+'"><span class="shape">'+CHOICES[i].shape+'</span>'+fracHTML(o.n,o.d)+'</button>').join('');
+    '<button class="opt color" data-index="'+i+'" style="background:'+CHOICES[i].color+';border-color:'+CHOICES[i].color+'"><span class="shape">'+CHOICES[i].shape+'</span>'+optionHTML(o,q)+'</button>').join('');
   $('quizTimeup').classList.add('hidden');
   showScreen('pQuiz');
   startCountdown($('quizTimer'), s.left, ()=>{ if(P.quiz&&!P.quiz.picked){ P.quiz.picked=true; $('quizTimeup').classList.remove('hidden'); } });
@@ -269,10 +273,10 @@ function showReveal(p){
   let h;
   if(ok){ h='<div class="result-big">✅ 答對了！</div><div class="result-sub">+'+pts+' 分</div>'; sound.correct(); }
   else{
-    const c=Number.isInteger(p.correct)&&p.correct>=0&&p.correct<4 ? p.correct : 0;
+    const c=Number.isInteger(p.correct)&&p.correct>=0&&p.correct<z.q.options.length ? p.correct : 0;
     const o=z.q.options[c];
     h= choice<0 ? '<div class="result-big">⏰ 來不及了！</div>' : '<div class="result-big">❌ 差一點！</div>';
-    h+='<div class="result-sub">正確答案是 <span style="color:'+CHOICES[c].color+'">'+CHOICES[c].shape+'</span> '+fracHTML(o.n,o.d)+'</div>';
+    h+='<div class="result-sub">正確答案是 <span style="color:'+CHOICES[c].color+'">'+CHOICES[c].shape+'</span> '+optionHTML(o,z.q)+'</div>';
     sound.wrong();
   }
   h+='<div class="score-line">目前 '+total+' 分'+(total>0&&rank>0&&rank<=3?'・第 '+rank+' 名 🎉':'・繼續加油！')+'</div>';

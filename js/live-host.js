@@ -6,8 +6,9 @@
 // ============================================================
 import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
+  optionHTML, loadSets, toGameQuestion,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610141924';
+} from './live-common.js?v=202610141948';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -15,6 +16,7 @@ const MAX_PLAYERS = 40;
 /* ── 狀態 ── */
 const S = {
   code:'', net:null, mode:'tug', level:'easy', teamN:3, quizN:LIVE.QUIZ_COUNT,
+  sets:[], src:null, inOrder:true,   // src：選用的題組（null = 自動出分數題）
   phase:'lobby',               // lobby | play | end
   players:new Map(),           // id → {id,name,team,correct,wrong,score,last}
   kicked:new Set(),
@@ -124,6 +126,7 @@ function assignTeams(reshuffle){
     }
   }
 }
+function setPayload(){ return S.src ? { title:S.src.title, frac:S.src.frac, shuffle:S.src.shuffle, questions:S.src.questions } : null; }
 function teamMap(){ const m={}; S.players.forEach(pl=>{ m[pl.id]=pl.team; }); return m; }
 
 let teamsTimer=null;
@@ -160,7 +163,7 @@ function syncFor(pl){
       if(g.qPhase==='q') return { phase:'quiz-q', i:g.i, total:g.qs.length, q:publicQ(g.qs[g.i]), left:Math.max(1,Math.ceil((g.endsAt-performance.now())/1000)), score:pl.score };
       return { phase:'quiz-wait', total:g.qs.length, score:pl.score };
     }
-    return { phase:'play', mode:g.mode, level:S.level, team:pl.team, teamN:teamCount(g.mode),
+    return { phase:'play', mode:g.mode, level:S.level, set:g.set, team:pl.team, teamN:teamCount(g.mode),
              left:Math.max(1,Math.ceil((g.endsAt-performance.now())/1000)), correct:pl.correct };
   }
   return { phase:'lobby', mode:S.mode, team:isTeamMode(S.mode)?pl.team:-1, teamN:teamCount(S.mode) };
@@ -205,7 +208,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>onTap(btn,()=>{
   S.mode=btn.dataset.mode;
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('selected',b===btn));
   $('optMarble').classList.toggle('hidden', S.mode!=='marble');
-  $('optQuiz').classList.toggle('hidden', S.mode!=='quiz');
+  applySrc();
   assignTeams(false); renderLobby(); broadcastTeams(); sound.pop();
 }));
 function radio(selector, onPick){
@@ -215,6 +218,31 @@ function radio(selector, onPick){
   }));
 }
 radio('.level-btn', b=>{ S.level=b.dataset.level; });
+
+/* ── 題目來源：自動出分數題，或老師在後台建的題組 ── */
+async function refreshSets(){
+  $('srcSel').disabled=true;
+  S.sets=await loadSets();
+  const keep=S.src&&S.src.id;
+  const sel=$('srcSel');
+  sel.innerHTML='<option value="auto">🎲 自動出題：分數擴分約分</option>'
+    + S.sets.map((s,i)=>'<option value="'+i+'">📚 '+esc(s.title)+'（'+s.questions.length+' 題）</option>').join('');
+  const idx=S.sets.findIndex(s=>s.id===keep);
+  sel.value= idx>=0 ? String(idx) : 'auto';
+  sel.disabled=false;
+  applySrc();
+}
+function applySrc(){
+  const v=$('srcSel').value;
+  S.src= v==='auto' ? null : S.sets[parseInt(v,10)]||null;
+  $('optLevel').classList.toggle('hidden', !!S.src);
+  $('optQuiz').classList.toggle('hidden', S.mode!=='quiz'||!!S.src);
+  $('optOrder').classList.toggle('hidden', S.mode!=='quiz'||!S.src);
+  $('srcInfo').textContent= S.src ? S.src.subject+'・'+S.src.questions.length+' 題'+(S.mode==='quiz'?'':'（每個人隨機抽題）') : '';
+}
+$('srcSel').addEventListener('change', ()=>{ applySrc(); sound.pop(); });
+onTap($('srcRefresh'), refreshSets);
+radio('.order-btn', b=>{ S.inOrder=b.dataset.order==='1'; });
 radio('.teamn-btn', b=>{ S.teamN=parseInt(b.dataset.n,10); assignTeams(false); renderLobby(); broadcastTeams(); });
 radio('.qn-btn',    b=>{ S.quizN=parseInt(b.dataset.n,10); });
 
@@ -296,7 +324,8 @@ function startTug(){
   [0,1].forEach(t=>{ $('tugScore'+t).querySelector('b').textContent='0'; $('finish'+t).classList.remove('danger'); });
   renderTugChips(); renderTimer('tugTimer', g.left);
   showScreen('scrTug');
-  send('start',{ mode:'tug', level:S.level, left:LIVE.TUG_SECONDS, teamN:2, map:teamMap() });
+  g.set=setPayload();
+  send('start',{ mode:'tug', level:S.level, set:g.set, left:LIVE.TUG_SECONDS, teamN:2, map:teamMap() });
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
     if(left!==g.left){ g.left=left; renderTimer('tugTimer',left); }
@@ -356,7 +385,8 @@ function startMarble(){
   $('mbTicker').innerHTML='';
   renderTimer('mbTimer',g.left);
   showScreen('scrMarble');
-  send('start',{ mode:'marble', level:S.level, left:LIVE.MARBLE_SECONDS, teamN:n, map:teamMap() });
+  g.set=setPayload();
+  send('start',{ mode:'marble', level:S.level, set:g.set, left:LIVE.MARBLE_SECONDS, teamN:n, map:teamMap() });
   every(()=>{
     const left=Math.max(0,Math.ceil((g.endsAt-performance.now())/1000));
     if(left!==g.left){ g.left=left; renderTimer('mbTimer',left); }
@@ -455,9 +485,16 @@ onTap($('mbStop'), ()=>confirmBox('要提早結束這一場嗎？',()=>{
 /* ============================================================
    🎯 搶答大挑戰
    ============================================================ */
-function publicQ(q){ return { type:q.type, n:q.n, d:q.d, k:q.k, options:q.options.map(o=>({n:o.n,d:o.d})) }; }
+function publicQ(q){
+  if(q.custom) return { custom:true, title:q.title, frac:q.frac, text:q.text, img:q.img, options:q.options.slice() };
+  return { type:q.type, n:q.n, d:q.d, k:q.k, options:q.options.map(o=>({n:o.n,d:o.d})) };
+}
 function startQuiz(){
-  const qs=[]; for(let i=0;i<S.quizN;i++) qs.push(makeQuestion(S.level));
+  let qs=[];
+  if(S.src){
+    const list=S.inOrder ? S.src.questions.slice() : shuffle(S.src.questions);
+    qs=list.map(q=>toGameQuestion(q,S.src));
+  }else{ for(let i=0;i<S.quizN;i++) qs.push(makeQuestion(S.level)); }
   S.game={ mode:'quiz', qs, i:-1, qPhase:null, answers:new Map(), stats:[], endsAt:0, left:0, running:true };
   showScreen('scrQuiz');
   nextQuestion();
@@ -480,7 +517,7 @@ function nextQuestion(){
   $('qzOpts').classList.remove('hidden');
   $('qzPromptCard').classList.remove('hidden');
   $('qzOpts').innerHTML=q.options.map((o,i)=>
-    '<div class="tile" style="background:'+CHOICES[i].color+'"><span class="shape">'+CHOICES[i].shape+'</span>'+fracHTML(o.n,o.d)
+    '<div class="tile" style="background:'+CHOICES[i].color+'"><span class="shape">'+CHOICES[i].shape+'</span>'+optionHTML(o,q)
     +'<span class="count hidden"></span><span class="trap hidden"></span><div class="bar"></div></div>').join('');
   $('qzNext').textContent='⏩ 提早公布';
   renderAnswered();
@@ -499,7 +536,7 @@ function nextQuestion(){
 function onPick(p){
   const g=S.game, pl=S.players.get(p.id);
   if(!pl||!g||g.mode!=='quiz'||g.qPhase!=='q'||p.i!==g.i||g.answers.has(pl.id)) return;
-  if(!Number.isInteger(p.c)||p.c<0||p.c>3) return;
+  if(!Number.isInteger(p.c)||p.c<0||p.c>=g.qs[g.i].options.length) return;
   const ms=Math.max(0,Math.min(LIVE.QUIZ_SECONDS*1000, Number(p.ms)||0));
   g.answers.set(pl.id,{ c:p.c, ms });
   renderAnswered();
@@ -532,7 +569,7 @@ function reveal(){
     if(i===q.correctIndex) tile.classList.add('right');
     else{
       tile.classList.add('dim');
-      const lab=TRAP_LABEL[q.options[i].tag];
+      const lab=q.custom?null:TRAP_LABEL[q.options[i].tag];
       if(lab&&counts[i]>0){ tr.textContent=lab; tr.classList.remove('hidden'); }
     }
   });
@@ -599,3 +636,4 @@ document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { on
 
 renderLobby();
 openRoom();
+refreshSets();

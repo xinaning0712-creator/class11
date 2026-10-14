@@ -4,7 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610141924';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610141948';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610141948';
+export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
 export const LIVE = {
@@ -136,6 +138,13 @@ export function makeQuestion(level){
 
 /* 檢查從網路收到的題目格式（只接受整數，避免奇怪的內容被顯示） */
 export function cleanQuestion(q){
+  if(q&&q.custom){
+    const text=typeof q.text==='string'?q.text.slice(0,300):'';
+    const img=cleanImg(q.img);
+    const options=Array.isArray(q.options)?q.options.slice(0,4).map(o=>typeof o==='string'?o.slice(0,80):''):[];
+    if((!text&&!img)||options.length<2||options.some(o=>!o)) return null;
+    return { custom:true, frac:q.frac===true, title:typeof q.title==='string'?q.title.slice(0,40):'', text, img, options };
+  }
   if(!q||!['A','B','C'].includes(q.type)) return null;
   const ints=[q.n,q.d,q.k].every(v=>Number.isInteger(v)&&v>0&&v<=200);
   if(!ints||!Array.isArray(q.options)||q.options.length!==4) return null;
@@ -156,12 +165,31 @@ export function fracHTML(n,d,cls){
 }
 const QMARK='<span class="qmark">?</span>';
 export function typeLabel(q){
+  if(q.custom) return '📚 '+(q.title||'題組');
   return q.type==='A' ? '📝 擴分填空' : q.type==='B' ? '✂️ 約成最簡分數' : '⚖️ 判斷相等';
 }
 export function promptHTML(q){
+  if(q.custom) return (q.text?'<span class="q-words">'+richText(q.text,q.frac)+'</span>':'')+(q.img?'<img class="q-img" src="'+esc(q.img)+'" alt="題目圖片">':'');
   if(q.type==='A') return fracHTML(q.n,q.d)+'<span class="eq">=</span><span class="frac"><span class="num">'+QMARK+'</span><span class="den">'+num(q.d*q.k)+'</span></span>';
   if(q.type==='B') return '把 '+fracHTML(q.n*q.k,q.d*q.k)+' 約成最簡分數';
   return '哪一個和 '+fracHTML(q.n,q.d)+' 一樣大？';
+}
+
+/* 選項的顯示（分數題是上下排版的分數；自訂題是文字） */
+export function optionHTML(o,q){
+  return q&&q.custom ? '<span class="opt-words">'+richText(o,q.frac)+'</span>' : fracHTML(o.n,o.d);
+}
+
+/* 白板讀取老師在後台建好的題組（測試模式用示範題組） */
+export async function loadSets(){
+  if(isTestMode) return [cleanSet(DEMO_SET)];
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/quiz_sets?select=id,title,subject,frac,shuffle,questions&order=updated_at.desc',
+      { headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY } });
+    if(!r.ok) return [];
+    const rows=await r.json();
+    return (Array.isArray(rows)?rows:[]).map(cleanSet).filter(Boolean);
+  }catch(e){ return []; }
 }
 
 /* 暱稱整理：去頭尾空白、最多 8 個字 */
