@@ -6,8 +6,27 @@
   <title>聯絡簿</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610142000">
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    // 字體預覽：網址加 ?font=huninn 會換成粉圓（這個分頁會記住），加 ?font=off 關掉
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search).get('font');
+        if (q === 'huninn') sessionStorage.setItem('shiny11-font', 'huninn');
+        if (q === 'off') sessionStorage.removeItem('shiny11-font');
+        if (sessionStorage.getItem('shiny11-font') !== 'huninn') return;
+        document.documentElement.setAttribute('data-font', 'huninn');
+        document.addEventListener('DOMContentLoaded', function () {
+          var a = document.createElement('a');
+          a.className = 'font-preview-badge';
+          a.href = location.pathname + '?font=off';
+          a.textContent = '🧪 粉圓預覽中・點這裡關閉';
+          document.body.appendChild(a);
+        });
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=202610142003">
 </head>
 <body class="board compact-page contact-page">
   <header class="board-header">
@@ -32,6 +51,6 @@
     <aside id="countdown" class="countdown-panel" aria-label="倒數日" hidden></aside>
   </div>
 
-  <script type="module" src="js/contact.js?v=202610142000"></script>
+  <script type="module" src="js/contact.js?v=202610142003"></script>
 </body>
 </html>

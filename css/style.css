@@ -893,3 +893,19 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
   .qz-meta, .qz-opts { grid-template-columns: 1fr; }
 }
 .qz-q > .btn { justify-self: start; }
+
+/* ============================================================
+   字體預覽：jf open 粉圓（網址加 ?font=huninn 才會套用）
+   ============================================================ */
+html[data-font="huninn"] body,
+html[data-font="huninn"] body * {
+  font-family: "Huninn", "PingFang TC", "Microsoft JhengHei", sans-serif !important;
+  font-synthesis-weight: none;
+}
+.font-preview-badge {
+  position: fixed; z-index: 999;
+  left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: .45rem 1rem; border-radius: 999px; background: #fff3c4; color: #7a5200;
+  border: 1px solid #e8c766; font-size: .95rem; font-weight: 700; text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
