@@ -1,5 +1,5 @@
 // 各頁共用的小工具
-import { SEAT_COUNT } from './config.js?v=202610151244';
+import { SEAT_COUNT } from './config.js?v=202610151259';
 
 export const STATUS = {
   green: { label: '完成', short: '綠' },

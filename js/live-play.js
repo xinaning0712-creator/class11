@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610151244';
+} from './live-common.js?v=202610151259';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -122,6 +122,7 @@ function handle(event,p){
       P.name=cleanName(p.name)||P.name;
       store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
       keep.set('fr-name',P.name); keep.set('fr-seat',String(P.seat));
+      guardBack();
       $('joinBtn').disabled=false; msg('');
       applySync(p.sync||{});
       return;
@@ -384,6 +385,37 @@ function showEnd(p){
   showScreen('pEnd');
   sound.win();
 }
+
+/* ============================================================
+   不小心滑掉怎麼辦
+   ・從左邊滑「上一頁」：留在這一頁（加入後才有效）
+   ・滑回主畫面、切到別的 App 再回來：自動重新連線、回到目前進度
+   ・整個關掉：重新掃 QR code，暱稱和座號會自動填好，按加入就回來
+   ============================================================ */
+let guarded=false;
+function guardBack(){
+  if(guarded) return; guarded=true;
+  try{ history.pushState({ fr:1 }, ''); }catch(e){}
+  window.addEventListener('popstate', ()=>{
+    if(P.joined){ try{ history.pushState({ fr:1 }, ''); }catch(e){} }
+  });
+}
+let hiddenAt=0;
+async function resume(){
+  if(!P.code||!P.name||!P.seat) return;
+  if(!P.joined&&P.screen==='pJoin') return;      // 還沒加入過，不用管
+  try{
+    if(P.net) P.net.close();
+    P.net=await connect({ code:P.code, role:'player', onMessage:handle, onStatus:setNet });
+  }catch(e){ setNet('ERR'); return; }
+  P.tries=0; sendJoin();                         // 白板會回傳目前進度（拔河中、搶答第幾題…）
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ hiddenAt=Date.now(); return; }
+  if(hiddenAt&&Date.now()-hiddenAt>2000) resume();
+  hiddenAt=0;
+});
+window.addEventListener('pageshow', e=>{ if(e.persisted) resume(); });   // 從「上一頁」快取回來
 
 /* ── 音效開關、自動重新加入 ── */
 onTap($('soundBtn'), ()=>{ sound.on=!sound.on; $('soundBtn').textContent=sound.on?'🔊':'🔇'; });
