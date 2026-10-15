@@ -4,9 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610151240';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610151244';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610151240';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610151244';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -19,7 +19,11 @@ export const LIVE = {
   QUIZ_COUNT: 10,        // 搶答：預設題數
   STREAK_STEP: 100,      // 搶答：連對加分，連對第 2 題 +100、第 3 題 +200……
   STREAK_MAX: 500,       // 搶答：連對加分最多加到多少
-  WRONG_LOCK_MS: 1000,   // iPad 答錯後暫停幾毫秒
+  // 拔河／賽跑：防止亂按（亂按會比認真算還慢）
+  WRONG_LOCKS: [3000, 5000, 8000],   // 答錯要冷靜幾毫秒：第 1 次錯 3 秒、連錯第 2 次 5 秒、第 3 次以上 8 秒
+  OPTION_DELAY_MS: 1500, // 題目先出現，選項晚 1.5 秒才能按（先看題目）
+  COMBO_AT: 3,           // 連續答對幾題開始「連對加成」
+  COMBO_POWER: 2,        // 連對加成時，一題算幾倍力氣
   NAME_MAX: 8            // 暱稱最多幾個字
 };
 

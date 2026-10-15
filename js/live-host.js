@@ -8,10 +8,10 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610151240';
-import { qrSvg } from './qr.js?v=202610151240';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610151240';
-import { music } from './live-music.js?v=202610151240';
+} from './live-common.js?v=202610151244';
+import { qrSvg } from './qr.js?v=202610151244';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610151244';
+import { music } from './live-music.js?v=202610151244';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -307,7 +307,7 @@ onTap($('lobbyBtn'), backToLobby);
 function startGame(){
   if(!S.players.size) return;
   clearTimers(); music.stop();
-  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; });
+  S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; pl.combo=0; pl.wrongRun=0; pl.lockUntil=0; pl.last=0; });
   assignTeams(false);
   S.phase='play';
   if(S.mode==='tug') startTug();
@@ -402,7 +402,7 @@ function marbleLegend(n){
 }
 function startMarble(){
   const n=S.teamN;
-  const g=S.game={ mode:'marble', n, counts:new Array(n).fill(0), total:0, running:true, collecting:true, racing:false,
+  const g=S.game={ mode:'marble', n, counts:new Array(n).fill(0), power:new Array(n).fill(0), total:0, running:true, collecting:true, racing:false,
                    endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS, stopRace:null };
   g.track=buildTrack($('mbSvg'), n);
   $('mbSvg').classList.remove('racing');
@@ -426,17 +426,17 @@ function startMarble(){
     if(left<=0) startRace();
   },250);
 }
-function addTicker(pl){
+function addTicker(pl,combo){
   const el=document.createElement('span');
-  el.className='tick';
-  el.textContent='⭐ '+pl.name+' 答對了！';
+  el.className='tick'+(combo?' hot':'');
+  el.textContent=combo ? '🔥 '+pl.name+' 連對！' : '⭐ '+pl.name+' 答對了！';
   const box=$('mbTicker'); box.insertBefore(el, box.firstChild);
   while(box.children.length>8) box.removeChild(box.lastChild);
 }
 /* 每隊平均每人答對幾題 */
 function perCapita(g){
   const size=teamSizes();
-  return g.counts.map((c,i)=>c/Math.max(1,size[i]||0));
+  return g.power.map((c,i)=>c/Math.max(1,size[i]||0));   // 含連對加成
 }
 function startRace(){
   const g=S.game; if(!g||g.mode!=='marble'||!g.collecting) return;
@@ -448,6 +448,8 @@ function startRace(){
   $('mbBanner').textContent='🏁 準備好了嗎？';
   const scores=perCapita(g);
   g.scores=scores;
+  const size=teamSizes();
+  g.avg=g.counts.map((c,i)=>c/Math.max(1,size[i]||0));   // 顯示用：平均每人真的答對幾題
   const plan=planRace(scores);
   const cnt=$('mbCount');
   const seq=['3','2','1','GO!'];
@@ -490,16 +492,24 @@ function onAns(p){
   const g=S.game, pl=S.players.get(p.id);
   if(!pl||S.phase!=='play'||!g||!g.running||g.mode==='quiz') return;
   if(g.mode==='marble'&&!g.collecting) return;
+  // 防止亂按：iPad 上選項晚 1.5 秒才能按、答錯要冷靜幾秒；白板這邊也再擋一次
   const now=performance.now();
-  if(now-pl.last<250) return;                   // 防止連點灌分
+  if(now<(pl.lockUntil||0)) return;              // 還在冷靜時間
+  if(now-pl.last<900) return;                    // 太快了（正常要先看題目）
   pl.last=now;
-  if(p.ok!==true){ pl.wrong++; return; }
-  pl.correct++;
+  if(p.ok!==true){
+    pl.wrong++; pl.combo=0; pl.wrongRun=(pl.wrongRun||0)+1;
+    const L=LIVE.WRONG_LOCKS;
+    pl.lockUntil=now+L[Math.min(pl.wrongRun,L.length)-1]-600;
+    return;
+  }
+  pl.correct++; pl.wrongRun=0; pl.combo=(pl.combo||0)+1;
+  const power=pl.combo>=LIVE.COMBO_AT?LIVE.COMBO_POWER:1;   // 連對加成
   const t=pl.team; if(t<0) return;
   const size=Math.max(1,teamSizes()[t]);
   if(g.mode==='tug'){
     g.counts[t]++;
-    g.pos=Math.max(-LIVE.TUG_LIMIT, Math.min(LIVE.TUG_LIMIT, g.pos+(t===0?-1:1)*LIVE.TUG_PULL/size));
+    g.pos=Math.max(-LIVE.TUG_LIMIT, Math.min(LIVE.TUG_LIMIT, g.pos+(t===0?-1:1)*LIVE.TUG_PULL*power/size));
     setRope(g.pos);
     $('tugScore'+t).querySelector('b').textContent=g.counts[t];
     const chip=g.chips&&g.chips.get(pl.id);
@@ -512,10 +522,10 @@ function onAns(p){
     if(g.pos<=-LIVE.TUG_LIMIT) endTeamGame(0);
     else if(g.pos>=LIVE.TUG_LIMIT) endTeamGame(1);
   }else{
-    g.counts[t]++; g.total++;
+    g.counts[t]++; g.power[t]+=power; g.total++;
     $('mbTotal').textContent=g.total;
     replayAnim($('mbTotalBox'),'boost');
-    addTicker(pl);
+    addTicker(pl,power>1);
   }
 }
 
@@ -546,7 +556,7 @@ function showTeamEnd(g,winner,order){
   let h='<div class="rank-list">';
   order.forEach((t,i)=>{
     const T=TEAMS[t];
-    const extra= g.mode==='marble'&&g.scores ? '（平均每人 '+(Math.round(g.scores[t]*10)/10)+' 題）' : '';
+    const extra= g.mode==='marble'&&g.avg ? '（平均每人 '+(Math.round(g.avg[t]*10)/10)+' 題）' : '';
     h+='<div class="rank-item" style="border-color:'+T.color+';color:'+T.deep+'"><span>'+(winner<0&&g.mode==='tug'?'🤝':medals[i])+' '+T.emoji+' '+T.name+'</span><span>答對 '+g.counts[t]+' 題'+extra+'</span></div>';
   });
   h+='</div>';
@@ -720,7 +730,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610151240');
+    const m=await import('./db.js?v=202610151244');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
@@ -756,7 +766,7 @@ function saveTeamGame(g,winner,order){
   const n=g.mode==='tug'?2:g.n;
   const teams=order.map(t=>({ team:t, name:TEAMS[t].name, emoji:TEAMS[t].emoji, correct:g.counts[t],
     members:Array.from(S.players.values()).filter(pl=>pl.team===t).length,
-    perCapita:g.mode==='marble'&&g.scores?Math.round(g.scores[t]*10)/10:undefined }));
+    perCapita:g.mode==='marble'&&g.avg?Math.round(g.avg[t]*10)/10:undefined }));
   const players=playerRows('correct');
   if(!players.some(p=>p.correct+p.wrong>0)) return endSave('','');
   record(g,{ mode:g.mode, source:sourceName(), player_count:players.length, players,

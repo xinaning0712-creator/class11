@@ -7,8 +7,8 @@
 import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
-  cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep
-} from './live-common.js?v=202610151240';
+  cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
+} from './live-common.js?v=202610151244';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -210,6 +210,9 @@ function startPlay(s){
   endPlaying();
   P.playing=true;
   P.correct=s.correct||0;
+  P.streak=0; P.wrongRun=0;
+  $('playCombo').classList.add('hidden');
+  $('playCalm').classList.add('hidden');
   const T=TEAMS[P.team];
   $('playTeam').textContent=T.emoji+' '+T.name;
   $('playTeam').style.borderColor=T.color; $('playTeam').style.color=T.deep;
@@ -227,7 +230,17 @@ function nextPlayQ(){
   const T=TEAMS[P.team]||TEAMS[0];
   $('playOpts').innerHTML=P.q.options.map((o,i)=>'<button class="opt" data-index="'+i+'" style="border-color:'+T.light+'">'+optionHTML(o,P.q)+'</button>').join('');
   $('playOpts').classList.remove('locked');
-  P.locked=false;
+  $('playCalm').classList.add('hidden');
+  // 先看題目：選項晚一點才能按
+  P.locked=true;
+  $('playOpts').classList.add('waiting');
+  const tk=P.token;
+  setTimeout(()=>{ if(tk!==P.token||!P.playing) return; $('playOpts').classList.remove('waiting'); P.locked=false; }, LIVE.OPTION_DELAY_MS);
+}
+function showCombo(){
+  const el=$('playCombo');
+  if(P.streak>=LIVE.COMBO_AT){ el.textContent='🔥 連對 '+P.streak; el.classList.remove('hidden'); replayAnim(el,'pop-in'); }
+  else el.classList.add('hidden');
 }
 $('playOpts').addEventListener('pointerdown', e=>{
   const btn=e.target.closest('[data-index]'); if(!btn) return;
@@ -240,19 +253,34 @@ function answerPlay(i,btn){
   const ok=i===P.q.correctIndex, tk=P.token;
   send('ans',{ id:P.id, ok });
   if(ok){
-    P.correct++;
+    P.correct++; P.streak++; P.wrongRun=0;
+    const power=P.streak>=LIVE.COMBO_AT?LIVE.COMBO_POWER:1;
     $('playCount').textContent='⭐ '+P.correct;
     btn.classList.add('right');
-    floatText(btn, P.mode==='tug'?'💪 +1':'🔮 +1');
+    floatText(btn, (power>1?'🔥 ':P.mode==='tug'?'💪 ':'🔮 ')+'+'+power);
+    showCombo();
     sound.correct();
     setTimeout(()=>{ if(tk===P.token) nextPlayQ(); },450);
   }else{
+    P.streak=0; P.wrongRun++;
+    showCombo();
     btn.classList.add('wrong');
     const rb=$('playOpts').querySelector('[data-index="'+P.q.correctIndex+'"]');
     if(rb) rb.classList.add('reveal');
     $('playOpts').classList.add('locked');
     sound.wrong();
-    setTimeout(()=>{ if(tk===P.token) nextPlayQ(); }, LIVE.WRONG_LOCK_MS);
+    // 答錯要冷靜一下，連錯越停越久（亂按就划不來了）
+    const L=LIVE.WRONG_LOCKS, ms=L[Math.min(P.wrongRun,L.length)-1];
+    const calm=$('playCalm'), end=performance.now()+ms;
+    const tickCalm=()=>{
+      if(tk!==P.token) return;
+      const s=Math.ceil((end-performance.now())/1000);
+      if(s<=0){ nextPlayQ(); return; }
+      calm.innerHTML='🧘 冷靜一下，再想想… <b>'+s+'</b>'+(P.wrongRun>=2?'<small>慢慢算，答對比較快喔！</small>':'');
+      setTimeout(tickCalm,200);
+    };
+    calm.classList.remove('hidden');
+    tickCalm();
   }
 }
 function floatText(el,text){
