@@ -1,9 +1,9 @@
 // 主畫面（白板投影用）
-import { CLASS_NAME, CLASSROOM_EMAIL } from './config.js?v=202610151259';
-import { configured, classroomDb, findOperator, friendlyError } from './db.js?v=202610151259';
-import { STATUS, SEATS, el, toast, debounce, startClock } from './ui.js?v=202610151259';
-import { celebrate } from './celebrate.js?v=202610151259';
-import { watchCountdowns, renderStrip } from './countdown.js?v=202610151259';
+import { CLASS_NAME, CLASSROOM_EMAIL } from './config.js?v=202610151321';
+import { configured, classroomDb, findOperator, friendlyError } from './db.js?v=202610151321';
+import { STATUS, SEATS, el, toast, debounce, startClock } from './ui.js?v=202610151321';
+import { celebrate } from './celebrate.js?v=202610151321';
+import { watchCountdowns, renderStrip } from './countdown.js?v=202610151321';
 
 const $ = (id) => document.getElementById(id);
 const UNDO_SECONDS = 10;

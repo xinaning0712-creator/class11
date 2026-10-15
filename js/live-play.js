@@ -8,7 +8,7 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610151259';
+} from './live-common.js?v=202610151321';
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -122,6 +122,7 @@ function handle(event,p){
       P.name=cleanName(p.name)||P.name;
       store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
       keep.set('fr-name',P.name); keep.set('fr-seat',String(P.seat));
+      keep.set('fr-code',P.code); keep.set('fr-at',String(Date.now()));
       guardBack();
       $('joinBtn').disabled=false; msg('');
       applySync(p.sync||{});
@@ -426,4 +427,8 @@ $('codeIn').value=urlCode||store.get('fr-code')||'';
 $('nameIn').value=store.get('fr-name')||keep.get('fr-name')||'';
 P.seat=cleanSeat(store.get('fr-seat')||keep.get('fr-seat'));
 buildSeats();
-if(store.get('fr-code')&&store.get('fr-name')&&P.seat) doJoin();   // 重新整理後自動回到房間
+// 自動回到房間：
+//  ・重新整理（同一個分頁）
+//  ・分頁關掉後重新掃同一個房間的 QR code（2 小時內），不用再按「加入」
+const recent=keep.get('fr-code')===$('codeIn').value && Date.now()-Number(keep.get('fr-at')||0) < 2*60*60*1000;
+if(P.seat&&$('nameIn').value&&((store.get('fr-code')&&store.get('fr-name'))||recent)) doJoin();
