@@ -7,18 +7,19 @@
 import {
   LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
-  cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store
-} from './live-common.js?v=202610142341';
+  cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep
+} from './live-common.js?v=202610151240';
 
 const $ = id => document.getElementById(id);
 const P = {
-  id: store.get('fr-id') || randomId(),
+  // iPad 的身分記在 localStorage：不小心關掉網頁再打開，白板還認得是同一個人
+  id: keep.get('fr-id') || store.get('fr-id') || randomId(),
   name:'', seat:0, code:'', net:null, joined:false, tries:0, joinTimer:null,
   mode:null, level:'easy', team:-1, teamN:2, set:null, deck:null,
   q:null, locked:false, playing:false, correct:0, score:0, quiz:null,
   timerId:null, endsAt:0, token:0, screen:'pJoin'
 };
-store.set('fr-id', P.id);
+store.set('fr-id', P.id); keep.set('fr-id', P.id);
 
 function showScreen(id){
   P.screen=id;
@@ -120,6 +121,7 @@ function handle(event,p){
       P.joined=true; clearTimeout(P.joinTimer);
       P.name=cleanName(p.name)||P.name;
       store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
+      keep.set('fr-name',P.name); keep.set('fr-seat',String(P.seat));
       $('joinBtn').disabled=false; msg('');
       applySync(p.sync||{});
       return;
@@ -130,6 +132,7 @@ function handle(event,p){
       fail('這個座號已經有人加入了，請確認是不是點錯；如果沒點錯，請找老師幫忙。');
       return;
     case 'rollcall': if(P.joined) send('join',joinInfo()); return;
+    case 'check': if(P.joined) send('here',{ id:P.id }); return;   // 白板問：這個座號的你還在嗎？
   }
   if(!P.joined) return;
   switch(event){
@@ -360,7 +363,7 @@ document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { on
 
 const urlCode=(new URLSearchParams(location.search).get('code')||'').replace(/\D/g,'').slice(0,4);
 $('codeIn').value=urlCode||store.get('fr-code')||'';
-$('nameIn').value=store.get('fr-name')||'';
-P.seat=cleanSeat(store.get('fr-seat'));
+$('nameIn').value=store.get('fr-name')||keep.get('fr-name')||'';
+P.seat=cleanSeat(store.get('fr-seat')||keep.get('fr-seat'));
 buildSeats();
 if(store.get('fr-code')&&store.get('fr-name')&&P.seat) doJoin();   // 重新整理後自動回到房間

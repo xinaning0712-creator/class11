@@ -8,10 +8,10 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610142341';
-import { qrSvg } from './qr.js?v=202610142341';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610142341';
-import { music } from './live-music.js?v=202610142341';
+} from './live-common.js?v=202610151240';
+import { qrSvg } from './qr.js?v=202610151240';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610151240';
+import { music } from './live-music.js?v=202610151240';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -100,6 +100,7 @@ function handle(event,p){
   else if(event==='ans') onAns(p);
   else if(event==='pick') onPick(p);
   else if(event==='leave') onLeave(p);
+  else if(event==='here') onHere(p);
 }
 
 function uniqueName(name,selfId){
@@ -153,9 +154,13 @@ function onJoin(p){
   // 同一個座號只能有一個人（成績才對得起來）
   if(seat){
     const other=Array.from(S.players.values()).find(o=>o.id!==p.id&&o.seat===seat);
-    if(other){ send('seat-taken',{ to:p.id }); return; }
+    if(other){ checkSeat(other,p); return; }
   }
-  if(pl){ if(seat&&pl.seat!==seat){ pl.seat=seat; if(S.phase==='lobby') renderLobby(); } }
+  if(pl){
+    if(seat&&pl.seat!==seat) pl.seat=seat;
+    if(S.phase==='lobby'&&name!==pl.name) pl.name=uniqueName(name,pl.id);
+    if(S.phase==='lobby') renderLobby();
+  }
   else{
     if(S.players.size>=MAX_PLAYERS){ send('full',{to:p.id}); return; }
     pl={ id:p.id, name:uniqueName(name,p.id), seat, team:-1, correct:0, wrong:0, answered:0, score:0, streak:0, last:0 };
@@ -163,6 +168,36 @@ function onJoin(p){
     if(isTeamMode(S.mode)) placeInSmallest(pl);
     sound.pop();
   }
+  send('welcome',{ to:pl.id, name:pl.name, sync:syncFor(pl) });
+  if(S.phase==='lobby'){ renderLobby(); broadcastTeams(); }
+  else if(S.phase==='play') onLateJoin(pl);
+}
+/* 同一個座號又有人加入：先問原本那台 iPad 還在不在
+   ・還在（回答 here）→ 新的這台是點錯座號，請他確認
+   ・沒回應 → 原本那台已經關掉了，把成績和隊伍交給新的這台（不小心關掉網頁的孩子可以接著玩） */
+const seatChecks=new Map();     // 原本的 id → { newP, timer }
+function checkSeat(old,newP){
+  const rec=seatChecks.get(old.id);
+  if(rec){ rec.newP=newP; return; }
+  const r={ newP };
+  r.timer=setTimeout(()=>{ seatChecks.delete(old.id); takeOver(old.id, r.newP); },2500);
+  seatChecks.set(old.id,r);
+  send('check',{ to:old.id });
+}
+function onHere(p){
+  const rec=seatChecks.get(p.id); if(!rec) return;
+  clearTimeout(rec.timer); seatChecks.delete(p.id);
+  send('seat-taken',{ to:rec.newP.id });
+}
+function takeOver(oldId,newP){
+  const old=S.players.get(oldId);
+  if(!old||S.kicked.has(newP.id)||S.players.has(newP.id)){ onJoin(newP); return; }
+  S.players.delete(oldId);
+  const pl=Object.assign({}, old, { id:newP.id, last:0 });
+  if(S.phase==='lobby') pl.name=uniqueName(cleanName(newP.name)||old.name, pl.id);
+  S.players.set(pl.id,pl);
+  const g=S.game;
+  if(g&&g.mode==='quiz'&&g.answers&&g.answers.has(oldId)){ g.answers.set(pl.id,g.answers.get(oldId)); g.answers.delete(oldId); }
   send('welcome',{ to:pl.id, name:pl.name, sync:syncFor(pl) });
   if(S.phase==='lobby'){ renderLobby(); broadcastTeams(); }
   else if(S.phase==='play') onLateJoin(pl);
@@ -685,7 +720,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610142341');
+    const m=await import('./db.js?v=202610151240');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

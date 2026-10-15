@@ -4,9 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610142341';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610151240';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610142341';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610151240';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -211,6 +211,11 @@ export const store={
   get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } },
   set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} },
   del(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+};
+/* 關掉網頁也記得的資料（iPad 身分、上次的暱稱和座號） */
+export const keep={
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
 export const isTestMode = new URLSearchParams(location.search).has('test');
 
