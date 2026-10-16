@@ -401,6 +401,10 @@ input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; 
   <!-- (1) 頂部標題列 -->
   <header id="topbar">
     <a id="homeLink" href="index.html" aria-label="回班網">🏠</a>
+    <script>
+      // 分享給其他老師用：網址加 ?solo，或直接打開下載的檔案，就不顯示「回班網」按鈕
+      if (/[?&]solo\b/.test(location.search) || location.protocol === 'file:') document.getElementById('homeLink').remove();
+    </script>
     <h1>⚔️ 分數大冒險：擴分與約分</h1>
     <button id="soundBtn" aria-label="音效開關">🔊</button>
   </header>

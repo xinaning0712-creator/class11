@@ -7,7 +7,7 @@
 | 聯絡簿 | 白板投影：Canva 聯絡簿 | https://xinaning0712-creator.github.io/class11/contact.html |
 | 抽籤 | 白板投影：樂透機抽座號 | https://xinaning0712-creator.github.io/class11/roll.html |
 | 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | https://xinaning0712-creator.github.io/class11/gacha.html |
-| 分數冒險 | 單機版擴分約分（新手村、鍛造工坊、雙人拔河） | https://xinaning0712-creator.github.io/class11/fraction.html |
+| 分數冒險 | 單機版擴分約分（新手村、鍛造工坊、雙人拔河） | https://xinaning0712-creator.github.io/class11/fraction.html （分享給其他老師用 `fraction.html?solo`，不會出現回班網按鈕） |
 | 全班對戰（白板） | 開房間、選玩法：全班拔河／搶答／玻璃球賽跑 | https://xinaning0712-creator.github.io/class11/live-host.html |
 | 全班對戰（iPad） | 孩子輸入房間代碼和暱稱加入 | https://xinaning0712-creator.github.io/class11/live.html |
 | 老師後台 | 需密碼 | https://xinaning0712-creator.github.io/class11/admin.html |
