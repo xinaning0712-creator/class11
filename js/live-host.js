@@ -8,10 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610151321';
-import { qrSvg } from './qr.js?v=202610151321';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610151321';
-import { music } from './live-music.js?v=202610151321';
+} from './live-common.js?v=202610161920';
+import { resetZoom } from './no-zoom.js?v=202610161920';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610161920';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610161920';
+import { music } from './live-music.js?v=202610161920';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -730,7 +731,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610151321');
+    const m=await import('./db.js?v=202610161920');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

@@ -1,11 +1,11 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610151321';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610151321';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610151321';
-import * as gacha from './admin-gacha.js?v=202610151321';
-import * as countdown from './admin-countdown.js?v=202610151321';
-import * as quizbank from './admin-quiz.js?v=202610151321';
-import * as results from './admin-results.js?v=202610151321';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610161920';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610161920';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610161920';
+import * as gacha from './admin-gacha.js?v=202610161920';
+import * as countdown from './admin-countdown.js?v=202610161920';
+import * as quizbank from './admin-quiz.js?v=202610161920';
+import * as results from './admin-results.js?v=202610161920';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
