@@ -1,6 +1,6 @@
 // 後台：獎品庫存、懲罰管理、抽獎紀錄
-import { friendlyError } from './db.js?v=202610161920';
-import { SEATS, el, toast } from './ui.js?v=202610161920';
+import { friendlyError } from './db.js?v=202610182224';
+import { SEATS, el, toast } from './ui.js?v=202610182224';
 
 const $ = (id) => document.getElementById(id);
 
