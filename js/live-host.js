@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610191504';
-import { resetZoom } from './no-zoom.js?v=202610191504';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610191504';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610191504';
-import { music } from './live-music.js?v=202610191504';
+} from './live-common.js?v=202610191509';
+import { resetZoom } from './no-zoom.js?v=202610191509';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610191509';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610191509';
+import { music } from './live-music.js?v=202610191509';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -621,7 +621,8 @@ function endCandy(ranks){
   g.running=false; g.racing=false;
   clearTimers(); music.stop();
   sound.win();
-  const order=g.racers.map((id,i)=>({ id, i, rank:ranks[i] })).sort((a,b)=>a.rank-b.rank||a.i-b.i);
+  const order=g.racers.map((id,i)=>({ id, i, rank:ranks[i], s:g.scores[i] })).sort((a,b)=>a.rank-b.rank||b.s-a.s);
+  order.forEach((o,k)=>{ o.rank=k+1; });      // 個人賽每顆球都有自己的名次
   const res={};
   order.forEach(o=>{ const pl=S.players.get(o.id); if(pl) res[o.id]=[o.rank, pl.correct, g.racers.length]; });
   send('end',{ mode:'candy', res });
@@ -637,7 +638,7 @@ function showCandyEnd(g,order){
   let h='<div class="cpodium">';
   slots.forEach(k=>{ const o=top[k]; if(!o) return; const x=info(o);
     h+='<div class="cpod"><span class="cball" style="background:'+candyCss(x.look)+'"></span><div class="medal">'+medals[k]+'</div>'
-      +'<div class="step" style="height:'+heights[slots.indexOf(k)]+'"><div class="who" id="who'+k+'">？</div><div class="nm" id="nm'+k+'"></div></div></div>'; });
+      +'<div class="step" style="height:'+heights[slots.indexOf(k)]+'"><div class="who" id="who'+k+'">？</div></div></div>'; });
   h+='</div><div class="crest" id="crest">';
   order.slice(3).forEach(o=>{ const x=info(o);
     h+='<span><b>'+o.rank+'</b><span class="cball" style="background:'+candyCss(x.look)+'"></span><span class="seat-r" data-seat="'+esc(x.seat)+'">？</span></span>'; });
@@ -650,7 +651,7 @@ function showCandyEnd(g,order){
     later(()=>{
       const x=info(o), who=$('who'+k);
       if(!who) return;
-      who.textContent=x.seat; $('nm'+k).textContent=x.name;
+      who.textContent=x.seat;   // 只公布座號，不顯示暱稱
       replayAnim(who,'flip');
       if(k===0) sound.win(); else sound.correct();
     }, 1500+step*1800);
@@ -869,7 +870,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610191504');
+    const m=await import('./db.js?v=202610191509');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
