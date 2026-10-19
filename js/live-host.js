@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610191509';
-import { resetZoom } from './no-zoom.js?v=202610191509';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610191509';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610191509';
-import { music } from './live-music.js?v=202610191509';
+} from './live-common.js?v=202610191615';
+import { resetZoom } from './no-zoom.js?v=202610191615';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610191615';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610191615';
+import { music } from './live-music.js?v=202610191615';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -149,10 +149,20 @@ function broadcastTeams(){         // 大廳裡分隊有變動時通知 iPad（�
   teamsTimer=setTimeout(()=>send('teams',{ mode:S.mode, teamN:teamCount(S.mode), map:isTeamMode(S.mode)?teamMap():{}, colors:colorMap() }),400);
 }
 
+/* 孩子沒填暱稱：送他一個可愛的暱稱（不會用座號，大螢幕才看不出是誰） */
+const CUTE=['小草莓','奶茶熊','棉花糖','小布丁','珍珠奶茶','蜜桃兔','小餅乾','焦糖貓','抹茶狗','藍莓喵','小湯圓','QQ糖',
+  '雪花冰','小鬆餅','芋圓','杏仁豆腐','蛋塔','小饅頭','甜甜圈','小泡芙','牛奶糖','紅豆餅','鯛魚燒','麻糬','小果凍','檸檬塔',
+  '巧克力','香草冰','可可熊','櫻花餅'];
+function cuteName(){
+  const used=new Set(Array.from(S.players.values()).map(pl=>pl.name));
+  const free=CUTE.filter(n=>!used.has(n));
+  return free.length ? free[Math.floor(Math.random()*free.length)] : CUTE[Math.floor(Math.random()*CUTE.length)];
+}
 function onJoin(p){
   if(S.kicked.has(p.id)){ send('kick',{to:p.id}); return; }
   let pl=S.players.get(p.id);
-  const name=cleanName(p.name)||'小勇者';
+  const typed=cleanName(p.name);
+  const name=typed || (pl ? pl.name : cuteName());
   const seat=cleanSeat(p.seat);
   // 同一個座號只能有一個人（成績才對得起來）
   if(seat){
@@ -197,7 +207,7 @@ function takeOver(oldId,newP){
   if(!old||S.kicked.has(newP.id)||S.players.has(newP.id)){ onJoin(newP); return; }
   S.players.delete(oldId);
   const pl=Object.assign({}, old, { id:newP.id, last:0 });
-  if(S.phase==='lobby') pl.name=uniqueName(cleanName(newP.name)||old.name, pl.id);
+  if(S.phase==='lobby'&&cleanName(newP.name)) pl.name=uniqueName(cleanName(newP.name), pl.id);
   S.players.set(pl.id,pl);
   const g=S.game;
   if(g&&g.mode==='quiz'&&g.answers&&g.answers.has(oldId)){ g.answers.set(pl.id,g.answers.get(oldId)); g.answers.delete(oldId); }
@@ -870,7 +880,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610191509');
+    const m=await import('./db.js?v=202610191615');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

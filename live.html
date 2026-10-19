@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610191509">
+<link rel="stylesheet" href="css/live.css?v=202610191615">
 <style>
 .center{max-width:720px; margin:0 auto; text-align:center}
 .join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
@@ -102,8 +102,8 @@
         <h2>加入全班對戰</h2>
         <label class="field" for="codeIn">🔢 房間代碼（看白板）</label>
         <input id="codeIn" class="inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
-        <label class="field" for="nameIn">😊 你的暱稱</label>
-        <input id="nameIn" class="inp" type="text" maxlength="8" autocomplete="off" placeholder="最多 8 個字">
+        <label class="field" for="nameIn">😊 你的暱稱（可以不填）</label>
+        <input id="nameIn" class="inp" type="text" maxlength="8" autocomplete="off" placeholder="不填會送你一個可愛暱稱">
         <div class="field">🪑 你的座號</div>
         <div id="seatGrid" class="seat-grid" role="group" aria-label="選座號"></div>
         <div class="seat-note">點選自己的座號喔！</div>
@@ -175,6 +175,6 @@
     </section>
   </main>
 </div>
-<script type="module" src="js/live-play.js?v=202610191509"></script>
+<script type="module" src="js/live-play.js?v=202610191615"></script>
 </body>
 </html>

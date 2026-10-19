@@ -8,13 +8,13 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610191509';
-import { resetZoom } from './no-zoom.js?v=202610191509';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610191615';
+import { resetZoom } from './no-zoom.js?v=202610191615';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
   // iPad 的身分記在 localStorage：不小心關掉網頁再打開，白板還認得是同一個人
-  id: keep.get('fr-id') || store.get('fr-id') || randomId(),
+  id: store.get('fr-id') || keep.get('fr-id') || randomId(),
   name:'', seat:0, code:'', net:null, joined:false, tries:0, joinTimer:null,
   mode:null, level:'easy', team:-1, color:-1, colors:{}, teamN:2, set:null, deck:null,
   q:null, locked:false, playing:false, correct:0, score:0, quiz:null,
@@ -79,7 +79,6 @@ async function doJoin(){
   const code=$('codeIn').value.replace(/\D/g,'').slice(0,4);
   const name=cleanName($('nameIn').value);
   if(code.length!==4){ msg('請輸入白板上的 4 位數代碼'); return; }
-  if(!name){ msg('請幫自己取一個暱稱'); return; }
   if(!P.seat){ msg('請點選你的座號'); return; }
   P.code=code; P.name=name; P.joined=false;
   $('joinBtn').disabled=true; msg('連線中…');
@@ -121,6 +120,7 @@ function handle(event,p){
     case 'welcome':
       P.joined=true; clearTimeout(P.joinTimer);
       P.name=cleanName(p.name)||P.name;
+      $('nameIn').value=P.name;            // 沒填暱稱的孩子，會拿到白板送的可愛暱稱
       store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
       keep.set('fr-name',P.name); keep.set('fr-seat',String(P.seat));
       keep.set('fr-code',P.code); keep.set('fr-at',String(Date.now()));
@@ -482,4 +482,4 @@ buildSeats();
 //  ・重新整理（同一個分頁）
 //  ・分頁關掉後重新掃同一個房間的 QR code（2 小時內），不用再按「加入」
 const recent=keep.get('fr-code')===$('codeIn').value && Date.now()-Number(keep.get('fr-at')||0) < 2*60*60*1000;
-if(P.seat&&$('nameIn').value&&((store.get('fr-code')&&store.get('fr-name'))||recent)) doJoin();
+if(P.seat&&((store.get('fr-code')&&store.get('fr-name'))||recent)) doJoin();
