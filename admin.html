@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610182224">
+  <link rel="stylesheet" href="css/style.css?v=202610190941">
 </head>
 <body class="admin">
   <!-- 登入 -->
@@ -158,6 +158,15 @@
           <a class="btn" href="contact.html" target="_blank" rel="noopener">打開聯絡簿頁 ↗</a>
         </div>
       </form>
+      <form id="marquee-form" class="card contact-form">
+        <label for="marquee-text" class="form-title">📢 跑馬燈（聯絡簿頁中間直的那一條）</label>
+        <textarea id="marquee-text" rows="3" maxlength="300" placeholder="一行一則，例如：&#10;明天記得帶彩色筆和剪刀&#10;星期五英語小考 Unit 3"></textarea>
+        <p id="marquee-msg" class="hint">一行一則，會依序輪流捲動。清空後按儲存，跑馬燈就會收起來。</p>
+        <div class="row-actions">
+          <button class="btn primary" type="submit">儲存跑馬燈</button>
+          <button id="marquee-clear" class="btn ghost" type="button">清空</button>
+        </div>
+      </form>
       <div class="card hint-card">
         <p class="form-title">怎麼拿到連結？</p>
         <ol>
@@ -293,6 +302,6 @@
     </main>
   </section>
 
-  <script type="module" src="js/admin.js?v=202610182224"></script>
+  <script type="module" src="js/admin.js?v=202610190941"></script>
 </body>
 </html>

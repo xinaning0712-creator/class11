@@ -1,11 +1,11 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610182224';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610182224';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610182224';
-import * as gacha from './admin-gacha.js?v=202610182224';
-import * as countdown from './admin-countdown.js?v=202610182224';
-import * as quizbank from './admin-quiz.js?v=202610182224';
-import * as results from './admin-results.js?v=202610182224';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610190941';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610190941';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610190941';
+import * as gacha from './admin-gacha.js?v=202610190941';
+import * as countdown from './admin-countdown.js?v=202610190941';
+import * as quizbank from './admin-quiz.js?v=202610190941';
+import * as results from './admin-results.js?v=202610190941';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
@@ -49,13 +49,26 @@ async function showApp() {
 // ---------- 📒 聯絡簿連結 ----------
 async function loadContact() {
   const { data, error } = await db.from('settings').select('key, value')
-    .in('key', ['contact_book_url', 'contact_book_ratio']);
+    .in('key', ['contact_book_url', 'contact_book_ratio', 'marquee_text']);
   if (error) return;
   const setting = Object.fromEntries(data.map((r) => [r.key, r.value]));
   $('contact-url').value = setting.contact_book_url ?? '';
+  $('marquee-text').value = setting.marquee_text ?? '';
   $('contact-ratio').value = setting.contact_book_ratio ?? '16:9';
   $('contact-msg').textContent = setting.contact_book_url ? '目前的聯絡簿連結 ✓' : '還沒有設定聯絡簿連結';
 }
+
+// 📢 跑馬燈
+async function saveMarquee(text) {
+  const value = String(text).split(/\r?\n/).map((s) => s.trim()).filter(Boolean).join('\n').slice(0, 300);
+  const { error } = await db.from('settings').upsert([{ key: 'marquee_text', value, updated_at: new Date().toISOString() }]);
+  if (error) return toast(`儲存失敗：${friendlyError(error)}`, { tone: 'error', seconds: 5 });
+  $('marquee-text').value = value;
+  $('marquee-msg').textContent = value ? '已儲存 ✓ 聯絡簿頁的跑馬燈會自動更新' : '已清空 ✓ 跑馬燈收起來了';
+  toast(value ? '跑馬燈已更新' : '跑馬燈已收起');
+}
+$('marquee-form').addEventListener('submit', (e) => { e.preventDefault(); saveMarquee($('marquee-text').value); });
+$('marquee-clear').addEventListener('click', () => { $('marquee-text').value = ''; saveMarquee(''); });
 
 $('contact-form').addEventListener('submit', async (e) => {
   e.preventDefault();

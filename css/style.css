@@ -581,9 +581,9 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .contact-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
 
 .contact-form { display: grid; gap: .6rem; }
-.contact-form input {
+.contact-form input, .contact-form textarea {
   width: 100%; min-height: 48px; padding: .5rem .9rem;
-  border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font-size: 1rem;
+  border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font: inherit; font-size: 1rem; line-height: 1.6; resize: vertical;
 }
 .hint-card ol { margin: .4rem 0; padding-left: 1.4rem; line-height: 1.9; }
 .hint-card code { background: var(--bg); padding: 0 .3em; border-radius: 4px; }
@@ -1071,3 +1071,36 @@ dialog.sheet::backdrop { background: rgba(40, 30, 20, .45); }
 .rs-qs .rs-qlabel { display: inline-block; min-width: 12em; max-width: 26em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rs-qs b { font-weight: 400; }
 .rs-qs li.low b { color: #c0453a; }
+
+/* ---------- 📢 聯絡簿頁跑馬燈（直書，夾在聯絡簿和倒數中間） ---------- */
+.marquee-v {
+  flex: 0 0 clamp(58px, 4.4vw, 92px);
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  padding: 10px 0; border-radius: 22px;
+  background: linear-gradient(180deg, #e98aa6, #c25d7c);
+  box-shadow: 0 6px 18px rgba(150, 50, 85, .22), inset 0 1px 0 rgba(255,255,255,.35);
+  color: #fff; overflow: hidden;
+}
+.marquee-v[hidden] { display: none; }
+.mq-icon { text-align: center; font-size: clamp(1.5rem, 2.2vw, 2.4rem); line-height: 1; flex: 0 0 auto; }
+.mq-window { flex: 1; min-height: 0; overflow: hidden; position: relative;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 6%, #000 94%, transparent);
+          mask-image: linear-gradient(180deg, transparent, #000 6%, #000 94%, transparent); }
+.mq-track { display: flex; flex-direction: column; align-items: center; animation: mqUp var(--mq-dur, 20s) linear infinite; will-change: transform; }
+.mq-unit {
+  display: flex; flex-direction: column; align-items: center;
+  font-size: clamp(1.6rem, 2.7vw, 3.1rem); font-weight: 700; line-height: 1.12;
+  text-shadow: 0 2px 4px rgba(110, 25, 55, .35);
+}
+.mq-ch { display: block; text-align: center; }
+.mq-ch.sp { height: .5em; }
+@keyframes mqUp { to { transform: translateY(-50%); } }
+@keyframes mqLeft { to { transform: translateX(-50%); } }
+@media (max-width: 900px) {   /* 螢幕窄時改成橫的一條 */
+  .marquee-v { flex: none; flex-direction: row; align-items: center; padding: 6px 12px; }
+  .mq-window { -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+                       mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .mq-track { flex-direction: row; width: max-content; animation-name: mqLeft; }
+  .mq-unit { display: block; white-space: nowrap; font-size: 1.4rem; padding-right: 1em; }
+}
+@media (prefers-reduced-motion: reduce) { .mq-track { animation-duration: calc(var(--mq-dur, 20s) * 2); } }

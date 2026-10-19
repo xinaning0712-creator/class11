@@ -5,7 +5,7 @@
 // 想換成自己的 mp3：把檔案放進 music 資料夾，填在下面的 FILES（例如 'music/think.mp3'），
 // 留空白就用合成的音樂。
 // ============================================================
-import { sound } from './live-common.js?v=202610182224';
+import { sound } from './live-common.js?v=202610190941';
 
 export const FILES = {
   think: '',   // 例如 'music/think.mp3'
