@@ -5,18 +5,18 @@
 //  - 搶答：看白板的題目，在 iPad 上選答案
 // ============================================================
 import {
-  LIVE, TEAMS, CHOICES, LEVELS, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
+  LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610190941';
-import { resetZoom } from './no-zoom.js?v=202610190941';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610191504';
+import { resetZoom } from './no-zoom.js?v=202610191504';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
   // iPad 的身分記在 localStorage：不小心關掉網頁再打開，白板還認得是同一個人
   id: keep.get('fr-id') || store.get('fr-id') || randomId(),
   name:'', seat:0, code:'', net:null, joined:false, tries:0, joinTimer:null,
-  mode:null, level:'easy', team:-1, teamN:2, set:null, deck:null,
+  mode:null, level:'easy', team:-1, color:-1, colors:{}, teamN:2, set:null, deck:null,
   q:null, locked:false, playing:false, correct:0, score:0, quiz:null,
   timerId:null, endsAt:0, token:0, screen:'pJoin'
 };
@@ -138,7 +138,12 @@ function handle(event,p){
     case 'check': if(P.joined) send('here',{ id:P.id }); return;   // 白板問：這個座號的你還在嗎？
   }
   if(!P.joined) return;
+  if(p.colors) setColors(p.colors);
   switch(event){
+    case 'colors':
+      setColors(p.map);
+      if(P.screen==='pWait') showWait();
+      break;
     case 'teams':
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
       if(P.screen==='pWait') showWait();
@@ -151,6 +156,7 @@ function handle(event,p){
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
       P.level=LEVELS[p.level]?p.level:'easy';
       useSet(p.set);
+      if(P.mode==='candy'){ startPlay({ left:p.left, correct:0 }); break; }
       if(P.team<0){ showWait(); send('join',joinInfo()); break; }  // 剛好晚一步加入：再報到一次拿隊伍
       startPlay({ left:p.left, correct:0 });
       break;
@@ -161,12 +167,14 @@ function handle(event,p){
   }
 }
 function applySync(s){
+  if(s.colors) setColors(s.colors);
   if(s.phase==='play'){
     P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN; useSet(s.set);
     P.team=Number.isInteger(s.team)?s.team:-1;
-    if(P.team>=0){ startPlay({ left:s.left, correct:s.correct }); return; }
+    if(P.team>=0||P.mode==='candy'){ startPlay({ left:s.left, correct:s.correct }); return; }
   }else if(s.phase==='race'){
-    P.mode='marble'; showRace(); return;
+    if(!P.mode) P.mode='marble';
+    showRace(); return;
   }else if(s.phase==='quiz-q'){
     P.mode='quiz'; P.score=s.score||0; showQuizQ(s); return;
   }else if(s.phase==='quiz-wait'){
@@ -198,10 +206,33 @@ function showWait(){
   $('waitHello').textContent='嗨，'+P.name+'！';
   const teamMode=(P.mode==='tug'||P.mode==='marble')&&P.team>=0;
   $('waitTeam').innerHTML= teamMode ? '你是 '+teamBadgeHTML(P.team) : '';
-  const label={ tug:'🪢 準備全班拔河！', marble:'🔮 準備玻璃球賽跑！', quiz:'🎯 準備搶答大挑戰！' }[P.mode]||'';
+  const label={ tug:'🪢 準備全班拔河！', marble:'🔮 準備玻璃球賽跑！', quiz:'🎯 準備搶答大挑戰！', candy:'🍬 準備糖果球個人賽！' }[P.mode]||'';
   $('waitText').textContent=(label?label+' ':'')+'等老師按開始…';
+  const candy=P.mode==='candy';
+  $('candyPick').classList.toggle('hidden', !candy);
+  $('waitAnim').classList.toggle('hidden', candy);
+  if(candy) renderCandy();
   showScreen('pWait');
 }
+
+/* ── 🍬 選糖果球 ── */
+function setColors(map){
+  P.colors={};
+  if(map&&typeof map==='object') Object.keys(map).forEach(id=>{ const c=Number(map[id]); if(Number.isInteger(c)&&c>=0&&c<CANDY.length) P.colors[id]=c; });
+  P.color= P.id in P.colors ? P.colors[P.id] : -1;
+}
+function renderCandy(){
+  const taken=new Set(Object.keys(P.colors).filter(id=>id!==P.id).map(id=>P.colors[id]));
+  $('candyGrid').innerHTML=CANDY.map((c,i)=>'<button type="button" class="candy-btn'+(i===P.color?' mine':'')+(taken.has(i)?' taken':'')
+    +'" data-c="'+i+'" style="background:'+candyCss(c)+'" aria-label="'+c.name+(taken.has(i)?'（已被選走）':'')+'"></button>').join('');
+}
+onTap($('candyGrid'), (e,target)=>{
+  const b=target.closest('[data-c]'); if(!b||b.classList.contains('taken')) return;
+  const c=Number(b.getAttribute('data-c'));
+  P.color=c; P.colors[P.id]=c; renderCandy(); sound.pop();
+  send('color',{ id:P.id, c });
+});
+function ballHTML(){ const c=CANDY[P.color]; return c ? '<span class="my-ball" style="background:'+candyCss(c)+'"></span>' : '🍬'; }
 /* 老師選了自訂題組：在 iPad 上建一台抽題機 */
 function useSet(raw){ P.set=raw?cleanSet(raw):null; P.deck=P.set?makeDeck(P.set):null; }
 function endPlaying(){ P.playing=false; P.token++; stopCountdown(); }
@@ -216,9 +247,15 @@ function startPlay(s){
   P.streak=0; P.wrongRun=0;
   $('playCombo').classList.add('hidden');
   $('playCalm').classList.add('hidden');
-  const T=TEAMS[P.team];
-  $('playTeam').textContent=T.emoji+' '+T.name;
-  $('playTeam').style.borderColor=T.color; $('playTeam').style.color=T.deep;
+  if(P.mode==='candy'){
+    const c=CANDY[P.color]||CANDY[0];
+    $('playTeam').innerHTML=ballHTML()+' 我的糖果球';
+    $('playTeam').style.borderColor=c.color; $('playTeam').style.color=c.deep;
+  }else{
+    const T=TEAMS[P.team];
+    $('playTeam').textContent=T.emoji+' '+T.name;
+    $('playTeam').style.borderColor=T.color; $('playTeam').style.color=T.deep;
+  }
   $('playCount').textContent='⭐ '+P.correct;
   $('playTimeup').classList.add('hidden');
   showScreen('pPlay');
@@ -230,7 +267,7 @@ function nextPlayQ(){
   P.q=P.deck ? P.deck() : makeQuestion(P.level);
   $('playType').textContent=typeLabel(P.q);
   $('playPrompt').innerHTML=promptHTML(P.q);
-  const T=TEAMS[P.team]||TEAMS[0];
+  const T=(P.mode==='candy'?CANDY[P.color]:TEAMS[P.team])||TEAMS[0];
   $('playOpts').innerHTML=P.q.options.map((o,i)=>'<button class="opt" data-index="'+i+'" style="border-color:'+T.light+'">'+optionHTML(o,P.q)+'</button>').join('');
   $('playOpts').classList.remove('locked');
   $('playCalm').classList.add('hidden');
@@ -260,7 +297,7 @@ function answerPlay(i,btn){
     const power=P.streak>=LIVE.COMBO_AT?LIVE.COMBO_POWER:1;
     $('playCount').textContent='⭐ '+P.correct;
     btn.classList.add('right');
-    floatText(btn, (power>1?'🔥 ':P.mode==='tug'?'💪 ':'🔮 ')+'+'+power);
+    floatText(btn, (power>1?'🔥 ':P.mode==='tug'?'💪 ':P.mode==='candy'?'🍬 ':'🔮 ')+'+'+power);
     showCombo();
     sound.correct();
     setTimeout(()=>{ if(tk===P.token) nextPlayQ(); },450);
@@ -354,6 +391,11 @@ function showReveal(p){
 /* 🔮 答題時間結束，白板開始比賽 */
 function showRace(){
   endPlaying();
+  if(P.mode==='candy'){
+    $('endBox').innerHTML='<div class="result-big">🏁 比賽開始！</div><div class="wait-anim">'+ballHTML()+'</div>'
+      +'<div class="result-sub">快看白板，找找你的球！</div><div class="score-line">你答對了 '+P.correct+' 題 💪</div>';
+    showScreen('pEnd'); return;
+  }
   $('endBox').innerHTML='<div class="result-big">🏁 比賽開始！</div><div class="wait-anim">🔮</div>'
     +'<div class="result-sub">快看白板！</div>'
     +(P.team>=0?'<div class="score-line">'+TEAMS[P.team].emoji+' '+TEAMS[P.team].name+' 加油！你答對了 '+P.correct+' 題 💪</div>':'');
@@ -367,7 +409,15 @@ function showEnd(p){
   endPlaying();
   const box=$('endBox');
   let h='';
-  if(p.mode==='quiz'){
+  if(p.mode==='candy'){
+    const r=p.res&&Array.isArray(p.res[P.id])?p.res[P.id]:null;
+    h='<div class="result-big">🏁 抵達終點！</div>';
+    if(r){
+      const rank=r[0]|0, medal=['','🥇','🥈','🥉'][rank]||'';
+      h+='<div class="wait-anim">'+ballHTML()+'</div><div class="result-sub">'+(medal?medal+' ':'')+'你的糖果球是第 '+rank+' 名！</div>'
+        +'<div class="score-line">答對 '+(r[1]|0)+' 題，辛苦了！</div>';
+    }
+  }else if(p.mode==='quiz'){
     const r=p.res&&Array.isArray(p.res[P.id])?p.res[P.id]:null;
     h='<div class="result-big">🏁 搶答結束！</div>';
     if(r){

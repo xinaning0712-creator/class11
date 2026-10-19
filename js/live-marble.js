@@ -4,7 +4,7 @@
 //  - 時間到：3、2、1、GO！依「每隊平均每人答對幾題」決定速度，
 //    途中速度會忽快忽慢（會互相超車），但最後名次一定照答題成績
 // ============================================================
-import { TEAMS } from './live-common.js?v=202610190941';
+import { TEAMS } from './live-common.js?v=202610191504';
 
 /* ── 可以調整的設定 ── */
 export const RACE = {
@@ -67,18 +67,24 @@ function offsetPath(T, off, step) {
   const e = pointAt(T, 1, off);
   return d + ' L' + e.x.toFixed(1) + ' ' + e.y.toFixed(1);
 }
-const laneOff = (i, n) => (i - (n - 1) / 2) * RACE.LANE;
+// 第 i 顆球在第幾條跑道（球比跑道多時，幾顆球共用一條）
+// 起跑線位置；球比跑道多時，後面幾排往後站（像賽車的起跑格）
+const START = 0.03, ROW_GAP = 0.0075;
+const laneOff = (i, tk) => ((i % tk.lanes) - (tk.lanes - 1) / 2) * tk.lane;
 
 /* ============================================================
    畫賽道（答題時間就先畫好，玻璃球在起點待命）
    ============================================================ */
-export function buildTrack(svg, n) {
+// cfg（可省略）：palette 每顆球的顏色 [{color,light,deep}]、lanes 跑道數、lane 跑道寬、r 球半徑
+export function buildTrack(svg, n, cfg = {}) {
   const T = trackPoints();
-  const wide = n * RACE.LANE + 22;
+  const palette = cfg.palette || TEAMS;
+  const tk = { lanes: cfg.lanes || n, lane: cfg.lane || RACE.LANE, r: cfg.r || RACE.R };
+  const wide = tk.lanes * tk.lane + 22;
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
   let h = '<defs>';
   for (let i = 0; i < n; i++) {
-    const c = TEAMS[i];
+    const c = palette[i];
     h += '<radialGradient id="mg' + i + '" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="' + c.light + '"/><stop offset="72%" stop-color="' + c.color + '"/><stop offset="100%" stop-color="' + c.deep + '"/></radialGradient>';
   }
   h += '<pattern id="checker" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#fff"/><rect width="6" height="6" fill="#5b4038"/><rect x="6" y="6" width="6" height="6" fill="#5b4038"/></pattern>';
@@ -90,8 +96,8 @@ export function buildTrack(svg, n) {
   const center = offsetPath(T, 0, 2);
   h += '<path d="' + center + '" fill="none" stroke="#e8c9b8" stroke-width="' + (wide + 12) + '" stroke-linecap="round" stroke-linejoin="round"/>';
   h += '<path d="' + center + '" fill="none" stroke="#fffaf6" stroke-width="' + wide + '" stroke-linecap="round" stroke-linejoin="round"/>';
-  for (let i = 1; i < n; i++) {
-    h += '<path d="' + offsetPath(T, laneOff(i, n) - RACE.LANE / 2, 3) + '" fill="none" stroke="#f0d9cc" stroke-width="2.5" stroke-dasharray="10 10"/>';
+  for (let i = 1; i < tk.lanes; i++) {
+    h += '<path d="' + offsetPath(T, laneOff(i, tk) - tk.lane / 2, 3) + '" fill="none" stroke="#f0d9cc" stroke-width="2.5" stroke-dasharray="10 10"/>';
   }
   // 方向箭頭
   for (let k = 1; k < 12; k++) {
@@ -104,37 +110,40 @@ export function buildTrack(svg, n) {
     const a = pointAt(T, p, -wide / 2), b = pointAt(T, p, wide / 2), a2 = pointAt(T, p + (p < 0.5 ? 0.006 : -0.006), -wide / 2), b2 = pointAt(T, p + (p < 0.5 ? 0.006 : -0.006), wide / 2);
     return '<path class="' + cls + '" d="M' + a.x + ' ' + a.y + ' L' + b.x + ' ' + b.y + ' L' + b2.x + ' ' + b2.y + ' L' + a2.x + ' ' + a2.y + ' Z" fill="' + fill + '"/>';
   };
-  h += line(0.012, 'start-line', '#f2a7bd');
+  h += line(START + 0.004, 'start-line', '#f2a7bd');
   h += line(0.994, 'finish-line', 'url(#checker)');
   const s = pointAt(T, 0, -wide / 2 - 18), f = pointAt(T, 1, -wide / 2 - 22);
   h += '<text x="' + (s.x + 40) + '" y="' + s.y + '" font-size="24" font-weight="900" fill="#d0587e" text-anchor="middle">起點</text>';
   h += '<text x="' + (f.x - 20) + '" y="' + f.y + '" font-size="30" text-anchor="middle">🏁</text>';
   // 軌跡（跑的時候拖出彩色尾巴）＋玻璃球
-  for (let i = 0; i < n; i++) h += '<path id="mbTrail' + i + '" fill="none" stroke="' + TEAMS[i].color + '" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".35" d=""/>';
+  for (let i = 0; i < n; i++) h += '<path id="mbTrail' + i + '" fill="none" stroke="' + palette[i].color + '" stroke-width="' + Math.round(tk.r * 0.75) + '" stroke-linecap="round" stroke-linejoin="round" opacity=".35" d=""/>';
   for (let i = 0; i < n; i++) {
-    const c = TEAMS[i], R = RACE.R;
+    const c = palette[i], R = tk.r;
     h += '<g id="mb' + i + '" class="marble">'
       + '<g class="bob" style="animation-delay:-' + (i * 0.35).toFixed(2) + 's">'
       + '<ellipse cx="0" cy="' + (R + 3) + '" rx="' + (R * 0.8) + '" ry="4" fill="rgba(90,60,40,.18)"/>'
       + '<circle r="' + R + '" fill="url(#mg' + i + ')" stroke="' + c.deep + '" stroke-width="2"/>'
+      + '<g transform="scale(' + (R / 16).toFixed(3) + ')">'
       + '<g id="mbSpin' + i + '"><path d="M-10 4 Q0 -13 10 4" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".65"/></g>'
-      + '<ellipse cx="-5" cy="-6" rx="5.5" ry="3.4" fill="#fff" opacity=".9"/>'
+      + '<ellipse cx="-5" cy="-6" rx="5.5" ry="3.4" fill="#fff" opacity=".9"/></g>'
       + '<text class="mb-crown" y="' + (-R - 6) + '" font-size="22" text-anchor="middle" opacity="0">👑</text>'
       + '<text class="mb-medal" x="' + (R + 14) + '" y="7" font-size="24" text-anchor="middle"></text>'
       + '</g></g>';
   }
   svg.innerHTML = h;
-  const track = { T, n, svg, trails: Array.from({ length: n }, () => []) };
+  const track = Object.assign(tk, { T, n, svg, trails: Array.from({ length: n }, () => []),
+    p0: Array.from({ length: n }, (_, i) => Math.max(0, START - 0.004 - Math.floor(i / tk.lanes) * ROW_GAP)) });
   for (let i = 0; i < n; i++) place(track, i, 0);
   return track;
 }
 
-function place(track, i, p) {
-  const pt = pointAt(track.T, p, laneOff(i, track.n));
+function place(track, i, prog) {
+  const p = track.p0[i] + (1 - track.p0[i]) * prog;     // 從自己的起跑位置跑到終點
+  const pt = pointAt(track.T, p, laneOff(i, track));
   const g = track.svg.querySelector('#mb' + i);
   if (!g) return pt;
   g.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')');
-  track.svg.querySelector('#mbSpin' + i).setAttribute('transform', 'rotate(' + (pt.dist / RACE.R * 57.3 % 360).toFixed(1) + ')');
+  track.svg.querySelector('#mbSpin' + i).setAttribute('transform', 'rotate(' + (pt.dist / track.r * 57.3 % 360).toFixed(1) + ')');
   return pt;
 }
 

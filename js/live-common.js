@@ -4,9 +4,9 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610190941';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610191504';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610190941';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610191504';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -34,6 +34,22 @@ export const TEAMS = [
   { key:'berry',  name:'藍莓喵喵隊', emoji:'🫐', animal:'🐱', color:'#93a8e6', deep:'#5368b8', light:'#eaeefc' },
   { key:'matcha', name:'抹茶狗狗隊', emoji:'🍵', animal:'🐶', color:'#9ccc8a', deep:'#4f8a3d', light:'#eef7e8' }
 ];
+
+/* ── 🍬 糖果球個人賽：24 種糖果色（每個人選一顆，不能重複） ── */
+function mix(hex, to, t){
+  const n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255;
+  const c=v=>Math.round(v+(to-v)*t);
+  return '#'+((1<<24)+(c(r)<<16)+(c(g)<<8)+c(b)).toString(16).slice(1);
+}
+export const CANDY = [
+  ['草莓','#ff7fa3'],['櫻花','#ffb3cf'],['蜜桃','#ffad85'],['橘子','#ff9f43'],
+  ['芒果','#ffc94d'],['檸檬','#ffe25c'],['青蘋果','#a8e063'],['哈密瓜','#c4ec8a'],
+  ['薄荷','#7be0bd'],['抹茶','#93c47d'],['蘇打','#6fd6ff'],['天空','#8ec9ff'],
+  ['海水','#4fc3d9'],['藍莓','#6f8dff'],['葡萄','#a57ce6'],['薰衣草','#c6a8ff'],
+  ['芋頭','#b996dc'],['粉紫','#e79be8'],['棉花糖','#f6bfe0'],['西瓜','#ff6f7f'],
+  ['蘋果紅','#f2545b'],['珊瑚','#ff8f70'],['奶茶','#d4ad8a'],['可可','#a97c5f']
+].map(([name,color])=>({ name, color, light:mix(color,255,0.55), deep:mix(color,40,0.35) }));
+export const candyCss = c => 'radial-gradient(circle at 35% 30%, #fff 0%, '+c.light+' 25%, '+c.color+' 62%, '+c.deep+' 100%)';
 
 /* ── 搶答四個選項的形狀與顏色（像 Kahoot，但是奶茶玫粉版） ── */
 export const CHOICES = [

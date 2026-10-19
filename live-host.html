@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610190941">
+<link rel="stylesheet" href="css/live.css?v=202610191504">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -151,6 +151,21 @@
 .rank-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 20px; border-radius:16px; border:3px solid; background:#fff}
 .stars{margin:10px 0 16px}
 .stars span{display:inline-block; margin:4px 6px; padding:6px 16px; border-radius:999px; background:#fff; border:3px solid #e9c46a}
+.candy-tip{margin:4px 0 8px; font-weight:800; color:#8b3550}
+.cball{display:inline-block; width:1em; height:1em; border-radius:50%; vertical-align:-.15em; box-shadow:inset 0 -3px 5px rgba(0,0,0,.12), 0 2px 4px rgba(90,60,40,.18)}
+.cpodium{display:flex; justify-content:center; align-items:flex-end; gap:clamp(10px,2vw,28px); margin:6px 0 14px}
+.cpod{display:flex; flex-direction:column; align-items:center; gap:6px; width:min(28%,230px)}
+.cpod .cball{font-size:clamp(4rem,9vw,8rem)}
+.cpod .medal{font-size:2.4rem; line-height:1}
+.cpod .step{width:100%; border-radius:16px 16px 0 0; background:linear-gradient(180deg,#fde3ea,#f7c5d1); border:3px solid var(--rose-d); display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:900}
+.cpod .who{font-size:clamp(1.6rem,3.4vw,3rem); color:#8b3550; min-height:1.3em}
+.cpod .nm{font-size:clamp(1rem,1.8vw,1.5rem); color:var(--muted); min-height:1.3em}
+.who.flip{animation:flipIn .6s ease}
+@keyframes flipIn{0%{transform:rotateX(90deg); opacity:0}100%{transform:none; opacity:1}}
+.crest{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; max-width:1100px; margin:0 auto}
+.crest span{display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; background:#fff; border:2px solid var(--cream-d); font-weight:800; font-size:clamp(.95rem,1.4vw,1.2rem)}
+.crest .cball{font-size:1.3em}
+.crest .seat-r{color:#8b3550; min-width:2.4em}
 .podium{display:flex; justify-content:center; align-items:flex-end; gap:14px; margin:10px 0 18px}
 .pod{width:min(30%,220px); border-radius:16px 16px 0 0; background:linear-gradient(180deg,#fde3ea,#f7c5d1); border:3px solid var(--rose-d); padding:10px 6px; font-weight:900}
 .pod .medal{font-size:2.6rem}
@@ -210,6 +225,7 @@
             <button class="mode-btn selected" data-mode="tug"><span class="m-ico">🪢</span><b>全班拔河</b><small>兩隊對抗，各自答題拉繩子</small></button>
             <button class="mode-btn" data-mode="quiz"><span class="m-ico">🎯</span><b>搶答大挑戰</b><small>全班同一題，又對又快分數高</small></button>
             <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>先專心答題收集能量，最後玻璃球在彎彎賽道上比賽！</small></button>
+            <button class="mode-btn" data-mode="candy"><span class="m-ico">🍬</span><b>糖果球個人賽</b><small>每人選一顆糖果球，最後大家一起賽跑，再揭曉是誰！</small></button>
           </div>
           <div class="opt-row src-row">題目
             <select id="srcSel" class="src-sel" aria-label="題目來源"><option value="auto">🎲 自動出題：分數擴分約分</option></select>
@@ -346,6 +362,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610190941"></script>
+<script type="module" src="js/live-host.js?v=202610191504"></script>
 </body>
 </html>

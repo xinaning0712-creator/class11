@@ -2,9 +2,9 @@
 //  - 👧 每個孩子：依座號統計參加場數、答對、答錯、答對率、搶答平均名次；點一列看每一場
 //  - 🎮 每一場：每場的結果、每個人的成績；搶答另外列出每一題全班答對率
 //  - 匯出 Excel（.csv，Excel 可以直接打開）、刪除單場、清除半年前的紀錄
-import { SEAT_COUNT } from './config.js?v=202610190941';
-import { friendlyError } from './db.js?v=202610190941';
-import { el, toast } from './ui.js?v=202610190941';
+import { SEAT_COUNT } from './config.js?v=202610191504';
+import { friendlyError } from './db.js?v=202610191504';
+import { el, toast } from './ui.js?v=202610191504';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'game_results';
@@ -12,6 +12,7 @@ const MODE = {
   quiz: { icon: '🎯', name: '搶答' },
   tug: { icon: '🪢', name: '拔河' },
   marble: { icon: '🔮', name: '賽跑' },
+  candy: { icon: '🍬', name: '糖果球' },
 };
 const TEAM_NAMES = ['🍓 草莓兔兔隊', '🧋 奶茶熊熊隊', '🫐 藍莓喵喵隊', '🍵 抹茶狗狗隊'];
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
@@ -91,6 +92,7 @@ function clean(r) {
     answered: Math.max(0, p?.answered | 0),
     score: Math.max(0, p?.score | 0),
     rank: Math.max(0, p?.rank | 0),
+    color: String(p?.color ?? '').slice(0, 8),
   }));
   const summary = r.summary && typeof r.summary === 'object' ? r.summary : {};
   return { id: r.id, at: r.played_at, mode: r.mode, source: String(r.source || ''), players, summary };
@@ -183,7 +185,9 @@ function seatDetail(st) {
   const items = st.games.map(({ r, p }) => {
     const M = MODE[r.mode];
     let result;
-    if (r.mode === 'quiz') {
+    if (r.mode === 'candy') {
+      result = `第 ${p.rank} 名／${r.players.length} 人・答對 ${p.correct} 題、答錯 ${p.wrong} 題`;
+    } else if (r.mode === 'quiz') {
       const total = r.summary.total | 0;
       result = `${p.score} 分・第 ${p.rank} 名／${r.players.length} 人・答對 ${p.correct}${total ? ` / ${total}` : ''} 題`;
     } else {
@@ -203,6 +207,10 @@ function seatDetail(st) {
 
 /* ---------- 🎮 每一場 ---------- */
 function gameHeadline(r) {
+  if (r.mode === 'candy') {
+    const top = [...r.players].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    return top.map((p, i) => `${['🥇', '🥈', '🥉'][i]} ${p.name}`).join('　') || '';
+  }
   if (r.mode === 'quiz') {
     const top = r.players.filter((p) => p.score > 0).sort((a, b) => a.rank - b.rank).slice(0, 3);
     return top.map((p, i) => `${['🥇', '🥈', '🥉'][i]} ${p.name}`).join('　') || '沒有人得分';
@@ -249,7 +257,8 @@ function gameBody(r) {
         el('span', { class: 'muted' }, `${q.right | 0}/${q.answered | 0} 人`));
     })));
   }
-  const cols = quiz ? ['名次', '座號', '暱稱', '分數', '答對', '答錯', '沒作答'] : ['名次', '座號', '暱稱', '隊伍', '答對', '答錯'];
+  const candy = r.mode === 'candy';
+  const cols = quiz ? ['名次', '座號', '暱稱', '分數', '答對', '答錯', '沒作答'] : ['名次', '座號', '暱稱', candy ? '糖果球' : '隊伍', '答對', '答錯'];
   const total = r.summary.total | 0;
   const sorted = [...r.players].sort((a, b) => (a.rank || 99) - (b.rank || 99));
   parts.push(el('div', { class: 'rs-table-wrap' }, el('table', { class: 'rs-table' },
@@ -258,7 +267,7 @@ function gameBody(r) {
       el('td', { class: 'rs-num' }, p.rank || '—'),
       el('td', { class: 'rs-seat' }, p.seat ? el('span', {}, p.seat) : '—'),
       el('td', {}, p.name),
-      quiz ? el('td', { class: 'rs-num' }, p.score) : el('td', {}, p.team >= 0 ? TEAM_NAMES[p.team] : '—'),
+      quiz ? el('td', { class: 'rs-num' }, p.score) : el('td', {}, candy ? `🍬 ${p.color || '—'}` : p.team >= 0 ? TEAM_NAMES[p.team] : '—'),
       el('td', { class: 'rs-num' }, p.correct),
       el('td', { class: 'rs-num' }, p.wrong),
       quiz ? el('td', { class: 'rs-num' }, Math.max(0, total - p.answered)) : null))))));
