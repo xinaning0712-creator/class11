@@ -8,18 +8,18 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610201921';
-import { resetZoom } from './no-zoom.js?v=202610201921';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610201921';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610201921';
-import { music } from './live-music.js?v=202610201921';
+} from './live-common.js?v=202610201930';
+import { resetZoom } from './no-zoom.js?v=202610201930';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610201930';
+import { buildTrack, planRace, playRace, setMedal, TRACKS } from './live-marble.js?v=202610201930';
+import { music } from './live-music.js?v=202610201930';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
 
 /* ── 狀態 ── */
 const S = {
-  code:'', net:null, mode:'tug', level:'easy', teamN:3, quizN:LIVE.QUIZ_COUNT,
+  code:'', net:null, mode:'tug', level:'easy', teamN:3, track:'snake', quizN:LIVE.QUIZ_COUNT,
   sets:[], src:null, inOrder:true,   // src：選用的題組（null = 自動出分數題）
   phase:'lobby',               // lobby | play | end
   players:new Map(),           // id → {id,name,team,correct,wrong,score,last}
@@ -284,6 +284,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>onTap(btn,()=>{
   S.mode=btn.dataset.mode;
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('selected',b===btn));
   $('optMarble').classList.toggle('hidden', S.mode!=='marble');
+  $('optTrack').classList.toggle('hidden', !isRace(S.mode));
   applySrc();
   assignTeams(false); renderLobby(); broadcastTeams(); sound.pop();
 }));
@@ -321,6 +322,12 @@ onTap($('srcRefresh'), refreshSets);
 radio('.order-btn', b=>{ S.inOrder=b.dataset.order==='1'; });
 radio('.teamn-btn', b=>{ S.teamN=parseInt(b.dataset.n,10); assignTeams(false); renderLobby(); broadcastTeams(); });
 radio('.qn-btn',    b=>{ S.quizN=parseInt(b.dataset.n,10); });
+radio('.track-btn', b=>{ S.track=b.dataset.track; });
+/* 這一場用哪條跑道（選「隨機」時每場抽一條） */
+function pickTrack(){
+  const keys=Object.keys(TRACKS);
+  return S.track==='random' ? keys[Math.floor(Math.random()*keys.length)] : (TRACKS[S.track]?S.track:'snake');
+}
 
 onTap($('startBtn'), startGame);
 onTap($('againBtn'), startGame);
@@ -430,12 +437,13 @@ function startMarble(){
   const n=S.teamN;
   const g=S.game={ mode:'marble', n, counts:new Array(n).fill(0), power:new Array(n).fill(0), total:0, running:true, collecting:true, racing:false,
                    endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS, stopRace:null };
-  g.track=buildTrack($('mbSvg'), n);
+  g.kind=pickTrack();
+  g.track=buildTrack($('mbSvg'), n, { kind:g.kind });
   $('mbSvg').classList.remove('racing');
   marbleLegend(n);
   $('mbTicker').innerHTML='';
   $('mbTotal').textContent='0';
-  $('mbBanner').textContent='🔮 收集能量中！答對越多，玻璃球跑越快';
+  $('mbBanner').textContent=(g.kind==='coaster'?'🎢 ':'🔮 ')+'收集能量中！答對越多，玻璃球跑越快';
   $('mbBanner').className='mb-banner';
   $('mbCount').classList.add('hidden');
   $('mbStop').textContent='🏁 現在開始賽跑';
@@ -601,13 +609,13 @@ function racerLook(g,i){ const pl=S.players.get(g.racers[i]); return CANDY[pl&&p
 function buildCandyTrack(g){
   const palette=g.racers.map((_,i)=>racerLook(g,i));
   g.n=g.racers.length;
-  g.track=buildTrack($('mbSvg'), g.n, { palette, lanes:Math.min(6,Math.max(2,g.n)), lane:19, r:11 });
+  g.track=buildTrack($('mbSvg'), g.n, { palette, lanes:Math.min(6,Math.max(2,g.n)), lane:19, r:11, kind:g.kind });
 }
 function startCandy(){
   S.players.forEach(giveColor);
   broadcastColors();
   const g=S.game={ mode:'candy', racers:Array.from(S.players.keys()), total:0, running:true, collecting:true, racing:false,
-                   endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS, stopRace:null };
+                   endsAt:performance.now()+LIVE.MARBLE_SECONDS*1000, left:LIVE.MARBLE_SECONDS, stopRace:null, kind:pickTrack() };
   buildCandyTrack(g);
   $('mbSvg').classList.remove('racing');
   $('mbLegend').innerHTML='';
@@ -884,7 +892,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610201921');
+    const m=await import('./db.js?v=202610201930');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

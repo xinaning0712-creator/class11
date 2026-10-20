@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610201921">
+<link rel="stylesheet" href="css/live.css?v=202610201930">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -242,6 +242,11 @@
             <button class="btn teamn-btn selected" data-n="3">3 隊</button>
             <button class="btn teamn-btn" data-n="4">4 隊</button>
           </div>
+          <div id="optTrack" class="opt-row hidden">跑道
+            <button class="btn track-btn selected" data-track="snake">🐍 蛇形道</button>
+            <button class="btn track-btn" data-track="coaster">🎢 雲霄飛車</button>
+            <button class="btn track-btn" data-track="random">🎲 隨機</button>
+          </div>
           <div id="optQuiz" class="opt-row hidden">題數
             <button class="btn qn-btn" data-n="5">5 題</button>
             <button class="btn qn-btn selected" data-n="10">10 題</button>
@@ -363,6 +368,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610201921"></script>
+<script type="module" src="js/live-host.js?v=202610201930"></script>
 </body>
 </html>
