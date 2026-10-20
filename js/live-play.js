@@ -8,8 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610191615';
-import { resetZoom } from './no-zoom.js?v=202610191615';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610201921';
+import { resetZoom } from './no-zoom.js?v=202610201921';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -23,9 +23,10 @@ const P = {
 store.set('fr-id', P.id); keep.set('fr-id', P.id);
 
 function showScreen(id){
+  const changed=P.screen!==id;
   P.screen=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
-  $('main').scrollTop=0;
+  if(changed) $('main').scrollTop=0;      // 同一個畫面更新時不要跳回最上面
 }
 function send(event,payload){
   if(!P.net) return;
@@ -142,7 +143,7 @@ function handle(event,p){
   switch(event){
     case 'colors':
       setColors(p.map);
-      if(P.screen==='pWait') showWait();
+      if(P.screen==='pWait'&&P.mode==='candy') updateCandy();   // 只改按鈕樣子，畫面不會跳
       break;
     case 'teams':
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
@@ -211,7 +212,7 @@ function showWait(){
   const candy=P.mode==='candy';
   $('candyPick').classList.toggle('hidden', !candy);
   $('waitAnim').classList.toggle('hidden', candy);
-  if(candy) renderCandy();
+  if(candy) updateCandy();
   showScreen('pWait');
 }
 
@@ -221,6 +222,15 @@ function setColors(map){
   if(map&&typeof map==='object') Object.keys(map).forEach(id=>{ const c=Number(map[id]); if(Number.isInteger(c)&&c>=0&&c<CANDY.length) P.colors[id]=c; });
   P.color= P.id in P.colors ? P.colors[P.id] : -1;
 }
+function updateCandy(){
+  const grid=$('candyGrid');
+  if(grid.children.length!==CANDY.length){ renderCandy(); return; }
+  const taken=new Set(Object.keys(P.colors).filter(id=>id!==P.id).map(id=>P.colors[id]));
+  Array.from(grid.children).forEach((b,i)=>{
+    b.classList.toggle('mine', i===P.color);
+    b.classList.toggle('taken', taken.has(i));
+  });
+}
 function renderCandy(){
   const taken=new Set(Object.keys(P.colors).filter(id=>id!==P.id).map(id=>P.colors[id]));
   $('candyGrid').innerHTML=CANDY.map((c,i)=>'<button type="button" class="candy-btn'+(i===P.color?' mine':'')+(taken.has(i)?' taken':'')
@@ -229,7 +239,7 @@ function renderCandy(){
 onTap($('candyGrid'), (e,target)=>{
   const b=target.closest('[data-c]'); if(!b||b.classList.contains('taken')) return;
   const c=Number(b.getAttribute('data-c'));
-  P.color=c; P.colors[P.id]=c; renderCandy(); sound.pop();
+  P.color=c; P.colors[P.id]=c; updateCandy(); sound.pop();
   send('color',{ id:P.id, c });
 });
 function ballHTML(){ const c=CANDY[P.color]; return c ? '<span class="my-ball" style="background:'+candyCss(c)+'"></span>' : '🍬'; }

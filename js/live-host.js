@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610191615';
-import { resetZoom } from './no-zoom.js?v=202610191615';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610191615';
-import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610191615';
-import { music } from './live-music.js?v=202610191615';
+} from './live-common.js?v=202610201921';
+import { resetZoom } from './no-zoom.js?v=202610201921';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610201921';
+import { buildTrack, planRace, playRace, setMedal } from './live-marble.js?v=202610201921';
+import { music } from './live-music.js?v=202610201921';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -238,18 +238,22 @@ function syncFor(pl){
 /* ============================================================
    大廳
    ============================================================ */
-function chipHTML(pl){ return '<button class="chip" data-id="'+esc(pl.id)+'">'+esc(pl.name)+'</button>'; }   // 白板只顯示暱稱，不顯示座號
+const shownChips=new Set();      // 已經在大廳出現過的人（彈出動畫只給新加入的）
+function chipHTML(pl){ return '<button class="chip'+(shownChips.has(pl.id)?'':' new')+'" data-id="'+esc(pl.id)+'">'+esc(pl.name)+'</button>'; }   // 白板只顯示暱稱，不顯示座號
 const bySeat=(a,b)=>(a.seat||99)-(b.seat||99);
-function renderLobby(){
+/* 內容一樣就不重畫（有人換糖果球顏色時，名單才不會一直跳） */
+function setBox(box,html){ if(box.dataset.html===html) return; box.dataset.html=html; box.innerHTML=html; }
+function renderLobby(){ renderLobbyInner(); S.players.forEach(pl=>shownChips.add(pl.id)); }
+function renderLobbyInner(){
   $('playerCount').textContent=S.players.size;
   $('startBtn').disabled=S.players.size===0;
   const box=$('lobbyPlayers');
   $('reshuffleBtn').classList.toggle('hidden', !isTeamMode(S.mode));
-  if(!S.players.size){ box.innerHTML='<div class="empty-hint">等待大家加入中…</div>'; return; }
+  if(!S.players.size){ setBox(box,'<div class="empty-hint">等待大家加入中…</div>'); return; }
   const list=Array.from(S.players.values());
   if(S.mode==='candy'){
     const picked=list.filter(pl=>pl.color>=0).length;
-    box.innerHTML='<div class="candy-tip">🍬 已選好糖果球：'+picked+' / '+list.length+'（沒選的，開始時會自動分一顆）</div><div class="chips" style="margin:8px 0 12px">'+list.map(chipHTML).join('')+'</div>';
+    setBox(box,'<div class="candy-tip">🍬 已選好糖果球：'+picked+' / '+list.length+'（沒選的，開始時會自動分一顆）</div><div class="chips" style="margin:8px 0 12px">'+list.map(chipHTML).join('')+'</div>');
     return;
   }
   if(isTeamMode(S.mode)){
@@ -259,9 +263,9 @@ function renderLobby(){
       const T=TEAMS[t], mem=list.filter(pl=>pl.team===t);
       h+='<div class="team-col" style="border-color:'+T.color+';background:'+T.light+'"><h3 style="color:'+T.deep+'">'+T.emoji+' '+T.name+'（'+mem.length+'）</h3><div class="chips">'+mem.map(chipHTML).join('')+'</div></div>';
     }
-    box.innerHTML=h+'</div>';
+    setBox(box,h+'</div>');
   }else{
-    box.innerHTML='<div class="chips" style="margin:8px 0 12px">'+list.map(chipHTML).join('')+'</div>';
+    setBox(box,'<div class="chips" style="margin:8px 0 12px">'+list.map(chipHTML).join('')+'</div>');
   }
 }
 /* 點名字 → 請他重新取名（避免不適當的暱稱） */
@@ -880,7 +884,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610191615');
+    const m=await import('./db.js?v=202610201921');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
