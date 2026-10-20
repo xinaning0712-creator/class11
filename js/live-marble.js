@@ -4,7 +4,7 @@
 //  - 時間到：3、2、1、GO！依「每隊平均每人答對幾題」決定速度，
 //    途中速度會忽快忽慢（會互相超車），但最後名次一定照答題成績
 // ============================================================
-import { TEAMS } from './live-common.js?v=202610201930';
+import { TEAMS } from './live-common.js?v=202610201938';
 
 /* ── 可以調整的設定 ── */
 export const RACE = {
@@ -269,6 +269,7 @@ export function buildTrack(svg, n, cfg = {}) {
       + '<ellipse cx="-5" cy="-6" rx="5.5" ry="3.4" fill="#fff" opacity=".9"/></g>'
       + '<text class="mb-crown" y="' + (-R - 6) + '" font-size="22" text-anchor="middle" opacity="0">👑</text>'
       + '<text class="mb-medal" x="' + (R + 14) + '" y="7" font-size="24" text-anchor="middle"></text>'
+      + '<g class="mb-tag" opacity="0"><circle cy="' + (-R - 20) + '" r="15" fill="#fff" stroke="#c25d7c" stroke-width="3"/><text y="' + (-R - 14) + '" font-size="18" font-weight="900" fill="#c25d7c" text-anchor="middle"></text></g>'
       + '</g></g>';
   }
   svg.innerHTML = h;
@@ -316,9 +317,11 @@ export function planRace(scores) {
 /* ============================================================
    播放比賽：onLead(隊伍)、onFinish(隊伍, 名次)、onDone()
    ============================================================ */
-export function playRace(track, plan, { onLead, onFinish, onDone }) {
+// pauseAt（秒）：跑到這個時間先停下來，呼叫 onPause(目前進度, 繼續跑的函式)
+export function playRace(track, plan, { onLead, onFinish, onDone, pauseAt, onPause }) {
   track.svg.classList.add('racing');
   let start = null, alive = true, leader = -1;
+  let pausedAt = 0, paused = false, pausedTotal = 0, pauseUsed = !(pauseAt > 0);
   const done = new Array(plan.n).fill(false);
   let finishedCount = 0;
   const ranks = new Array(plan.n).fill(0);
@@ -326,7 +329,9 @@ export function playRace(track, plan, { onLead, onFinish, onDone }) {
   const step = ts => {
     if (!alive) return;
     if (start === null) start = ts;
-    const t = (ts - start) / 1000;
+    if (paused) return;
+    let t = (ts - start - pausedTotal) / 1000;
+    if (!pauseUsed && t >= pauseAt) t = pauseAt;
     const prog = [];
     for (let i = 0; i < plan.n; i++) {
       const p = plan.curves[i](t);
@@ -354,11 +359,41 @@ export function playRace(track, plan, { onLead, onFinish, onDone }) {
       if (leader >= 0 && onLead) onLead(lead);
       leader = lead;
     }
+    if (!pauseUsed && t >= pauseAt) {        // 中場暫停
+      pauseUsed = true; paused = true; pausedAt = ts;
+      if (leader >= 0) crown(leader).setAttribute('opacity', '0');
+      onPause(prog.slice(), () => {
+        if (!alive) return;
+        paused = false;
+        requestAnimationFrame(now => { pausedTotal += now - pausedAt; if (leader >= 0) crown(leader).setAttribute('opacity', '1'); requestAnimationFrame(step); });
+      });
+      return;
+    }
     if (finishedCount < plan.n) requestAnimationFrame(step);
     else { alive = false; setTimeout(() => onDone && onDone(ranks), 900); }
   };
   requestAnimationFrame(step);
   return () => { alive = false; };
+}
+
+/* 球頭上的小號碼（中場預言用）；txt 空白就收起來 */
+export function setTag(track, i, txt) {
+  const g = track.svg.querySelector('#mb' + i + ' .mb-tag'); if (!g) return;
+  g.querySelector('text').textContent = txt || '';
+  g.setAttribute('opacity', txt ? '1' : '0');
+}
+/* 找一個「冠軍已經在前五名」的時間點來暫停（大約跑到一半） */
+export function guessMoment(plan) {
+  const champ = plan.finish.indexOf(Math.min(...plan.finish));
+  const T = plan.finish[champ];
+  let best = null, bestRank = 99;
+  for (let t = T * 0.42; t <= T * 0.62; t += 0.1) {
+    const prog = plan.curves.map(c => c(t));
+    const rank = prog.filter(v => v > prog[champ]).length + 1;
+    if (rank <= 5 && rank > 1) return t;            // 冠軍在前五、但還沒領先：最好猜也最刺激
+    if (rank < bestRank) { bestRank = rank; best = t; }
+  }
+  return best ?? T * 0.5;
 }
 
 export function setMedal(track, i, rank) {

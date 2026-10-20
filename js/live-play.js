@@ -8,8 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610201930';
-import { resetZoom } from './no-zoom.js?v=202610201930';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610201938';
+import { resetZoom } from './no-zoom.js?v=202610201938';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -162,6 +162,8 @@ function handle(event,p){
       startPlay({ left:p.left, correct:0 });
       break;
     case 'race': showRace(); break;
+    case 'guess': showGuess(p); break;
+    case 'guess-end': if(P.screen==='pResult') showRace(); break;
     case 'q': showQuizQ(p); break;
     case 'reveal': showReveal(p); break;
     case 'end': showEnd(p); break;
@@ -412,6 +414,31 @@ function showRace(){
   showScreen('pEnd');
 }
 
+/* 🔮 中場預言：前五顆哪一顆會是冠軍？（不影響分數） */
+function showGuess(p){
+  const opts=Array.isArray(p.opts)?p.opts.slice(0,5):[];
+  if(!opts.length) return;
+  P.guessed=0;
+  let h='<div class="result-sub">🔮 猜猜看！誰會是冠軍？</div><div class="guess-note">猜錯也沒關係，不會影響分數喔</div><div class="guess-grid">';
+  opts.forEach(o=>{
+    const c=CANDY[o.c]||CANDY[0], k=o.k|0;
+    h+='<button type="button" class="guess-btn" data-g="'+k+'"><span class="gnum">'+k+'</span><span class="gball" style="background:'+candyCss(c)+'"></span>'
+      +(o.c===P.color?'<span class="gmine">我的球</span>':'')+'</button>';
+  });
+  h+='</div><div id="guessMsg" class="wait-text">點一顆你覺得會贏的球</div>';
+  resultBox(h);
+  sound.pop();
+}
+onTap($('resultBox'), (e,target)=>{
+  const b=target.closest('[data-g]'); if(!b) return;
+  const k=Number(b.getAttribute('data-g'));
+  P.guessed=k;
+  $('resultBox').querySelectorAll('[data-g]').forEach(x=>x.classList.toggle('picked', x===b));
+  const m=$('guessMsg'); if(m) m.textContent='你猜 '+k+' 號球！看白板，比賽馬上繼續～';
+  send('guess',{ id:P.id, k });
+  sound.pop();
+});
+
 /* ============================================================
    結束
    ============================================================ */
@@ -424,8 +451,10 @@ function showEnd(p){
     h='<div class="result-big">🏁 抵達終點！</div>';
     if(r){
       const rank=r[0]|0, medal=['','🥇','🥈','🥉'][rank]||'';
-      h+='<div class="wait-anim">'+ballHTML()+'</div><div class="result-sub">'+(medal?medal+' ':'')+'你的糖果球是第 '+rank+' 名！</div>'
+      if(rank>0) h+='<div class="wait-anim">'+ballHTML()+'</div><div class="result-sub">'+(medal?medal+' ':'')+'你的糖果球是第 '+rank+' 名！</div>'
         +'<div class="score-line">答對 '+(r[1]|0)+' 題，辛苦了！</div>';
+      if(r[3]===1) h+='<div class="streak-line">🔮 你猜中冠軍了！你是預言家！</div>';
+      else if(r[3]===0) h+='<div class="score-line">🔮 這次沒猜中冠軍，下次再試試！</div>';
     }
   }else if(p.mode==='quiz'){
     const r=p.res&&Array.isArray(p.res[P.id])?p.res[P.id]:null;

@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610201930';
-import { resetZoom } from './no-zoom.js?v=202610201930';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610201930';
-import { buildTrack, planRace, playRace, setMedal, TRACKS } from './live-marble.js?v=202610201930';
-import { music } from './live-music.js?v=202610201930';
+} from './live-common.js?v=202610201938';
+import { resetZoom } from './no-zoom.js?v=202610201938';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610201938';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201938';
+import { music } from './live-music.js?v=202610201938';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -104,6 +104,7 @@ function handle(event,p){
   else if(event==='leave') onLeave(p);
   else if(event==='here') onHere(p);
   else if(event==='color') onColor(p);
+  else if(event==='guess') onGuess(p);
 }
 
 function uniqueName(name,selfId){
@@ -501,7 +502,10 @@ function startRace(){
     $('mbBanner').textContent=candy?'🍬 衝啊！':'🔮 衝啊！';
     music.play('race');
     let lastLead=-1;
+    g.guessAt=candy&&g.n>=6 ? guessMoment(plan) : 0;     // 🔮 糖果球：跑到一半，猜猜誰是冠軍
     g.stopRace=playRace(g.track, plan, {
+      pauseAt: g.guessAt,
+      onPause: (prog,resume)=>startGuess(g,prog,resume),
       onLead:t=>{
         if(t===lastLead) return; lastLead=t;
         const T=candy?racerLook(g,t):TEAMS[t];
@@ -527,7 +531,10 @@ function startRace(){
       }
     });
     // 最後衝刺提示
-    later(()=>{ if(g.racing&&$('mbBanner').textContent.indexOf('終點')<0){ $('mbBanner').textContent='🔥 最後衝刺！'; $('mbBanner').style.color='#d9531e'; replayAnim($('mbBanner'),'boost'); } }, (Math.min(...plan.finish)-3)*1000);
+    g.sprint=()=>{ if(g.racing&&$('mbBanner').textContent.indexOf('終點')<0){ $('mbBanner').textContent='🔥 最後衝刺！'; $('mbBanner').style.color='#d9531e'; replayAnim($('mbBanner'),'boost'); } };
+    g.sprintAt=Math.min(...plan.finish)-3;
+    if(!g.guessAt||g.sprintAt<g.guessAt) later(g.sprint, g.sprintAt*1000);
+    else later(()=>{ if(!g.guess) g.sprint(); }, g.sprintAt*1000);        // 有中場預言：等繼續跑之後再提示
   }, 300+3*900+500);
 }
 
@@ -638,6 +645,53 @@ function startCandy(){
     if(left<=0) startRace();
   },250);
 }
+/* ── 🔮 中場預言：猜猜前五顆哪一顆是冠軍（不影響分數） ── */
+const GUESS_SECONDS=10;
+function startGuess(g,prog,resume){
+  const top=prog.map((p,i)=>({p,i})).sort((a,b)=>b.p-a.p).slice(0,5);
+  g.guess={ top:top.map(o=>o.i), picks:new Map(), resume, done:false };
+  top.forEach((o,k)=>setTag(g.track,o.i,String(k+1)));
+  // 白板上方排出這五顆球（球在賽道上擠在一起時，看這裡比較清楚）
+  $('mbGuess').innerHTML=top.map((o,k)=>'<div class="gopt"><span class="gnum">'+(k+1)+'</span><span class="cball" style="background:'+candyCss(racerLook(g,o.i))+'"></span></div>').join('');
+  $('mbGuess').classList.remove('hidden');
+  music.speed(0.7);
+  const opts=top.map((o,k)=>{ const pl=S.players.get(g.racers[o.i]); return { k:k+1, i:o.i, c:pl&&pl.color>=0?pl.color:0 }; });
+  send('guess',{ opts, left:GUESS_SECONDS });
+  const banner=$('mbBanner');
+  banner.style.color='#8b3550';
+  let left=GUESS_SECONDS;
+  const show=()=>{ banner.textContent='🔮 猜猜看！①～⑤ 誰會是冠軍？ ⏳ '+left+'（已猜 '+g.guess.picks.size+' 人）'; };
+  show(); replayAnim(banner,'boost'); sound.pop();
+  const id=every(()=>{
+    left--; show();
+    if(left<=3&&left>0) sound.tick();
+    if(left<=0||g.guess.picks.size>=S.players.size) endGuess(g);
+  },1000);
+  g.guess.iv=id; g.guess.tick=show;
+}
+function onGuess(p){
+  const g=S.game, pl=S.players.get(p.id);
+  if(!pl||!g||g.mode!=='candy'||!g.guess||g.guess.done) return;
+  const k=Number(p.k);
+  if(!Number.isInteger(k)||k<1||k>g.guess.top.length) return;
+  g.guess.picks.set(pl.id, g.guess.top[k-1]);
+  if(g.guess.tick) g.guess.tick();
+  if(g.guess.picks.size>=S.players.size) later(()=>endGuess(g),400);
+}
+function endGuess(g){
+  if(!g.guess||g.guess.done) return;
+  g.guess.done=true;
+  S.timers.forEach(t=>{ if(t.i&&t.id===g.guess.iv){ clearInterval(t.id); S.timers.delete(t); } });
+  g.guess.top.forEach(i=>setTag(g.track,i,''));
+  $('mbGuess').classList.add('hidden');
+  if(g.sprint) later(g.sprint, Math.max(0,(g.sprintAt-g.guessAt)*1000)+600);   // 繼續跑之後，最後衝刺提示照比賽時間出現
+  send('guess-end',{});
+  $('mbBanner').textContent='🍬 比賽繼續！';
+  music.speed(1);
+  sound.tone(1047,0,.3,'triangle',.2);
+  later(()=>g.guess.resume(), 600);
+}
+
 function endCandy(ranks){
   const g=S.game; if(!g||!g.running) return;
   g.running=false; g.racing=false;
@@ -646,7 +700,11 @@ function endCandy(ranks){
   const order=g.racers.map((id,i)=>({ id, i, rank:ranks[i], s:g.scores[i] })).sort((a,b)=>a.rank-b.rank||b.s-a.s);
   order.forEach((o,k)=>{ o.rank=k+1; });      // 個人賽每顆球都有自己的名次
   const res={};
-  order.forEach(o=>{ const pl=S.players.get(o.id); if(pl) res[o.id]=[o.rank, pl.correct, g.racers.length]; });
+  const champ=order[0]?order[0].i:-1, picks=g.guess?g.guess.picks:new Map();
+  g.seers=[];                                   // 猜中冠軍的人
+  S.players.forEach(pl=>{ if(picks.has(pl.id)&&picks.get(pl.id)===champ) g.seers.push(pl.name); });
+  order.forEach(o=>{ const pl=S.players.get(o.id); if(pl) res[o.id]=[o.rank, pl.correct, g.racers.length, picks.has(o.id)?(picks.get(o.id)===champ?1:0):-1]; });
+  S.players.forEach(pl=>{ if(!res[pl.id]&&picks.has(pl.id)) res[pl.id]=[0,0,0,picks.get(pl.id)===champ?1:0]; });
   send('end',{ mode:'candy', res });
   saveCandy(g,order);
   later(()=>showCandyEnd(g,order), 1300);
@@ -665,6 +723,9 @@ function showCandyEnd(g,order){
   order.slice(3).forEach(o=>{ const x=info(o);
     h+='<span><b>'+o.rank+'</b><span class="cball" style="background:'+candyCss(x.look)+'"></span><span class="seat-r" data-seat="'+esc(x.seat)+'">？</span></span>'; });
   h+='</div>';
+  if(g.guess){
+    h+='<div id="seers" class="seers hidden">🔮 猜中冠軍的預言家：'+(g.seers.length?g.seers.map(n=>'<b>'+esc(n)+'</b>').join('、')+'（'+g.seers.length+' 人）':'這次沒有人猜中，下次加油！')+'</div>';
+  }
   $('endBody').innerHTML=h;
   showScreen('scrEnd');
   // 揭曉：第 3 名 → 第 2 名 → 第 1 名，再公布其他人
@@ -680,6 +741,7 @@ function showCandyEnd(g,order){
   });
   later(()=>{
     document.querySelectorAll('#crest .seat-r').forEach(el=>{ el.textContent=el.getAttribute('data-seat'); replayAnim(el,'flip'); });
+    const sr=$('seers'); if(sr){ sr.classList.remove('hidden'); replayAnim(sr,'pop-in'); }
     sound.pop();
   }, 1500+3*1800);
 }
@@ -892,7 +954,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610201930');
+    const m=await import('./db.js?v=202610201938');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
