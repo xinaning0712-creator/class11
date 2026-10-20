@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610202028">
+<link rel="stylesheet" href="css/live.css?v=202610202039">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -50,6 +50,10 @@
 .mode-btn .m-ico{grid-row:1 / 3; font-size:2.3rem}
 .mode-btn b{font-size:clamp(1.1rem,2vw,1.45rem)}
 .mode-btn small{font-size:.95rem; color:var(--muted); font-weight:700}
+.board-link{display:grid; grid-template-columns:auto 1fr; column-gap:12px; align-items:center; margin:2px 0 12px; padding:8px 14px; border-radius:16px; border:3px dashed var(--milk-d); background:#fffaf4; color:var(--ink); text-decoration:none; text-align:left}
+.board-link .m-ico{grid-row:1 / 3; font-size:2.3rem}
+.board-link b{font-size:clamp(1.1rem,2vw,1.45rem)}
+.board-link small{font-size:.95rem; color:var(--muted); font-weight:700}
 .mode-btn.selected{background:linear-gradient(180deg,#fff,#fde3ea); border-color:var(--rose-d); box-shadow:0 4px 0 var(--rose-d),0 0 0 4px rgba(236,140,168,.3)}
 .opt-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-weight:800; font-size:1.1rem}
 .opt-row .btn{padding:6px 14px; min-height:48px}
@@ -256,6 +260,7 @@ body.cozy .seers{background:#f3ecff; border:3px solid var(--line); color:var(--l
             <button class="mode-btn" data-mode="marble"><span class="m-ico">🔮</span><b>玻璃球賽跑</b><small>先專心答題收集能量，最後玻璃球在彎彎賽道上比賽！</small></button>
             <button class="mode-btn" data-mode="candy"><span class="m-ico">🍬</span><b>糖果球個人賽</b><small>每人選一顆糖果球，最後大家一起賽跑，再揭曉是誰！</small></button>
           </div>
+          <a class="board-link" href="board-tug.html"><span class="m-ico">🪢</span><b>白板拔河</b><small>不用 iPad！兩隊上台在白板上直接答題拉繩子 ↗</small></a>
           <div class="opt-row src-row">題目
             <select id="srcSel" class="src-sel" aria-label="題目來源"><option value="auto">🎲 自動出題：分數擴分約分</option></select>
             <button id="srcRefresh" class="btn" aria-label="重新讀取題組" title="重新讀取題組">🔄</button>
@@ -397,6 +402,6 @@ body.cozy .seers{background:#f3ecff; border:3px solid var(--line); color:var(--l
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610202028"></script>
+<script type="module" src="js/live-host.js?v=202610202039"></script>
 </body>
 </html>
