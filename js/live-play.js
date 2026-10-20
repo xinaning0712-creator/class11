@@ -8,8 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610201938';
-import { resetZoom } from './no-zoom.js?v=202610201938';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610201943';
+import { resetZoom } from './no-zoom.js?v=202610201943';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {

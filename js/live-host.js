@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610201938';
-import { resetZoom } from './no-zoom.js?v=202610201938';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610201938';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201938';
-import { music } from './live-music.js?v=202610201938';
+} from './live-common.js?v=202610201943';
+import { resetZoom } from './no-zoom.js?v=202610201943';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610201943';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201943';
+import { music } from './live-music.js?v=202610201943';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -503,6 +503,7 @@ function startRace(){
     music.play('race');
     let lastLead=-1;
     g.guessAt=candy&&g.n>=6 ? guessMoment(plan) : 0;     // 🔮 糖果球：跑到一半，猜猜誰是冠軍
+    g.champ=plan.finish.indexOf(Math.min(...plan.finish));
     g.stopRace=playRace(g.track, plan, {
       pauseAt: g.guessAt,
       onPause: (prog,resume)=>startGuess(g,prog,resume),
@@ -648,7 +649,9 @@ function startCandy(){
 /* ── 🔮 中場預言：猜猜前五顆哪一顆是冠軍（不影響分數） ── */
 const GUESS_SECONDS=10;
 function startGuess(g,prog,resume){
-  const top=prog.map((p,i)=>({p,i})).sort((a,b)=>b.p-a.p).slice(0,5);
+  let top=prog.map((p,i)=>({p,i})).sort((a,b)=>b.p-a.p).slice(0,5);
+  // 正確答案一定要在選項裡：冠軍還沒擠進前五時，用他換掉第五顆
+  if(g.champ>=0&&!top.some(o=>o.i===g.champ)){ top[top.length-1]={ p:prog[g.champ], i:g.champ }; top.sort((a,b)=>b.p-a.p); }
   g.guess={ top:top.map(o=>o.i), picks:new Map(), resume, done:false };
   top.forEach((o,k)=>setTag(g.track,o.i,String(k+1)));
   // 白板上方排出這五顆球（球在賽道上擠在一起時，看這裡比較清楚）
@@ -954,7 +957,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610201938');
+    const m=await import('./db.js?v=202610201943');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

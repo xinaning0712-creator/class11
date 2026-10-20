@@ -4,7 +4,7 @@
 //  - 時間到：3、2、1、GO！依「每隊平均每人答對幾題」決定速度，
 //    途中速度會忽快忽慢（會互相超車），但最後名次一定照答題成績
 // ============================================================
-import { TEAMS } from './live-common.js?v=202610201938';
+import { TEAMS } from './live-common.js?v=202610201943';
 
 /* ── 可以調整的設定 ── */
 export const RACE = {
@@ -77,6 +77,30 @@ function coasterPoints(){
   T.loopFrom = loopFrom; T.loopTo = loopTo;
   return T;
 }
+function ferrisWheel(cx, cy, r, ground){
+  const cabins = ['#ffb3cf', '#ffe25c', '#8ec9ff', '#a8e063', '#c6a8ff', '#ffad85', '#7be0bd', '#f6bfe0'];
+  let h = '<g class="ferris" opacity=".78">';
+  // 支腳
+  h += '<path d="M' + (cx - 70) + ' ' + ground + ' L' + cx + ' ' + cy + ' L' + (cx + 70) + ' ' + ground + '" fill="none" stroke="#e2a9bb" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>';
+  h += '<line x1="' + (cx - 42) + '" y1="' + (cy + (ground - cy) * 0.6) + '" x2="' + (cx + 42) + '" y2="' + (cy + (ground - cy) * 0.6) + '" stroke="#e2a9bb" stroke-width="5"/>';
+  // 輪子（慢慢轉）
+  h += '<g><animateTransform attributeName="transform" type="rotate" from="0 ' + cx + ' ' + cy + '" to="360 ' + cx + ' ' + cy + '" dur="40s" repeatCount="indefinite"/>';
+  h += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#e8b4c4" stroke-width="6"/>';
+  h += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 16) + '" fill="none" stroke="#f3d2dc" stroke-width="3"/>';
+  for (let k = 0; k < 8; k++) {
+    const a = Math.PI * 2 * k / 8, x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+    h += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#efc9d4" stroke-width="3"/>';
+  }
+  h += '</g>';
+  // 車廂（不跟著輪子翻轉，永遠正正的掛著）
+  for (let k = 0; k < 8; k++) {
+    h += '<g><animateTransform attributeName="transform" type="rotate" from="' + (k * 45) + ' ' + cx + ' ' + cy + '" to="' + (k * 45 + 360) + ' ' + cx + ' ' + cy + '" dur="40s" repeatCount="indefinite"/>'
+      + '<g transform="translate(' + (cx + r) + ' ' + cy + ')"><g><animateTransform attributeName="transform" type="rotate" from="' + (-k * 45) + '" to="' + (-k * 45 - 360) + '" dur="40s" repeatCount="indefinite"/>'
+      + '<line x1="0" y1="0" x2="0" y2="9" stroke="#d98aa3" stroke-width="2"/><rect x="-11" y="8" width="22" height="17" rx="7" fill="' + cabins[k] + '" stroke="#fff" stroke-width="2"/></g></g></g>';
+  }
+  h += '<circle cx="' + cx + '" cy="' + cy + '" r="10" fill="#c25d7c"/></g>';
+  return h;
+}
 function coasterScene(T, wide){
   const G = COASTER.ground, L = COASTER.loop;
   let h = '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3ec"/><stop offset=".65" stop-color="#fff4ec"/><stop offset="1" stop-color="#fffaf4"/></linearGradient>'
@@ -86,9 +110,11 @@ function coasterScene(T, wide){
   h += '<path d="M-1200 ' + G + ' Q-900 ' + (G - 18) + ' -600 ' + G + ' T0 ' + G + ' T600 ' + G + ' T1200 ' + G + ' T1800 ' + G + ' T2400 ' + G + ' V1000 H-1200 Z" fill="url(#grass)"/>';
   // 遠方的遊樂園
   [['☁️', 380, 96, 54, .8], ['☁️', 760, 150, 44, .7], ['☁️', 1130, 86, 40, .7], ['☁️', -60, 160, 46, .6], ['☁️', 1300, 200, 50, .6],
-   ['🎡', 1120, 300, 120, .9], ['🎪', 175, 628, 74, .95], ['🎠', 650, 628, 56, .95], ['🍿', 300, 630, 38, .95], ['🍭', 1250, 632, 42, .95],
+   ['🎪', 175, 628, 74, .95], ['🎠', 650, 628, 56, .95], ['🍿', 300, 630, 38, .95], ['🍭', 1250, 632, 42, .95],
    ['🎈', 560, 180, 42, .9], ['🎈', 590, 210, 30, .8], ['🌟', L.cx + L.drift / 2, L.cy + 14, 46, .95]]
     .forEach(([e, x, y, sz, o]) => { h += '<text x="' + x + '" y="' + y + '" font-size="' + sz + '" text-anchor="middle" opacity="' + o + '">' + e + '</text>'; });
+  // 🎡 手畫的摩天輪（淡淡的玫瑰色，站在草地上當背景）
+  h += ferrisWheel(1150, 400, 88, G);
   // 格子支架（迴圈那段不畫）：兩根柱子＋交叉的斜撐
   let posts = '', braces = '';
   let last = null;
@@ -387,7 +413,7 @@ export function guessMoment(plan) {
   const champ = plan.finish.indexOf(Math.min(...plan.finish));
   const T = plan.finish[champ];
   let best = null, bestRank = 99;
-  for (let t = T * 0.42; t <= T * 0.62; t += 0.1) {
+  for (let t = T * 0.4; t <= T * 0.75; t += 0.05) {
     const prog = plan.curves.map(c => c(t));
     const rank = prog.filter(v => v > prog[champ]).length + 1;
     if (rank <= 5 && rank > 1) return t;            // 冠軍在前五、但還沒領先：最好猜也最刺激
