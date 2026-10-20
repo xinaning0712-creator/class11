@@ -1,5 +1,5 @@
 // ============================================================
-// 分數大冒險・全班連線版：孩子的 iPad 端
+// 11班專屬樂園・全班連線版：孩子的 iPad 端
 //  - 輸入房間代碼與暱稱加入
 //  - 拔河／賽跑：自己一直答題，答對就幫隊伍出力
 //  - 搶答：看白板的題目，在 iPad 上選答案
@@ -8,9 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610202019';
-import { candyBallImg } from './candy-faces.js?v=202610202019';
-import { resetZoom } from './no-zoom.js?v=202610202019';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610202028';
+import { candyBallImg } from './candy-faces.js?v=202610202028';
+import { resetZoom } from './no-zoom.js?v=202610202028';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {

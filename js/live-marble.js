@@ -4,8 +4,8 @@
 //  - 時間到：3、2、1、GO！依「每隊平均每人答對幾題」決定速度，
 //    途中速度會忽快忽慢（會互相超車），但最後名次一定照答題成績
 // ============================================================
-import { candyBallSVG, LINE } from './candy-faces.js?v=202610202019';
-import { TEAMS } from './live-common.js?v=202610202019';
+import { candyBallSVG, LINE } from './candy-faces.js?v=202610202028';
+import { TEAMS } from './live-common.js?v=202610202028';
 
 /* ── 可以調整的設定 ── */
 export const RACE = {

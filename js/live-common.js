@@ -1,12 +1,12 @@
 // ============================================================
-// 分數大冒險・全班連線版：白板（live-host）和 iPad（live）共用的程式
+// 11班專屬樂園・全班連線版：白板（live-host）和 iPad（live）共用的程式
 //  - 出題：擴分填空 / 約分到最簡 / 判斷相等，陷阱依迷思產生，並標記陷阱種類
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610202019';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610202028';
 export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610202019';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610202028';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
