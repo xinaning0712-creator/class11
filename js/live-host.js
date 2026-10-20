@@ -8,11 +8,11 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610201943';
-import { resetZoom } from './no-zoom.js?v=202610201943';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610201943';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201943';
-import { music } from './live-music.js?v=202610201943';
+} from './live-common.js?v=202610201951';
+import { resetZoom } from './no-zoom.js?v=202610201951';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610201951';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201951';
+import { music } from './live-music.js?v=202610201951';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -282,6 +282,7 @@ onTap($('lobbyPlayers'), (e,target)=>{
 onTap($('reshuffleBtn'), ()=>{ assignTeams(true); renderLobby(); broadcastTeams(); sound.pop(); });
 
 document.querySelectorAll('.mode-btn').forEach(btn=>onTap(btn,()=>{
+  if(S.picking){ clearTimers(); S.picking=false; $('startBtn').textContent='🚀 開始！'; send('pick-left',{ left:0 }); }
   S.mode=btn.dataset.mode;
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('selected',b===btn));
   $('optMarble').classList.toggle('hidden', S.mode!=='marble');
@@ -334,8 +335,31 @@ onTap($('startBtn'), startGame);
 onTap($('againBtn'), startGame);
 onTap($('lobbyBtn'), backToLobby);
 
+/* 🍬 糖果球：按開始時還有人沒選顏色 → 倒數 10 秒讓大家選好，時間到自動開始（沒選的自動分一顆） */
+const PICK_SECONDS=10;
 function startGame(){
   if(!S.players.size) return;
+  const unpicked=()=>Array.from(S.players.values()).filter(pl=>pl.color<0).length;
+  if(S.mode==='candy'&&S.phase==='lobby'&&unpicked()>0){
+    if(S.picking) return;
+    clearTimers();
+    S.picking=true;
+    let left=PICK_SECONDS;
+    const btn=$('startBtn');
+    const show=()=>{ btn.textContent='⏳ '+left+' 秒後開始（還有 '+unpicked()+' 人沒選球）'; };
+    btn.disabled=true; show();
+    send('pick-left',{ left });
+    every(()=>{
+      left--;
+      if(left<=0||unpicked()===0){ S.picking=false; btn.textContent='🚀 開始！'; beginGame(); return; }
+      show(); if(left<=3) sound.tick();
+    },1000);
+    return;
+  }
+  beginGame();
+}
+function beginGame(){
+  S.picking=false;
   clearTimers(); music.stop();
   S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; pl.combo=0; pl.wrongRun=0; pl.lockUntil=0; pl.last=0; pl.power=0; });
   assignTeams(false);
@@ -346,7 +370,7 @@ function startGame(){
   else startQuiz();
 }
 function backToLobby(){
-  clearTimers(); music.stop();
+  clearTimers(); music.stop(); S.picking=false;
   S.phase='lobby'; S.game=null;
   assignTeams(false);
   renderLobby(); showScreen('scrLobby');
@@ -957,7 +981,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610201943');
+    const m=await import('./db.js?v=202610201951');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

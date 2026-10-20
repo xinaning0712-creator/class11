@@ -8,8 +8,8 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610201943';
-import { resetZoom } from './no-zoom.js?v=202610201943';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610201951';
+import { resetZoom } from './no-zoom.js?v=202610201951';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -164,6 +164,7 @@ function handle(event,p){
     case 'race': showRace(); break;
     case 'guess': showGuess(p); break;
     case 'guess-end': if(P.screen==='pResult') showRace(); break;
+    case 'pick-left': pickCountdown(p.left|0); break;
     case 'q': showQuizQ(p); break;
     case 'reveal': showReveal(p); break;
     case 'end': showEnd(p); break;
@@ -224,6 +225,19 @@ function setColors(map){
   if(map&&typeof map==='object') Object.keys(map).forEach(id=>{ const c=Number(map[id]); if(Number.isInteger(c)&&c>=0&&c<CANDY.length) P.colors[id]=c; });
   P.color= P.id in P.colors ? P.colors[P.id] : -1;
 }
+/* 老師按開始了：倒數幾秒內選好球 */
+let pickTimer=null;
+function pickCountdown(left){
+  const t=$('candyTitle'); clearInterval(pickTimer);
+  if(left<=0){ t.textContent='🍬 選一顆你的糖果球'; return; }
+  const end=Date.now()+left*1000;
+  const tick=()=>{
+    const s=Math.ceil((end-Date.now())/1000);
+    if(s<=0){ clearInterval(pickTimer); t.textContent='🍬 時間到！沒選的會自動分一顆'; return; }
+    t.textContent='⏳ '+s+' 秒內選好你的糖果球！';
+  };
+  tick(); pickTimer=setInterval(tick,250);
+}
 function updateCandy(){
   const grid=$('candyGrid');
   if(grid.children.length!==CANDY.length){ renderCandy(); return; }
@@ -254,6 +268,7 @@ function endPlaying(){ P.playing=false; P.token++; stopCountdown(); }
    ============================================================ */
 function startPlay(s){
   endPlaying();
+  clearInterval(pickTimer); $('candyTitle').textContent='🍬 選一顆你的糖果球';
   P.playing=true;
   P.correct=s.correct||0;
   P.streak=0; P.wrongRun=0;
@@ -418,8 +433,8 @@ function showRace(){
 function showGuess(p){
   const opts=Array.isArray(p.opts)?p.opts.slice(0,5):[];
   if(!opts.length) return;
-  P.guessed=0;
-  let h='<div class="result-sub">🔮 猜猜看！誰會是冠軍？</div><div class="guess-note">猜錯也沒關係，不會影響分數喔</div><div class="guess-grid">';
+  P.guessed=0; P.guessOpen=true;
+  let h='<div id="guessTimer" class="guess-timer">⏳ '+(p.left|0)+'</div><div class="result-sub">🔮 猜猜看！誰會是冠軍？</div><div class="guess-note">猜錯也沒關係，不會影響分數喔</div><div class="guess-grid">';
   opts.forEach(o=>{
     const c=CANDY[o.c]||CANDY[0], k=o.k|0;
     h+='<button type="button" class="guess-btn" data-g="'+k+'"><span class="gnum">'+k+'</span><span class="gball" style="background:'+candyCss(c)+'"></span>'
@@ -428,9 +443,15 @@ function showGuess(p){
   h+='</div><div id="guessMsg" class="wait-text">點一顆你覺得會贏的球</div>';
   resultBox(h);
   sound.pop();
+  // 倒數 10 秒：時間到就不能再選
+  startCountdown($('guessTimer'), p.left|0||10, ()=>{
+    P.guessOpen=false;
+    $('resultBox').querySelectorAll('[data-g]').forEach(x=>{ if(!x.classList.contains('picked')) x.classList.add('closed'); });
+    const m=$('guessMsg'); if(m&&!P.guessed) m.textContent='⏰ 時間到！看白板，比賽繼續～';
+  });
 }
 onTap($('resultBox'), (e,target)=>{
-  const b=target.closest('[data-g]'); if(!b) return;
+  const b=target.closest('[data-g]'); if(!b||!P.guessOpen) return;
   const k=Number(b.getAttribute('data-g'));
   P.guessed=k;
   $('resultBox').querySelectorAll('[data-g]').forEach(x=>x.classList.toggle('picked', x===b));
