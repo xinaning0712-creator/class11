@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610201951">
+<link rel="stylesheet" href="css/live.css?v=202610202019">
 <style>
 .center{max-width:720px; margin:0 auto; text-align:center}
 .join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
@@ -27,14 +27,27 @@
 .candy-pick{margin:4px 0 6px}
 .candy-title{font-size:clamp(1.3rem,4vw,1.8rem); font-weight:900; color:#c25d7c; margin-bottom:10px}
 .candy-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; max-width:560px; margin:0 auto}
-.candy-btn{position:relative; aspect-ratio:1; border-radius:50%; border:3px solid #fff; padding:0; cursor:pointer;
-  box-shadow:inset 0 -6px 10px rgba(0,0,0,.12), 0 4px 8px rgba(90,60,40,.18); transition:transform .15s}
+.candy-btn{position:relative; aspect-ratio:1; border-radius:50%; border:0; padding:0; background:none; cursor:pointer; transition:transform .15s}
+.candy-btn .cface{width:100%; height:auto; display:block; overflow:visible}
 .candy-btn.mine{outline:5px solid #c25d7c; outline-offset:3px; transform:scale(1.08)}
-.candy-btn.mine::after{content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.6rem; font-weight:900; text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.candy-btn.mine::after{content:'✓'; position:absolute; right:-4px; bottom:-2px; width:26px; height:26px; border-radius:50%; background:#c25d7c; border:3px solid #fff; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; font-weight:900}
 .candy-btn.taken{filter:grayscale(.55); opacity:.3}
-.candy-btn.taken::after{content:'✕'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#7a6a6a; font-size:1.4rem; font-weight:900}
+.candy-btn.taken::after{content:'已選'; position:absolute; left:50%; bottom:-4px; transform:translateX(-50%); padding:0 6px; border-radius:999px; background:#fff; border:2px solid #b9a79a; color:#8a7466; font-size:.7rem; font-weight:900; white-space:nowrap}
 .candy-note{font-size:.95rem; font-weight:700; color:var(--muted); margin-top:10px}
-.my-ball{display:inline-block; width:1.1em; height:1.1em; border-radius:50%; vertical-align:-.2em; box-shadow:inset 0 -3px 5px rgba(0,0,0,.12)}
+.my-ball{display:inline-block; vertical-align:middle; line-height:0}
+.my-ball .cface{overflow:visible}
+.mini-badge .my-ball .cface{width:1.4em; height:auto}
+/* 🌸 糖果球個人賽：手繪療癒風 */
+body.cozy .candy-title, body.cozy .guess-btn .gnum{color:var(--line)}
+body.cozy .candy-btn.mine{outline:5px solid var(--line); outline-offset:2px}
+body.cozy .candy-btn.mine::after{background:var(--line)}
+body.cozy .guess-btn{border:3px solid var(--line); background:#fff4dc; box-shadow:0 4px 0 var(--line)}
+body.cozy .guess-btn.picked{background:#f7c4cf; border-color:var(--line); box-shadow:0 4px 0 var(--line)}
+body.cozy .guess-timer, body.cozy .pill, body.cozy .mini-badge{background:#fff4dc; border:3px solid var(--line) !important; color:var(--line) !important}
+body.cozy .opt{border:3px solid var(--line) !important; box-shadow:0 5px 0 var(--line)}
+body.cozy .qcard{background:#fff4dc}
+body.cozy .seat-btn{border-color:var(--line); box-shadow:0 3px 0 var(--line)}
+body.cozy .result-big, body.cozy .result-sub, body.cozy .score-line{color:var(--line)}
 .guess-timer{display:inline-block; padding:2px 18px; border-radius:999px; background:#fff; border:3px solid #b9a6e6; color:#5d4a99; font-weight:900; font-size:1.5rem; margin-bottom:6px}
 .guess-btn.closed{opacity:.35; filter:grayscale(.6)}
 .guess-note{font-weight:800; color:var(--muted); margin:-4px 0 12px}
@@ -42,7 +55,8 @@
 .guess-btn{position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 8px 12px; min-width:96px;
   border-radius:20px; border:4px solid var(--cream-d); background:#fff; font:inherit; cursor:pointer; box-shadow:0 4px 0 var(--cream-d)}
 .guess-btn .gnum{font-size:1.6rem; font-weight:900; color:#c25d7c}
-.guess-btn .gball{width:70px; height:70px; border-radius:50%; box-shadow:inset 0 -6px 10px rgba(0,0,0,.12), 0 4px 8px rgba(90,60,40,.18)}
+.guess-btn .gball{display:block; width:72px}
+.guess-btn .gball .cface{width:100%; height:auto; display:block; overflow:visible}
 .guess-btn .gmine{font-size:.85rem; font-weight:900; color:#fff; background:#c25d7c; border-radius:999px; padding:1px 8px}
 .guess-btn.picked{border-color:#8b67c2; background:#f3ecff; box-shadow:0 4px 0 #8b67c2; transform:translateY(-2px)}
 .seat-note{font-size:.95rem; font-weight:700; color:var(--muted); text-align:left; margin-top:6px}
@@ -185,6 +199,6 @@
     </section>
   </main>
 </div>
-<script type="module" src="js/live-play.js?v=202610201951"></script>
+<script type="module" src="js/live-play.js?v=202610202019"></script>
 </body>
 </html>

@@ -4,7 +4,8 @@
 //  - 時間到：3、2、1、GO！依「每隊平均每人答對幾題」決定速度，
 //    途中速度會忽快忽慢（會互相超車），但最後名次一定照答題成績
 // ============================================================
-import { TEAMS } from './live-common.js?v=202610201951';
+import { candyBallSVG, LINE } from './candy-faces.js?v=202610202019';
+import { TEAMS } from './live-common.js?v=202610202019';
 
 /* ── 可以調整的設定 ── */
 export const RACE = {
@@ -101,6 +102,82 @@ function ferrisWheel(cx, cy, r, ground){
   h += '<circle cx="' + cx + '" cy="' + cy + '" r="10" fill="#c25d7c"/></g>';
   return h;
 }
+/* ============================================================
+   🌸 手繪療癒風場景（糖果球個人賽用）：奶油色天空、草地、櫻花樹、小白花、深咖啡外框
+   畫在另一層背景（#mbBg），比賽時只有球在動，白板電腦才不會卡
+   ============================================================ */
+function cozyCloud(x, y, s){ return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path d="M-60 10 Q-62 -14 -38 -16 Q-30 -40 -4 -34 Q14 -50 34 -32 Q62 -34 60 -6 Q74 12 50 18 H-46 Q-70 20 -60 10Z" fill="#fff" stroke="' + LINE + '" stroke-width="3.5" stroke-linejoin="round"/></g>'; }
+function cozyTree(x, y, s){
+  let t = '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path d="M-8 0 Q-6 -40 -2 -60 L6 -60 Q8 -40 10 0Z" fill="#9c7258" stroke="' + LINE + '" stroke-width="3.5"/>';
+  t += '<path d="M-62 -70 Q-74 -110 -40 -122 Q-30 -156 6 -150 Q40 -164 54 -128 Q86 -112 66 -78 Q62 -52 30 -56 Q4 -42 -22 -54 Q-58 -46 -62 -70Z" fill="#f7c4cf" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>';
+  [[-34, -96], [0, -124], [30, -98], [-10, -76], [44, -72], [-46, -70], [14, -140]].forEach(([fx, fy]) => { t += '<g transform="translate(' + fx + ' ' + fy + ')"><circle r="7" fill="#fff" stroke="' + LINE + '" stroke-width="2"/><circle r="2.6" fill="#f2a4b6"/></g>'; });
+  return t + '</g>';
+}
+function cozyFlowers(x, y){ return '<g transform="translate(' + x + ' ' + y + ')"><circle r="4.5" fill="#fff" stroke="' + LINE + '" stroke-width="1.8"/><circle cx="10" cy="4" r="3.5" fill="#fff" stroke="' + LINE + '" stroke-width="1.6"/><circle cx="4" cy="-7" r="3" fill="#fff" stroke="' + LINE + '" stroke-width="1.5"/></g>'; }
+function cozyFlag(x, y, flip){ const d = flip ? -1 : 1;
+  return '<g transform="translate(' + x + ' ' + y + ')"><rect x="-4" y="-70" width="8" height="74" rx="3" fill="#fff4dc" stroke="' + LINE + '" stroke-width="3"/>'
+    + '<path d="M' + (4 * d) + ' -68 H' + (56 * d) + ' L' + (46 * d) + ' -54 L' + (56 * d) + ' -40 H' + (4 * d) + 'Z" fill="#f7c4cf" stroke="' + LINE + '" stroke-width="3.5" stroke-linejoin="round"/>'
+    + '<text x="' + (28 * d) + '" y="-48" font-size="15" font-weight="700" fill="' + LINE + '" text-anchor="middle">終點</text></g>'; }
+function cozyWheel(cx, cy, r, ground){
+  let s = '<path d="M' + (cx - 64) + ' ' + ground + ' L' + cx + ' ' + cy + ' L' + (cx + 64) + ' ' + ground + '" fill="none" stroke="' + LINE + '" stroke-width="7" stroke-linejoin="round"/><path d="M' + (cx - 64) + ' ' + ground + ' L' + cx + ' ' + cy + ' L' + (cx + 64) + ' ' + ground + '" fill="none" stroke="#f3d7b6" stroke-width="3"/>';
+  s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + LINE + '" stroke-width="5"/><circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 12) + '" fill="none" stroke="#f7c4cf" stroke-width="6"/>';
+  const cab = ['#f7c4cf', '#ffe08a', '#a8d8d2', '#c9e3a0', '#d5c2f0', '#ffc9a6', '#a8d8d2', '#f7c4cf'];
+  for (let k = 0; k < 8; k++) { const a = Math.PI * 2 * k / 8, x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+    s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + LINE + '" stroke-width="2.5"/><rect x="' + (x - 13).toFixed(1) + '" y="' + (y + 2).toFixed(1) + '" width="26" height="20" rx="8" fill="' + cab[k] + '" stroke="' + LINE + '" stroke-width="3"/>'; }
+  return s + '<circle cx="' + cx + '" cy="' + cy + '" r="9" fill="#ef9fb3" stroke="' + LINE + '" stroke-width="3"/>';
+}
+function cozyScene(T, wide, kind){
+  const G = kind === 'coaster' ? COASTER.ground : H - 6;
+  let h = '<defs><filter id="hand" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter></defs>';
+  h += '<rect x="-1200" y="-400" width="3600" height="1600" fill="' + (kind === 'coaster' ? '#fdf3e4' : '#d6e8b4') + '"/><g filter="url(#hand)">';
+  if (kind === 'coaster') {
+    h += '<path d="M-1200 470 Q -500 380 -300 440 Q 0 360 260 440 T 760 420 T 1240 430 T 1600 440 T 2400 440 V800 H-1200Z" fill="#dcebc0" stroke="' + LINE + '" stroke-width="3"/>';
+    h += cozyCloud(380, 90, 1) + cozyCloud(760, 140, .8) + cozyCloud(1120, 80, .9) + cozyCloud(-60, 150, .9) + cozyCloud(1320, 190, 1);
+    h += '<path d="M-1200 ' + G + ' Q -900 ' + (G - 16) + ' -600 ' + G + ' T 0 ' + G + ' T 600 ' + G + ' T 1200 ' + G + ' T 1800 ' + G + ' T 2400 ' + G + ' V1200 H-1200Z" fill="#c8dea3" stroke="' + LINE + '" stroke-width="4"/>';
+    h += cozyWheel(1150, 400, 86, G);
+    h += cozyTree(120, G + 6, 1.05) + cozyTree(700, G + 8, .85) + cozyTree(1010, G + 10, .7) + cozyTree(-40, G + 4, 1.2) + cozyTree(1300, G + 6, 1) + cozyTree(-200, G + 8, .9);
+    [[300, 660], [520, 668], [620, 656], [880, 664], [1100, 662], [40, 670], [400, 672], [960, 672]].forEach(([x, y]) => { h += cozyFlowers(x, y); });
+    // 支架
+    let last = null;
+    for (let i = 0; i < T.pts.length; i += 6) {
+      if (i > T.loopFrom - 3 && i < T.loopTo + 3) { last = null; continue; }
+      const p = pointAt(T, T.len[i] / T.total, wide / 2 + 2);
+      if (p.y > G - 34) { last = null; continue; }
+      if (last && p.x - last.x < 44) continue;
+      h += '<rect x="' + (p.x - 4).toFixed(1) + '" y="' + p.y.toFixed(1) + '" width="8" height="' + (G - p.y).toFixed(1) + '" rx="3" fill="#fff4dc" stroke="' + LINE + '" stroke-width="3"/>';
+      last = p;
+    }
+    // 月台
+    const st = pointAt(T, 0.02, 0);
+    h += '<rect x="30" y="' + (st.y + wide / 2 + 2) + '" width="250" height="18" rx="7" fill="#f7c4cf" stroke="' + LINE + '" stroke-width="4"/>';
+    h += '<path d="M36 ' + (st.y - 92) + ' H274 L258 ' + (st.y - 56) + ' H52Z" fill="#a8d8d2" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>';
+    h += '<path d="M60 ' + (st.y - 80) + ' H250 M66 ' + (st.y - 68) + ' H244" stroke="#fff" stroke-width="5" stroke-linecap="round"/>';
+    [66, 244].forEach(x => { h += '<rect x="' + (x - 5) + '" y="' + (st.y - 56) + '" width="10" height="82" rx="4" fill="#fff4dc" stroke="' + LINE + '" stroke-width="3"/>'; });
+    h += '<g transform="translate(155 ' + (st.y - 118) + ')"><rect x="-96" y="-22" width="192" height="40" rx="14" fill="#fff4dc" stroke="' + LINE + '" stroke-width="4"/><text y="7" font-size="22" font-weight="700" fill="' + LINE + '" text-anchor="middle">🍬 糖果雲霄飛車</text></g>';
+  } else {
+    // 蛇形道：整片草地上的小公園
+    h += cozyCloud(1110, 46, .7) + cozyCloud(80, 640, .6);
+    h += cozyTree(600, 270, .5) + cozyTree(380, 270, .45) + cozyTree(820, 270, .45) + cozyTree(520, 494, .5) + cozyTree(300, 494, .45) + cozyTree(760, 494, .45);
+    [[460, 240], [700, 236], [960, 244], [250, 236], [420, 460], [640, 470], [880, 462], [1060, 470], [200, 464]].forEach(([x, y]) => { h += cozyFlowers(x, y); });
+  }
+  // 軌道：咖啡外框＋奶油軌面＋粉紅鐵軌
+  const center = offsetPath(T, 0, 2);
+  h += '<path d="' + center + '" fill="none" stroke="' + LINE + '" stroke-width="' + (wide + 8) + '" stroke-linejoin="round" stroke-linecap="' + (kind === 'coaster' ? 'butt' : 'round') + '"/>';
+  h += '<path d="' + center + '" fill="none" stroke="#fff4dc" stroke-width="' + wide + '" stroke-linejoin="round" stroke-linecap="' + (kind === 'coaster' ? 'butt' : 'round') + '"/>';
+  let ties = '';
+  for (let d = 12; d < T.total; d += 22) { const a = pointAt(T, d / T.total, -wide / 2 + 4), b = pointAt(T, d / T.total, wide / 2 - 4); ties += 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + ' '; }
+  h += '<path d="' + ties + '" stroke="#ecd3b0" stroke-width="4" stroke-linecap="round"/>';
+  [-1, 1].forEach(sd => { h += '<path d="' + offsetPath(T, sd * (wide / 2 - 8), 2) + '" fill="none" stroke="#f2a4b6" stroke-width="5" stroke-linejoin="round"/>'; });
+  // 起點（粉紅線）、終點旗
+  const a = pointAt(T, START + 0.004, -wide / 2), b = pointAt(T, START + 0.004, wide / 2);
+  h += '<path d="M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + '" stroke="' + LINE + '" stroke-width="11" stroke-linecap="round"/><path d="M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + '" stroke="#f7c4cf" stroke-width="6" stroke-linecap="round"/>';
+  const fp = pointAt(T, 0.995, -wide / 2 - 2);
+  h += cozyFlag(fp.x, fp.y - 4, kind === 'snake' ? false : false);
+  if (kind === 'coaster') h += '<path transform="translate(' + (COASTER.loop.cx + COASTER.loop.drift / 2) + ' ' + COASTER.loop.cy + ') scale(1.4)" d="M0 -26 L7 -8 L26 -8 L11 4 L17 23 L0 12 L-17 23 L-11 4 L-26 -8 L-7 -8Z" fill="#ffe08a" stroke="' + LINE + '" stroke-width="3.5" stroke-linejoin="round"/>';
+  else { const sp = pointAt(T, 0, -wide / 2 - 16); h += '<g transform="translate(' + (sp.x + 44) + ' ' + (sp.y - 6) + ')"><rect x="-40" y="-20" width="80" height="34" rx="12" fill="#fff4dc" stroke="' + LINE + '" stroke-width="3.5"/><text y="5" font-size="18" font-weight="700" fill="' + LINE + '" text-anchor="middle">起點</text></g>'; }
+  return h + '</g>';
+}
+
 function coasterScene(T, wide){
   const G = COASTER.ground, L = COASTER.loop;
   let h = '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3ec"/><stop offset=".65" stop-color="#fff4ec"/><stop offset="1" stop-color="#fffaf4"/></linearGradient>'
@@ -234,6 +311,7 @@ const laneOff = (i, tk) => ((i % tk.lanes) - (tk.lanes - 1) / 2) * tk.lane;
 // cfg（可省略）：palette 每顆球的顏色 [{color,light,deep}]、lanes 跑道數、lane 跑道寬、r 球半徑
 export function buildTrack(svg, n, cfg = {}) {
   const kind = TRACKS[cfg.kind] ? cfg.kind : 'snake';
+  const cozy = cfg.style === 'cozy';            // 🌸 手繪療癒風（糖果球個人賽）
   const T = trackPoints(kind);
   T.warp = buildWarp(T, kind);
   const palette = cfg.palette || TEAMS;
@@ -253,7 +331,20 @@ export function buildTrack(svg, n, cfg = {}) {
   h += '<pattern id="checker" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#fff"/><rect width="6" height="6" fill="#5b4038"/><rect x="6" y="6" width="6" height="6" fill="#5b4038"/></pattern>';
   h += '</defs>';
   const center = offsetPath(T, 0, 2);
-  if (kind === 'coaster') {
+  // 背景層：手繪風的場景畫在另一張 svg（不會跟著球一起重畫）
+  let bg = svg.parentNode && svg.parentNode.querySelector('.mb-bg');
+  if (cozy) {
+    if (!bg) { bg = document.createElementNS(NS, 'svg'); bg.setAttribute('class', 'mb-bg'); bg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); bg.setAttribute('aria-hidden', 'true'); svg.parentNode.insertBefore(bg, svg); }
+    bg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    bg.innerHTML = cozyScene(T, wide, kind);
+    svg.classList.add('cozy');
+  } else {
+    if (bg) bg.remove();
+    svg.classList.remove('cozy');
+  }
+  if (cozy) {
+    // 場景都在背景層了
+  } else if (kind === 'coaster') {
     h += coasterScene(T, wide);
   } else {
     // 背景小裝飾
@@ -263,11 +354,11 @@ export function buildTrack(svg, n, cfg = {}) {
     h += '<path d="' + center + '" fill="none" stroke="#e8c9b8" stroke-width="' + (wide + 12) + '" stroke-linecap="round" stroke-linejoin="round"/>';
     h += '<path d="' + center + '" fill="none" stroke="#fffaf6" stroke-width="' + wide + '" stroke-linecap="round" stroke-linejoin="round"/>';
   }
-  for (let i = 1; i < tk.lanes && kind !== 'coaster'; i++) {
+  for (let i = 1; i < tk.lanes && kind !== 'coaster' && !cozy; i++) {
     h += '<path d="' + offsetPath(T, laneOff(i, tk) - tk.lane / 2, 3) + '" fill="none" stroke="#f0d9cc" stroke-width="2.5" stroke-dasharray="10 10"/>';
   }
   // 方向箭頭
-  for (let k = 1; k < 12 && kind !== 'coaster'; k++) {
+  for (let k = 1; k < 12 && kind !== 'coaster' && !cozy; k++) {
     const p = pointAt(T, k / 12, 0), q = pointAt(T, k / 12 + 0.003, 0);
     const ang = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
     h += '<text x="0" y="0" font-size="20" fill="#e3b7a8" text-anchor="middle" dominant-baseline="central" transform="translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ') rotate(' + ang.toFixed(1) + ')">›</text>';
@@ -277,25 +368,28 @@ export function buildTrack(svg, n, cfg = {}) {
     const a = pointAt(T, p, -wide / 2), b = pointAt(T, p, wide / 2), a2 = pointAt(T, p + (p < 0.5 ? 0.006 : -0.006), -wide / 2), b2 = pointAt(T, p + (p < 0.5 ? 0.006 : -0.006), wide / 2);
     return '<path class="' + cls + '" d="M' + a.x + ' ' + a.y + ' L' + b.x + ' ' + b.y + ' L' + b2.x + ' ' + b2.y + ' L' + a2.x + ' ' + a2.y + ' Z" fill="' + fill + '"/>';
   };
-  h += line(START + 0.004, 'start-line', '#f2a7bd');
-  h += line(0.994, 'finish-line', 'url(#checker)');
-  const s = pointAt(T, 0, -wide / 2 - 18), f = pointAt(T, 1, -wide / 2 - 22);
-  if (kind !== 'coaster') h += '<text x="' + (s.x + 40) + '" y="' + s.y + '" font-size="24" font-weight="900" fill="#d0587e" text-anchor="middle">起點</text>';
-  h += '<text x="' + (f.x - 20) + '" y="' + f.y + '" font-size="30" text-anchor="middle">🏁</text>';
+  if (!cozy) {
+    h += line(START + 0.004, 'start-line', '#f2a7bd');
+    h += line(0.994, 'finish-line', 'url(#checker)');
+    const s = pointAt(T, 0, -wide / 2 - 18), f = pointAt(T, 1, -wide / 2 - 22);
+    if (kind !== 'coaster') h += '<text x="' + (s.x + 40) + '" y="' + s.y + '" font-size="24" font-weight="900" fill="#d0587e" text-anchor="middle">起點</text>';
+    h += '<text x="' + (f.x - 20) + '" y="' + f.y + '" font-size="30" text-anchor="middle">🏁</text>';
+  }
   // 軌跡（跑的時候拖出彩色尾巴）＋玻璃球
   for (let i = 0; i < n; i++) h += '<path id="mbTrail' + i + '" fill="none" stroke="' + palette[i].color + '" stroke-width="' + Math.round(tk.r * 0.75) + '" stroke-linecap="round" stroke-linejoin="round" opacity=".35" d=""/>';
   for (let i = 0; i < n; i++) {
     const c = palette[i], R = tk.r;
     h += '<g id="mb' + i + '" class="marble">'
       + '<g class="bob" style="animation-delay:-' + (i * 0.35).toFixed(2) + 's">'
-      + '<ellipse cx="0" cy="' + (R + 3) + '" rx="' + (R * 0.8) + '" ry="4" fill="rgba(90,60,40,.18)"/>'
+      + (cozy ? candyBallSVG(c.color, cfg.faces ? cfg.faces[i] : i, R + 1)
+      : '<ellipse cx="0" cy="' + (R + 3) + '" rx="' + (R * 0.8) + '" ry="4" fill="rgba(90,60,40,.18)"/>'
       + '<circle r="' + R + '" fill="url(#mg' + i + ')" stroke="' + c.deep + '" stroke-width="2"/>'
       + '<g transform="scale(' + (R / 16).toFixed(3) + ')">'
       + '<g id="mbSpin' + i + '"><path d="M-10 4 Q0 -13 10 4" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".65"/></g>'
-      + '<ellipse cx="-5" cy="-6" rx="5.5" ry="3.4" fill="#fff" opacity=".9"/></g>'
+      + '<ellipse cx="-5" cy="-6" rx="5.5" ry="3.4" fill="#fff" opacity=".9"/></g>')
       + '<text class="mb-crown" y="' + (-R - 6) + '" font-size="22" text-anchor="middle" opacity="0">👑</text>'
       + '<text class="mb-medal" x="' + (R + 14) + '" y="7" font-size="24" text-anchor="middle"></text>'
-      + '<g class="mb-tag" opacity="0"><circle cy="' + (-R - 20) + '" r="15" fill="#fff" stroke="#c25d7c" stroke-width="3"/><text y="' + (-R - 14) + '" font-size="18" font-weight="900" fill="#c25d7c" text-anchor="middle"></text></g>'
+      + '<g class="mb-tag" opacity="0"><circle cy="' + (-R - 20) + '" r="15" fill="#fff" stroke="' + (cozy ? LINE : '#c25d7c') + '" stroke-width="3"/><text y="' + (-R - 14) + '" font-size="18" font-weight="900" fill="' + (cozy ? LINE : '#c25d7c') + '" text-anchor="middle"></text></g>'
       + '</g></g>';
   }
   svg.innerHTML = h;
@@ -311,7 +405,8 @@ function place(track, i, prog) {
   const g = track.svg.querySelector('#mb' + i);
   if (!g) return pt;
   g.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')');
-  track.svg.querySelector('#mbSpin' + i).setAttribute('transform', 'rotate(' + (pt.dist / track.r * 57.3 % 360).toFixed(1) + ')');
+  const spin = track.svg.querySelector('#mbSpin' + i);
+  if (spin) spin.setAttribute('transform', 'rotate(' + (pt.dist / track.r * 57.3 % 360).toFixed(1) + ')');
   return pt;
 }
 

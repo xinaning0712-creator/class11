@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610201951">
+<link rel="stylesheet" href="css/live.css?v=202610202019">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -168,6 +168,27 @@
 .mb-guess .gopt{display:flex; flex-direction:column; align-items:center; gap:4px}
 .mb-guess .gnum{font-size:clamp(1.4rem,2.4vw,2.4rem); font-weight:900; color:#c25d7c; line-height:1}
 .mb-guess .cball{font-size:clamp(3rem,5.6vw,5.6rem)}
+/* 🌸 手繪療癒風（糖果球個人賽） */
+.race-wrap .mb-bg{position:absolute; inset:0; width:100%; height:100%; will-change:transform}
+#mbSvg{position:relative}
+body.cozy .race-wrap{background:#fdf3e4; border:4px solid var(--line); box-shadow:0 8px 0 var(--cz-shadow), 0 8px 0 4px var(--line)}
+body.cozy .timer, body.cozy .mb-total{background:var(--cz-cream); border:4px solid var(--line); color:var(--line); box-shadow:0 5px 0 var(--cz-shadow), 0 5px 0 4px var(--line)}
+body.cozy .timer.danger{color:#d64545; border-color:#d64545}
+body.cozy .mb-banner{color:var(--line) !important}
+body.cozy .tick{border:3px solid var(--line); background:#fff; color:var(--line); box-shadow:0 3px 0 var(--line)}
+body.cozy .tick.hot{background:#ffe1cf}
+body.cozy .mb-count{color:#ef9fb3; text-shadow:0 0 0 #fff, 4px 4px 0 var(--line), -2px -2px 0 var(--line), 2px -2px 0 var(--line), -2px 2px 0 var(--line)}
+body.cozy .mb-guess{background:var(--cz-cream); border:4px solid var(--line); box-shadow:0 6px 0 var(--cz-shadow), 0 6px 0 4px var(--line)}
+body.cozy .mb-guess .gnum, body.cozy .cpod .who{color:var(--line)}
+body.cozy .end-title{color:var(--line) !important}
+body.cozy .cpod .step{background:#f7c4cf; border:4px solid var(--line); box-shadow:0 5px 0 var(--cz-shadow)}
+body.cozy .crest span{border:3px solid var(--line); box-shadow:0 3px 0 var(--line)}
+body.cozy .crest .seat-r{color:var(--line)}
+body.cozy .seers{background:#f3ecff; border:3px solid var(--line); color:var(--line); box-shadow:0 4px 0 var(--line)}
+.cpod .cface, .crest .cface, .mb-guess .cface{display:block; overflow:visible; height:auto}
+.cpod .cface{width:clamp(90px,9vw,150px)}
+.mb-guess .cface{width:clamp(60px,5.6vw,96px)}
+.crest .cface{width:2em}
 .seers{margin:12px auto 0; max-width:1100px; padding:8px 18px; border-radius:16px; background:#f3ecff; border:3px solid #b9a6e6; color:#5d4a99; font-weight:900; font-size:clamp(1rem,1.6vw,1.4rem)}
 .seers b{color:#8b3550}
 .crest{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; max-width:1100px; margin:0 auto}
@@ -376,6 +397,6 @@
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610201951"></script>
+<script type="module" src="js/live-host.js?v=202610202019"></script>
 </body>
 </html>

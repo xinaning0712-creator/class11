@@ -8,11 +8,12 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610201951';
-import { resetZoom } from './no-zoom.js?v=202610201951';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610201951';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610201951';
-import { music } from './live-music.js?v=202610201951';
+} from './live-common.js?v=202610202019';
+import { resetZoom } from './no-zoom.js?v=202610202019';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610202019';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610202019';
+import { candyBallImg } from './candy-faces.js?v=202610202019';
+import { music } from './live-music.js?v=202610202019';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -360,6 +361,7 @@ function startGame(){
 }
 function beginGame(){
   S.picking=false;
+  document.body.classList.toggle('cozy', S.mode==='candy');     // 🌸 糖果球個人賽用手繪療癒風
   clearTimers(); music.stop();
   S.players.forEach(pl=>{ pl.correct=0; pl.wrong=0; pl.answered=0; pl.score=0; pl.streak=0; pl.combo=0; pl.wrongRun=0; pl.lockUntil=0; pl.last=0; pl.power=0; });
   assignTeams(false);
@@ -371,6 +373,7 @@ function beginGame(){
 }
 function backToLobby(){
   clearTimers(); music.stop(); S.picking=false;
+  document.body.classList.remove('cozy');
   S.phase='lobby'; S.game=null;
   assignTeams(false);
   renderLobby(); showScreen('scrLobby');
@@ -638,10 +641,13 @@ function giveColor(pl){
   pl.color= free.length ? free[Math.floor(Math.random()*free.length)] : Math.floor(Math.random()*CANDY.length);
 }
 function racerLook(g,i){ const pl=S.players.get(g.racers[i]); return CANDY[pl&&pl.color>=0?pl.color:0]; }
+function racerFace(g,i){ const pl=S.players.get(g.racers[i]); return pl&&pl.color>=0?pl.color:0; }   // 表情跟著顏色（24 種）
+const ballImg=(g,i,size)=>candyBallImg(racerLook(g,i).color, racerFace(g,i), size);
 function buildCandyTrack(g){
   const palette=g.racers.map((_,i)=>racerLook(g,i));
   g.n=g.racers.length;
-  g.track=buildTrack($('mbSvg'), g.n, { palette, lanes:Math.min(6,Math.max(2,g.n)), lane:19, r:11, kind:g.kind });
+  g.track=buildTrack($('mbSvg'), g.n, { palette, lanes:Math.min(6,Math.max(2,g.n)), lane:19, r:11, kind:g.kind,
+    style:'cozy', faces:g.racers.map((_,i)=>racerFace(g,i)) });
 }
 function startCandy(){
   S.players.forEach(giveColor);
@@ -679,7 +685,7 @@ function startGuess(g,prog,resume){
   g.guess={ top:top.map(o=>o.i), picks:new Map(), resume, done:false };
   top.forEach((o,k)=>setTag(g.track,o.i,String(k+1)));
   // 白板上方排出這五顆球（球在賽道上擠在一起時，看這裡比較清楚）
-  $('mbGuess').innerHTML=top.map((o,k)=>'<div class="gopt"><span class="gnum">'+(k+1)+'</span><span class="cball" style="background:'+candyCss(racerLook(g,o.i))+'"></span></div>').join('');
+  $('mbGuess').innerHTML=top.map((o,k)=>'<div class="gopt"><span class="gnum">'+(k+1)+'</span>'+ballImg(g,o.i,96)+'</div>').join('');
   $('mbGuess').classList.remove('hidden');
   music.speed(0.7);
   const opts=top.map((o,k)=>{ const pl=S.players.get(g.racers[o.i]); return { k:k+1, i:o.i, c:pl&&pl.color>=0?pl.color:0 }; });
@@ -741,14 +747,15 @@ function showCandyEnd(g,order){
   $('endTitle').textContent='🍬 糖果球大賽結果';
   $('endTitle').style.color='#c25d7c';
   const info=o=>{ const pl=S.players.get(o.id); return { look:racerLook(g,o.i), seat:pl&&pl.seat?pl.seat+' 號':'？', name:pl?pl.name:'' }; };
+  const big=(o,size)=>ballImg(g,o.i,size);
   const top=order.slice(0,3), slots=[1,0,2], heights=['160px','210px','120px'], medals=['🥇','🥈','🥉'];
   let h='<div class="cpodium">';
   slots.forEach(k=>{ const o=top[k]; if(!o) return; const x=info(o);
-    h+='<div class="cpod"><span class="cball" style="background:'+candyCss(x.look)+'"></span><div class="medal">'+medals[k]+'</div>'
+    h+='<div class="cpod">'+big(o,150)+'<div class="medal">'+medals[k]+'</div>'
       +'<div class="step" style="height:'+heights[slots.indexOf(k)]+'"><div class="who" id="who'+k+'">？</div></div></div>'; });
   h+='</div><div class="crest" id="crest">';
   order.slice(3).forEach(o=>{ const x=info(o);
-    h+='<span><b>'+o.rank+'</b><span class="cball" style="background:'+candyCss(x.look)+'"></span><span class="seat-r" data-seat="'+esc(x.seat)+'">？</span></span>'; });
+    h+='<span><b>'+o.rank+'</b>'+big(o,40)+'<span class="seat-r" data-seat="'+esc(x.seat)+'">？</span></span>'; });
   h+='</div>';
   if(g.guess){
     h+='<div id="seers" class="seers hidden">🔮 猜中冠軍的預言家：'+(g.seers.length?g.seers.map(n=>'<b>'+esc(n)+'</b>').join('、')+'（'+g.seers.length+' 人）':'這次沒有人猜中，下次加油！')+'</div>';
@@ -981,7 +988,7 @@ async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
   try{
-    const m=await import('./db.js?v=202610201951');
+    const m=await import('./db.js?v=202610202019');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

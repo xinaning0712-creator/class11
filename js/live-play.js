@@ -8,8 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610201951';
-import { resetZoom } from './no-zoom.js?v=202610201951';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610202019';
+import { candyBallImg } from './candy-faces.js?v=202610202019';
+import { resetZoom } from './no-zoom.js?v=202610202019';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -23,6 +24,7 @@ const P = {
 store.set('fr-id', P.id); keep.set('fr-id', P.id);
 
 function showScreen(id){
+  setCozy();
   const changed=P.screen!==id;
   P.screen=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
@@ -250,7 +252,7 @@ function updateCandy(){
 function renderCandy(){
   const taken=new Set(Object.keys(P.colors).filter(id=>id!==P.id).map(id=>P.colors[id]));
   $('candyGrid').innerHTML=CANDY.map((c,i)=>'<button type="button" class="candy-btn'+(i===P.color?' mine':'')+(taken.has(i)?' taken':'')
-    +'" data-c="'+i+'" style="background:'+candyCss(c)+'" aria-label="'+c.name+(taken.has(i)?'（已被選走）':'')+'"></button>').join('');
+    +'" data-c="'+i+'" aria-label="'+c.name+(taken.has(i)?'（已被選走）':'')+'">'+candyBallImg(c.color,i,60)+'</button>').join('');
 }
 onTap($('candyGrid'), (e,target)=>{
   const b=target.closest('[data-c]'); if(!b||b.classList.contains('taken')) return;
@@ -258,7 +260,9 @@ onTap($('candyGrid'), (e,target)=>{
   P.color=c; P.colors[P.id]=c; updateCandy(); sound.pop();
   send('color',{ id:P.id, c });
 });
-function ballHTML(){ const c=CANDY[P.color]; return c ? '<span class="my-ball" style="background:'+candyCss(c)+'"></span>' : '🍬'; }
+function ballHTML(size){ const c=CANDY[P.color]; return c ? '<span class="my-ball">'+candyBallImg(c.color,P.color,size||40)+'</span>' : '🍬'; }
+/* 🌸 糖果球個人賽用手繪療癒風（其他玩法維持原樣） */
+function setCozy(){ document.body.classList.toggle('cozy', P.mode==='candy'); }
 /* 老師選了自訂題組：在 iPad 上建一台抽題機 */
 function useSet(raw){ P.set=raw?cleanSet(raw):null; P.deck=P.set?makeDeck(P.set):null; }
 function endPlaying(){ P.playing=false; P.token++; stopCountdown(); }
@@ -419,7 +423,7 @@ function showReveal(p){
 function showRace(){
   endPlaying();
   if(P.mode==='candy'){
-    $('endBox').innerHTML='<div class="result-big">🏁 比賽開始！</div><div class="wait-anim">'+ballHTML()+'</div>'
+    $('endBox').innerHTML='<div class="result-big">🏁 比賽開始！</div><div class="wait-anim">'+ballHTML(110)+'</div>'
       +'<div class="result-sub">快看白板，找找你的球！</div><div class="score-line">你答對了 '+P.correct+' 題 💪</div>';
     showScreen('pEnd'); return;
   }
@@ -437,7 +441,7 @@ function showGuess(p){
   let h='<div id="guessTimer" class="guess-timer">⏳ '+(p.left|0)+'</div><div class="result-sub">🔮 猜猜看！誰會是冠軍？</div><div class="guess-note">猜錯也沒關係，不會影響分數喔</div><div class="guess-grid">';
   opts.forEach(o=>{
     const c=CANDY[o.c]||CANDY[0], k=o.k|0;
-    h+='<button type="button" class="guess-btn" data-g="'+k+'"><span class="gnum">'+k+'</span><span class="gball" style="background:'+candyCss(c)+'"></span>'
+    h+='<button type="button" class="guess-btn" data-g="'+k+'"><span class="gnum">'+k+'</span><span class="gball">'+candyBallImg(c.color,o.c,72)+'</span>'
       +(o.c===P.color?'<span class="gmine">我的球</span>':'')+'</button>';
   });
   h+='</div><div id="guessMsg" class="wait-text">點一顆你覺得會贏的球</div>';
@@ -472,7 +476,7 @@ function showEnd(p){
     h='<div class="result-big">🏁 抵達終點！</div>';
     if(r){
       const rank=r[0]|0, medal=['','🥇','🥈','🥉'][rank]||'';
-      if(rank>0) h+='<div class="wait-anim">'+ballHTML()+'</div><div class="result-sub">'+(medal?medal+' ':'')+'你的糖果球是第 '+rank+' 名！</div>'
+      if(rank>0) h+='<div class="wait-anim">'+ballHTML(110)+'</div><div class="result-sub">'+(medal?medal+' ':'')+'你的糖果球是第 '+rank+' 名！</div>'
         +'<div class="score-line">答對 '+(r[1]|0)+' 題，辛苦了！</div>';
       if(r[3]===1) h+='<div class="streak-line">🔮 你猜中冠軍了！你是預言家！</div>';
       else if(r[3]===0) h+='<div class="score-line">🔮 這次沒猜中冠軍，下次再試試！</div>';

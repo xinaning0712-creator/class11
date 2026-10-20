@@ -1,7 +1,7 @@
 // 後台：倒數日（可以預排很多個，畫面上只顯示最近的 3 個）
-import { friendlyError } from './db.js?v=202610201951';
-import { el, toast } from './ui.js?v=202610201951';
-import { todayISO, daysUntil, shortDate, SHOW_MAX } from './countdown.js?v=202610201951';
+import { friendlyError } from './db.js?v=202610202019';
+import { el, toast } from './ui.js?v=202610202019';
+import { todayISO, daysUntil, shortDate, SHOW_MAX } from './countdown.js?v=202610202019';
 
 const $ = (id) => document.getElementById(id);
 let db = null;

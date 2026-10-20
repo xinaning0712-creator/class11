@@ -77,3 +77,18 @@ button{font-family:inherit; min-width:48px; min-height:48px; cursor:pointer; tou
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 @keyframes pop{0%{transform:scale(.3); opacity:0}70%{transform:scale(1.15); opacity:1}100%{transform:scale(1)}}
+
+/* ============================================================
+   🌸 手繪療癒風（目前只用在 🍬 糖果球個人賽：body 加上 .cozy）
+   奶油色貼紙＋深咖啡外框＋實心陰影、抹茶草地
+   ============================================================ */
+body.cozy{ --line:#5b4038; --cz-cream:#fff4dc; --cz-shadow:#e2c39b; --ink:#5b4038; color:var(--line) }
+body.cozy #app{background:#c8dea3}
+body.cozy .topbar{background:#fff4dc; color:var(--line); border-bottom:4px solid var(--line); box-shadow:0 4px 0 var(--cz-shadow)}
+body.cozy .topbar h1{text-shadow:none}
+body.cozy .icon-btn{color:var(--line); border:3px solid var(--line); background:#fff; box-shadow:0 3px 0 var(--line)}
+body.cozy .card{background:var(--cz-cream); border:4px solid var(--line); box-shadow:0 6px 0 var(--cz-shadow), 0 6px 0 4px var(--line)}
+body.cozy .btn{background:#fff; border:3px solid var(--line); box-shadow:0 4px 0 var(--line); color:var(--line)}
+body.cozy .btn-rose{background:#f7c4cf}
+body.cozy .btn-milk{background:#efd9bd}
+body.cozy .btn:active{box-shadow:0 1px 0 var(--line)}
