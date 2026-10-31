@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311907';
-import { el, toast } from './ui.js?v=202610311907';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311907';
-import { ask, sure } from './dialogs.js?v=202610311907';
-import * as quizbank from './admin-quiz.js?v=202610311907';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311913';
+import { el, toast } from './ui.js?v=202610311913';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311913';
+import { ask, sure } from './dialogs.js?v=202610311913';
+import * as quizbank from './admin-quiz.js?v=202610311913';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -186,7 +186,7 @@ async function start() {
 
   $('login-view').hidden = true;
   $('app-view').hidden = false;
-  $('rc-who').textContent = A.me ? `${me.name}・${me.subject}` : '班導（11 班）';
+  $('rc-who').textContent = A.me ? me.subject : '班導';   // 上方只顯示科目（投影時不用秀老師的名字）
 
   if (A.me) {
     quizbank.init(db, { owner: uid, oneSubject: !A.homeroom });
@@ -1018,7 +1018,7 @@ $('me-form').addEventListener('submit', async (e) => {
   const { error } = await db.from('rc_teachers').update(patch).eq('user_id', A.me.user_id);
   if (error) return fail('儲存', error);
   Object.assign(A.me, patch);
-  $('rc-who').textContent = `${A.me.name}・${A.me.subject}`;
+  $('rc-who').textContent = A.me.subject;
   toast('已儲存');
 });
 $('cls-add').addEventListener('click', async () => {
