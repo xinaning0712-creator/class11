@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311902';
-import { el, toast } from './ui.js?v=202610311902';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311902';
-import { ask, sure } from './dialogs.js?v=202610311902';
-import * as quizbank from './admin-quiz.js?v=202610311902';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311907';
+import { el, toast } from './ui.js?v=202610311907';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311907';
+import { ask, sure } from './dialogs.js?v=202610311907';
+import * as quizbank from './admin-quiz.js?v=202610311907';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -19,7 +19,9 @@ const GROUP_COLORS = ['#f4a3b8', '#f6c27a', '#9fd3a8', '#8fc3e8', '#c7a8e6', '#f
 const db = rcDb();
 const A = {
   me: null,            // { user_id, name, subject, game_join, game_top, game_win }；班導登入時是 null
-  isOwner: false,      // 科任老師 = true；班導 = false
+  uid: null,
+  isOwner: false,      // 現在這一班是不是自己的（自己的班：可以計分、改設定；別人的班：只能看名單、兌換、統計）
+  labels: {},          // 別人的班顯示「11班・智慧閱讀」
   courses: [], course: null,
   students: [], groups: [], behaviors: [],
   events: [],          // 這個班全部的加扣分（含撤銷的）
@@ -158,10 +160,11 @@ async function start() {
     return showLogin('還沒建立熊熊遊樂園的資料表：請先在 Supabase 執行 supabase/10_熊熊遊樂園_科任老師.sql');
   }
   A.me = me || null;
-  A.isOwner = !!me;
-  if (!A.isOwner) {
-    const { data: role } = await db.rpc('my_role');
-    if (role !== 'teacher') {
+  A.uid = uid;
+  const { data: role } = await db.rpc('my_role');
+  A.homeroom = role === 'teacher';      // 班導：題庫要選科目
+  if (!A.me) {
+    if (!A.homeroom) {
       await db.auth.signOut();
       return showLogin('這個帳號還不能使用熊熊遊樂園後台（請班導幫忙開通）');
     }
@@ -172,16 +175,21 @@ async function start() {
   A.courses = courses || [];
   if (!A.courses.length) {
     await db.auth.signOut();
-    return showLogin(A.isOwner ? '找不到你的班級，請班導重新執行設定' : '科任老師還沒建立 11 班');
+    return showLogin(A.me ? '找不到你的班級，請班導重新執行設定' : '科任老師還沒建立 11 班');
   }
+  // 自己的班排前面；別人的班查一下是哪一科（例如班導看到的「11班・智慧閱讀」）
+  A.courses.sort((a, b) => (a.owner === uid ? 0 : 1) - (b.owner === uid ? 0 : 1) || a.sort - b.sort || a.id - b.id);
+  await Promise.all(A.courses.filter((c) => c.owner !== uid).map(async (c) => {
+    const { data } = await db.rpc('rc_course_teacher', { p_course: c.id });
+    if (data) A.labels[c.id] = data;
+  }));
 
   $('login-view').hidden = true;
   $('app-view').hidden = false;
-  $('rc-who').textContent = A.isOwner ? `${me.name}・${me.subject}` : '班導（11 班）';
-  document.body.classList.toggle('rc-homeroom', !A.isOwner);
+  $('rc-who').textContent = A.me ? `${me.name}・${me.subject}` : '班導（11 班）';
 
-  if (A.isOwner) {
-    quizbank.init(db, { owner: uid });
+  if (A.me) {
+    quizbank.init(db, { owner: uid, oneSubject: !A.homeroom });
     quizbank.load();
     await loadBehaviors();
   }
@@ -198,8 +206,13 @@ async function start() {
    ============================================================ */
 /* 畫面上只顯示「現在這一班」；其他班的名字只會出現在按「換班」後的選班視窗裡
    （投影到白板時，孩子不會看到老師還帶哪些班） */
+function courseLabel(c) {
+  if (!c) return '';
+  const mineSomewhere = A.courses.some((x) => x.owner === A.uid);
+  return c.owner !== A.uid && mineSomewhere ? `${c.name}・${A.labels[c.id] || '科任課'}` : c.name;
+}
 function renderClassPills() {
-  $('rc-current').textContent = A.course ? A.course.name : '';
+  $('rc-current').textContent = courseLabel(A.course);
   $('rc-switch').hidden = A.courses.length < 2;
 }
 
@@ -209,7 +222,7 @@ function pickCourse(canCancel = true) {
   $('cls-pick').replaceChildren(...A.courses.map((c) => el('button', {
     class: 'rc-pick-btn' + (c.id === A.course?.id ? ' active' : ''), type: 'button',
     onclick: () => { const r = pickResolve; pickResolve = null; $('cls-dialog').close(); r?.(c); },
-  }, c.name)));
+  }, courseLabel(c))));
   $('cls-cancel').hidden = !canCancel;
   return new Promise((resolve) => {
     pickResolve = resolve;
@@ -223,11 +236,13 @@ $('cls-dialog').addEventListener('cancel', (e) => {
 });
 $('rc-switch').addEventListener('click', async () => {
   const c = await pickCourse(true);
-  if (c && c.id !== A.course?.id) { await selectCourse(c); toast(`已切換到 ${c.name}`); }
+  if (c && c.id !== A.course?.id) { await selectCourse(c); toast(`已切換到 ${courseLabel(c)}`); }
 });
 
 async function selectCourse(c) {
   A.course = c;
+  A.isOwner = c.owner === A.uid;
+  document.body.classList.toggle('rc-homeroom', !A.isOwner);   // 別人的班：只顯示名單、兌換、統計
   A.picked.clear();
   try { sessionStorage.setItem('rc-course', String(c.id)); } catch { /* ignore */ }
   renderClassPills();
@@ -235,7 +250,7 @@ async function selectCourse(c) {
   const play = `live-host.html?rc=${c.id}&n=${c.seat_count}`;
   $('bd-play').href = play;
   const qp = $('rc-quiz-play'); if (qp) qp.href = play;
-  if (A.tab === 'exchange' && !c.is_home) showTab(A.isOwner ? 'board' : 'roster');
+  if (!canUse(A.tab)) showTab(A.isOwner ? 'board' : 'roster');   // 換到不能用這個分頁的班
   await loadCourse();
 }
 
@@ -882,7 +897,7 @@ $('st-export').addEventListener('click', () => {
   const home = A.course.is_home;
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = [
-    [`${A.course.name} ${A.me?.subject || '熊熊遊樂園'} 課堂分數`, `${fmtDate(range.start)}～${fmtDate(new Date(range.end - 864e5))}`].map(q).join(','),
+    [`${A.course.name} ${A.course.owner === A.uid ? (A.me?.subject || '熊熊遊樂園') : (A.labels[A.course.id] || '熊熊遊樂園')} 課堂分數`, `${fmtDate(range.start)}～${fmtDate(new Date(range.end - 864e5))}`].map(q).join(','),
     ['座號', '姓名', '組別', '加分', '扣分', '遊戲', '合計', ...(home ? ['已換集點'] : []), '小組分'].map(q).join(','),
     ...rows.map((r) => [r.s.seat, r.s.name, r.group, r.plus, r.minus, r.game, r.total, ...(home ? [r.stamps] : []),
       r.s.group_id ? grpPoints(r.s.group_id, range) : ''].map(q).join(',')),
@@ -903,12 +918,12 @@ function renderSettings() {
   $('rule-join').value = A.me.game_join;
   $('rule-top').value = A.me.game_top;
   $('rule-win').value = A.me.game_win;
-  const home = A.courses.find((c) => c.is_home);
+  const home = A.courses.find((c) => c.is_home && c.owner === A.uid);
   $('rate-field').hidden = !home;
   if (home) $('rule-rate').value = home.point_rate;
   $('me-name').value = A.me.name;
   $('me-subject').value = A.me.subject;
-  $('cls-list').replaceChildren(...A.courses.map((c) => el('div', { class: 'rc-cls-row' },
+  $('cls-list').replaceChildren(...A.courses.filter((c) => c.owner === A.uid).map((c) => el('div', { class: 'rc-cls-row' },
     el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.is_home ? '・可換 11 班扭蛋集點' : ''}`),
     c.is_home ? '' : el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeCourse(c) }, '刪除'))));
 }
@@ -987,7 +1002,7 @@ $('rule-form').addEventListener('submit', async (e) => {
   const { error } = await db.from('rc_teachers').update(patch).eq('user_id', A.me.user_id);
   if (error) return fail('儲存', error);
   Object.assign(A.me, patch);
-  const home = A.courses.find((c) => c.is_home);
+  const home = A.courses.find((c) => c.is_home && c.owner === A.uid);
   if (home) {
     const rate = n('rule-rate', 1, 100);
     const { error: e2 } = await db.from('rc_courses').update({ point_rate: rate }).eq('id', home.id);

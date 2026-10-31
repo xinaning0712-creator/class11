@@ -1,13 +1,13 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202610311902';
-import { el, toast } from './ui.js?v=202610311902';
+import { friendlyError } from './db.js?v=202610311907';
+import { el, toast } from './ui.js?v=202610311907';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202610311902';
-import { sure } from './dialogs.js?v=202610311902';
-import { readSheetFile } from './sheet-import.js?v=202610311902';
+} from './quiz-bank.js?v=202610311907';
+import { sure } from './dialogs.js?v=202610311907';
+import { readSheetFile } from './sheet-import.js?v=202610311907';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -48,7 +48,7 @@ export function init(client, opts = {}) {
   db = client;
   scope = opts;
   // 科任老師只教一科：不用選科目；「分數上下排版」預設不勾（那是數學用的）
-  if (scope.owner) {
+  if (scope.oneSubject) {
     $('qz-subject').closest('label').hidden = true;
     document.body.classList.add('qz-one-subject');
   }
@@ -118,7 +118,7 @@ function renderList() {
     const date = new Date(s.updated_at).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
     return el('div', { class: 'card qz-set' },
       el('div', { class: 'qz-set-main' },
-        scope.owner ? '' : el('span', { class: 'qz-subject' }, s.subject),
+        scope.oneSubject ? '' : el('span', { class: 'qz-subject' }, s.subject),
         el('strong', { class: 'qz-set-title' }, s.title),
         el('span', { class: 'muted' }, `${n} 題・${date} 更新`)),
       el('span', { class: 'row-actions' },
@@ -179,7 +179,7 @@ function openEditor(s) {
   ed = s
     ? { id: s.id, title: s.title, subject: s.subject, frac: s.frac, shuffle: s.shuffle,
         questions: (s.questions || []).map((q) => cleanQuestion(q)).filter(Boolean).map(toEditQ) }
-    : { id: null, title: '', subject: scope.owner ? '國語' : '數學', frac: !scope.owner, shuffle: true, questions: [blankQ()] };
+    : { id: null, title: '', subject: scope.oneSubject ? '國語' : '數學', frac: !scope.oneSubject, shuffle: true, questions: [blankQ()] };
   dirty = false;
   $('qz-title').value = ed.title;
   $('qz-subject').value = ed.subject;
