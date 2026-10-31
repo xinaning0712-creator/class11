@@ -1,12 +1,13 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202610311723';
-import { el, toast } from './ui.js?v=202610311723';
+import { friendlyError } from './db.js?v=202610311847';
+import { el, toast } from './ui.js?v=202610311847';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202610311723';
-import { readSheetFile } from './sheet-import.js?v=202610311723';
+} from './quiz-bank.js?v=202610311847';
+import { sure } from './dialogs.js?v=202610311847';
+import { readSheetFile } from './sheet-import.js?v=202610311847';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -48,8 +49,8 @@ export function init(client, opts = {}) {
   scope = opts;
   $('qz-subject').replaceChildren(...SUBJECTS.map((s) => el('option', { value: s }, s)));
   $('qz-new').addEventListener('click', () => openEditor(null));
-  $('qz-back').addEventListener('click', () => {
-    if (dirty && !confirm('還沒儲存，確定要離開嗎？')) return;
+  $('qz-back').addEventListener('click', async () => {
+    if (dirty && !(await sure('還沒儲存，確定要離開嗎？', { ok: '不存了，離開', danger: true }))) return;
     closeEditor();
   });
   $('qz-save').addEventListener('click', save);
@@ -139,7 +140,7 @@ async function copySet(s) {
 }
 
 async function removeSet(s) {
-  if (!confirm(`確定要刪除題組「${s.title}」嗎？刪掉就救不回來了。`)) return;
+  if (!(await sure(`確定要刪除題組「${s.title}」嗎？\n刪掉就救不回來了。`, { ok: '刪除', danger: true }))) return;
   const { error } = await db.from(TABLE).delete().eq('id', s.id);
   if (error) return fail('刪除', error);
   toast('已刪除');
@@ -238,8 +239,8 @@ function questionCard(q, i) {
           if (ed.questions.length >= MAX_QUESTIONS) return toast(`一個題組最多 ${MAX_QUESTIONS} 題`, { tone: 'error' });
           ed.questions.splice(i + 1, 0, { ...q, slots: [...q.slots] }); touch(); renderQuestions();
         } }, '複製'),
-        el('button', { class: 'btn small ghost', type: 'button', onclick: () => {
-          if ((q.text || q.slots.some((s) => s)) && !confirm(`確定要刪除第 ${i + 1} 題嗎？`)) return;
+        el('button', { class: 'btn small ghost', type: 'button', onclick: async () => {
+          if ((q.text || q.slots.some((s) => s)) && !(await sure(`確定要刪除第 ${i + 1} 題嗎？`, { ok: '刪除', danger: true }))) return;
           ed.questions.splice(i, 1); touch(); renderQuestions();
         } }, '刪除'))),
     text, preview, imgBox,

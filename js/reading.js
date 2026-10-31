@@ -5,10 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311723';
-import { el, toast } from './ui.js?v=202610311723';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311723';
-import * as quizbank from './admin-quiz.js?v=202610311723';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311847';
+import { el, toast } from './ui.js?v=202610311847';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311847';
+import { ask, sure } from './dialogs.js?v=202610311847';
+import * as quizbank from './admin-quiz.js?v=202610311847';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -425,9 +426,9 @@ async function undoEvent(e) {
   e.undone_at = now;
   renderAll();
 }
-function undoBatchConfirm(e) {
+async function undoBatchConfirm(e) {
   const n = A.events.filter((x) => x.batch === e.batch && live(x)).length;
-  if (n > 1 && !confirm(`這筆是同一次加給 ${n} 個人／組的，要一起撤銷嗎？`)) return;
+  if (n > 1 && !(await sure(`這筆是同一次加給 ${n} 個人／組的，要一起撤銷嗎？`, { ok: '一起撤銷' }))) return;
   undoBatch(e.batch);
 }
 
@@ -516,7 +517,7 @@ async function saveStudent(s, patch) {
   if ('avatar' in patch) renderRoster();
 }
 async function removeStudent(s) {
-  if (!confirm(`確定要把 ${stuLabel(s)} 從名單刪掉嗎？他的加扣分紀錄也會一起刪掉。`)) return;
+  if (!(await sure(`確定要把 ${stuLabel(s)} 從名單刪掉嗎？\n他的加扣分紀錄也會一起刪掉。`, { ok: '刪除', danger: true }))) return;
   const { error } = await db.from('rc_students').delete().eq('id', s.id);
   if (error) return fail('刪除', error);
   await loadCourse();
@@ -628,18 +629,21 @@ async function moveTo(stuId, groupId) {
 
 $('gr-add').addEventListener('click', async () => {
   const n = A.groups.length + 1;
-  const name = prompt('新的組名：', `第${'一二三四五六七八九十'[n - 1] || n}組`);
-  if (!name?.trim()) return;
+  const name = await ask('新的組名：', { value: `第${'一二三四五六七八九十'[n - 1] || n}組`, ok: '新增' });
+  if (!name) return;
   const { error } = await db.from('rc_groups').insert({ course_id: A.course.id, name: name.trim().slice(0, 12), color: (n - 1) % 12, sort: n });
   if (error) return fail('新增組別', error);
   await loadCourse();
 });
 $('gr-auto').addEventListener('click', async () => {
   if (!A.students.length) return toast('先匯入名單喔');
-  const ans = prompt('要分成幾組？（會依座號平均分，例如 6 組）', String(A.groups.length || 6));
+  const ans = await ask('要分成幾組？（會依座號平均分）', {
+    value: String(A.groups.length || 6), ok: '分組',
+    check: (v) => (/^\d+$/.test(v) && +v >= 1 && +v <= 12 ? '' : '請輸入 1～12 的數字'),
+  });
+  if (ans === null) return;
   const n = Number(ans);
-  if (!Number.isInteger(n) || n < 1 || n > 12) return;
-  if (A.students.some((s) => s.group_id) && !confirm('已經分好的組會重新分配，確定嗎？')) return;
+  if (A.students.some((s) => s.group_id) && !(await sure('已經分好的組會重新分配，確定嗎？', { ok: '重新分組' }))) return;
   // 組數不夠就補，多的保留（空的組可以自己刪）
   for (let i = A.groups.length; i < n; i++) {
     const { error } = await db.from('rc_groups').insert({ course_id: A.course.id, name: `第${'一二三四五六七八九十'[i] || i + 1}組`, color: i % 12, sort: i + 1 });
@@ -660,8 +664,8 @@ $('gr-auto').addEventListener('click', async () => {
   await loadCourse();
 });
 async function renameGroup(g) {
-  const name = prompt('組名：', g.name);
-  if (!name?.trim() || name.trim() === g.name) return;
+  const name = await ask('組名：', { value: g.name, ok: '儲存' });
+  if (!name || name === g.name) return;
   const { error } = await db.from('rc_groups').update({ name: name.trim().slice(0, 12) }).eq('id', g.id);
   if (error) return fail('改組名', error);
   g.name = name.trim().slice(0, 12);
@@ -669,7 +673,7 @@ async function renameGroup(g) {
 }
 async function removeGroup(g) {
   const n = A.students.filter((s) => s.group_id === g.id).length;
-  if (!confirm(`確定要刪除「${g.name}」嗎？${n ? `組裡的 ${n} 個人會變成「還沒分組」，` : ''}這一組的小組分紀錄也會一起刪掉。`)) return;
+  if (!(await sure(`確定要刪除「${g.name}」嗎？\n${n ? `組裡的 ${n} 個人會變成「還沒分組」，` : ''}這一組的小組分紀錄也會一起刪掉。`, { ok: '刪除', danger: true }))) return;
   const { error } = await db.from('rc_groups').delete().eq('id', g.id);
   if (error) return fail('刪除組別', error);
   await loadCourse();
@@ -718,11 +722,13 @@ function renderExchange() {
 async function doExchange(s, max) {
   let n = max;
   if (max > 1) {
-    const ans = prompt(`${stuLabel(s)} 可以換 ${max} 點，這次要換幾點？`, String(max));
+    const ans = await ask(`集點卡蓋好了嗎？\n${stuLabel(s)} 可以換 ${max} 點，這次換幾點？`, {
+      value: String(max), ok: '換集點',
+      check: (v) => (/^\d+$/.test(v) && +v >= 1 && +v <= max ? '' : `請輸入 1～${max}`),
+    });
     if (ans === null) return;
     n = Number(ans);
-    if (!Number.isInteger(n) || n < 1 || n > max) return toast(`請輸入 1～${max}`, { tone: 'error' });
-  } else if (!confirm(`集點卡蓋好了嗎？\n${stuLabel(s)}：換 1 點（用掉 ${A.course.point_rate} 分）`)) return;
+  } else if (!(await sure(`集點卡蓋好了嗎？\n${stuLabel(s)}：換 1 點（用掉 ${A.course.point_rate} 分）`, { ok: '蓋好了' }))) return;
   const { error } = await db.rpc('rc_exchange', { p_student: s.id, p_stamps: n });
   if (error) return fail('兌換', error);
   sfx.plus();
@@ -730,7 +736,7 @@ async function doExchange(s, max) {
   await loadCourse();
 }
 async function undoExchange(x) {
-  if (!confirm('確定要撤銷這筆兌換嗎？分數會加回去（記得把集點卡上的章劃掉）。')) return;
+  if (!(await sure('確定要撤銷這筆兌換嗎？\n分數會加回去（記得把集點卡上的章劃掉）。', { ok: '撤銷' }))) return;
   const { error } = await db.rpc('rc_undo_exchange', { p_id: x.id });
   if (error) return fail('撤銷', error);
   await loadCourse();
@@ -874,7 +880,7 @@ async function saveBehavior(b, patch) {
   toast('已儲存');
 }
 async function removeBehavior(b) {
-  if (!confirm(`確定要刪除「${b.label}」嗎？（以前的加扣分紀錄不會不見）`)) return;
+  if (!(await sure(`確定要刪除「${b.label}」嗎？\n（以前的加扣分紀錄不會不見）`, { ok: '刪除', danger: true }))) return;
   const { error } = await db.from('rc_behaviors').delete().eq('id', b.id);
   if (error) return fail('刪除', error);
   A.behaviors = A.behaviors.filter((x) => x !== b);
@@ -944,8 +950,8 @@ $('me-form').addEventListener('submit', async (e) => {
   toast('已儲存');
 });
 $('cls-add').addEventListener('click', async () => {
-  const name = prompt('新班級的名稱（例如：510）：');
-  if (!name?.trim()) return;
+  const name = await ask('新班級的名稱（例如：510）：', { ok: '新增' });
+  if (!name) return;
   const { data, error } = await db.from('rc_courses')
     .insert({ owner: A.me.user_id, name: name.trim().slice(0, 12), sort: A.courses.length }).select('*').single();
   if (error) return fail('新增班級', error);
@@ -954,8 +960,10 @@ $('cls-add').addEventListener('click', async () => {
   toast(`已新增「${data.name}」，記得到「👥 名單與分組」貼上名單`);
 });
 async function removeCourse(c) {
-  if (!confirm(`確定要刪除「${c.name}」嗎？名單、分組和所有加扣分紀錄都會一起刪掉，救不回來。`)) return;
-  if (prompt(`請輸入班級名稱「${c.name}」確認刪除：`) !== c.name) return;
+  const typed = await ask(`確定要刪除「${c.name}」嗎？\n名單、分組和所有加扣分紀錄都會一起刪掉，救不回來。\n請輸入班級名稱「${c.name}」確認：`, {
+    ok: '刪除', danger: true, check: (v) => (v === c.name ? '' : `請輸入「${c.name}」`),
+  });
+  if (typed !== c.name) return;
   const { error } = await db.from('rc_courses').delete().eq('id', c.id);
   if (error) return fail('刪除班級', error);
   A.courses = A.courses.filter((x) => x !== c);
