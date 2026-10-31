@@ -1,19 +1,20 @@
 // ============================================================
-// 11班專屬樂園・全班連線版：白板（老師）端
+// 熊熊遊樂園・全班連線版：白板（老師）端
 //  - 開房間（四位數代碼），孩子用 iPad 加入
 //  - 三種玩法：全班拔河 / 搶答大挑戰 / 玻璃球賽跑
 //  - 老師端負責計分與廣播；孩子端只送「答對／答錯」或「選了哪一個」
 // ============================================================
 import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
-  optionHTML, loadSets, toGameQuestion, cleanSeat,
+  optionHTML, loadSets, toGameQuestion, cleanSeat, SEAT_COUNT,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610202039';
-import { resetZoom } from './no-zoom.js?v=202610202039';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610202039';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610202039';
-import { candyBallImg } from './candy-faces.js?v=202610202039';
-import { music } from './live-music.js?v=202610202039';
+} from './live-common.js?v=202610311723';
+import { resetZoom } from './no-zoom.js?v=202610311723';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610311723';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610311723';
+import { candyBallImg } from './candy-faces.js?v=202610311723';
+import { music } from './live-music.js?v=202610311723';
+import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202610311723';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -40,6 +41,8 @@ function clearTimers(){ S.timers.forEach(t=>t.i?clearInterval(t.id):clearTimeout
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
   $('main').scrollTop=0;
+  $('rejoinBtn').classList.toggle('hidden', id==='scrLobby');   // 遊戲中才需要「回來玩」
+  if(id==='scrLobby') closeRejoin();
 }
 function send(event,payload){
   if(!S.net) return;
@@ -49,13 +52,18 @@ function send(event,payload){
 /* ============================================================
    開房間與連線
    ============================================================ */
-function joinUrl(){
+function joinUrl(code){
   const base=location.href.split('?')[0].replace(/[^/]*$/,'');
-  return base+'live.html'+(isTestMode?'?test=1':'');
+  const q=new URLSearchParams();
+  if(isTestMode) q.set('test','1');
+  if(code) q.set('code',code);
+  if(RC_COURSE&&SEAT_COUNT!==24) q.set('n',String(SEAT_COUNT));   // 人數不是 24 的班（例如 509）：iPad 的座號按鈕跟著變
+  const qs=q.toString();
+  return base+'live.html'+(qs?'?'+qs:'');
 }
 /* QR code 裡放「加入網址＋房間代碼」，孩子掃完只要輸入暱稱 */
 function renderQR(){
-  const url=joinUrl()+(isTestMode?'&':'?')+'code='+S.code;
+  const url=joinUrl(S.code);
   try{ $('qrBox').innerHTML=qrSvg(url,{ level:'M', margin:2 }); }
   catch(e){ $('qrBox').innerHTML=''; }
 }
@@ -302,7 +310,7 @@ radio('.level-btn', b=>{ S.level=b.dataset.level; });
 /* ── 題目來源：自動出分數題，或老師在後台建的題組 ── */
 async function refreshSets(){
   $('srcSel').disabled=true;
-  S.sets=await loadSets();
+  S.sets=await loadSets(await setsOwner());
   const keep=S.src&&S.src.id;
   const sel=$('srcSel');
   sel.innerHTML='<option value="auto">🎲 自動出題：分數擴分約分</option>'
@@ -987,8 +995,13 @@ const noSave = isTestMode && !new URLSearchParams(location.search).has('save'); 
 async function getSaver(force){
   if(noSave) return null;
   if(saver&&!force) return saver;
+  if(RC_COURSE){                 // 科任老師模式：用熊熊遊樂園後台的登入
+    const r=await rcSession();
+    saver= r ? { db:r.db, role:'rc' } : null;
+    return saver;
+  }
   try{
-    const m=await import('./db.js?v=202610202039');
+    const m=await import('./db.js?v=202610311723');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
@@ -1001,6 +1014,7 @@ async function showSaveState(){
   el.textContent='💾 …'; el.title=''; el.className='save-state';
   const sv=await getSaver(true);
   if(sv){ el.textContent='💾 ✓'; el.title='比賽成績會自動存到後台'; el.className='save-state ok'; }
+  else if(RC_COURSE){ el.textContent='💾 ✕'; el.title='還沒登入熊熊遊樂園後台，成績不會存'; el.className='save-state warn'; }
   else{ el.textContent='💾 ✕'; el.title='這台電腦沒有開教室模式，成績不會存（到班網主畫面的 ⚙️ 開啟）'; el.className='save-state warn'; }
 }
 function qLabel(q){
@@ -1036,9 +1050,26 @@ function saveQuiz(g){
   record(g,{ mode:'quiz', source:sourceName(), player_count:players.length, players,
     summary:{ level:S.src?null:S.level, total:g.stats.length, questions:g.stats.map(s=>({ label:s.label, answered:s.answered, right:s.right })) } });
 }
+/* 科任老師模式：結算畫面多一個「⭐ 記到課堂分數」（每場只能記一次，後台可以撤銷） */
+function offerAward(gameId, db){
+  const b=document.createElement('button');
+  b.className='btn btn-rose award-btn'; b.textContent='⭐ 記到課堂分數';
+  b.title='有答題的同學 +分；前三名或獲勝隊伍再加分（規則在熊熊遊樂園後台設定）';
+  onTap(b, async ()=>{
+    if(b.disabled) return;
+    b.disabled=true; b.textContent='記分中…';
+    const { data, error }=await db.rpc('rc_award_game',{ p_game:gameId });
+    if(error){ b.disabled=false; b.textContent='⭐ 再試一次'; b.title=String(error.message||''); return; }
+    b.textContent='⭐ 已記分（'+data+' 人）'; b.classList.add('done');
+    sound.win();
+  });
+  $('endSave').after(b);
+}
+
 /* 結算畫面右下角的小符號（白板投影給孩子看，所以不寫字；滑鼠移上去才看得到說明） */
 function endSave(text,cls,retry){
   const el=$('endSave');
+  document.querySelectorAll('.award-btn').forEach(b=>b.remove());
   el.className='end-save'+(cls?' '+cls:'');
   el.title=text;
   el.textContent= cls==='ok' ? '💾 ✓' : cls==='warn' ? '💾 ✕' : text ? '💾 …' : '';
@@ -1054,9 +1085,18 @@ async function record(g,row){
   if(noSave){ endSave('🧪 測試模式不會存成績',''); return; }
   endSave('💾 成績儲存中…','');
   const sv=await getSaver(false);
-  if(!sv){ endSave('⚠️ 成績沒有存：這台電腦沒有開教室模式（到班網主畫面的 ⚙️ 設定開啟）','warn',()=>{ saver=null; record(g,row); }); return; }
-  const { error }=await sv.db.from('game_results').insert(row);
-  if(!error){ g.saved=true; endSave('✅ 成績已存到後台（📊 成績紀錄）','ok'); return; }
+  if(!sv){ endSave(RC_COURSE?'⚠️ 成績沒有存：請先登入熊熊遊樂園後台':'⚠️ 成績沒有存：這台電腦沒有開教室模式（到班網主畫面的 ⚙️ 設定開啟）','warn',()=>{ saver=null; record(g,row); }); return; }
+  if(RC_COURSE) row=Object.assign({}, row, { course_id:RC_COURSE });
+  // 教室模式不能讀回成績（只有老師能看），所以只有科任老師模式才要拿回這一場的編號
+  const { data, error }= RC_COURSE
+    ? await sv.db.from('game_results').insert(row).select('id').single()
+    : await sv.db.from('game_results').insert(row);
+  if(!error){
+    g.saved=true;
+    endSave(RC_COURSE?'✅ 成績已存到熊熊遊樂園後台':'✅ 成績已存到後台（📊 成績紀錄）','ok');
+    if(RC_COURSE&&data) offerAward(data.id, sv.db);
+    return;
+  }
   const m=String(error.code||'')+' '+String(error.message||'');
   if(/game_results|42P01|PGRST205|does not exist/i.test(m)) endSave('⚠️ 成績沒有存：還沒建立成績資料表（請先執行 08_成績紀錄.sql）','warn',()=>record(g,row));
   else endSave('⚠️ 成績沒有存好（網路不穩？）','warn',()=>record(g,row));
@@ -1066,6 +1106,20 @@ async function record(g,row){
    小工具：確認框、音效開關
    ============================================================ */
 let modalYes=null;
+/* ── 📲 回來玩：遊戲中也能叫出 QR code，讓不小心關掉網頁的孩子回來 ── */
+let rejoinTimer=0;
+function openRejoin(){
+  const url=joinUrl(S.code);
+  try{ $('rejoinQr').innerHTML=qrSvg(url,{ level:'M', margin:2 }); }catch(e){ $('rejoinQr').innerHTML=''; }
+  $('rejoinCode').textContent=S.code;
+  $('rejoinModal').classList.remove('hidden');
+  clearTimeout(rejoinTimer);
+  rejoinTimer=setTimeout(closeRejoin, 30000);     // 30 秒後自動收起來，不擋住遊戲
+}
+function closeRejoin(){ clearTimeout(rejoinTimer); $('rejoinModal').classList.add('hidden'); }
+onTap($('rejoinBtn'), openRejoin);
+onTap($('rejoinClose'), closeRejoin);
+
 function confirmBox(html,yes){ $('modalText').innerHTML=html; modalYes=yes; $('modal').classList.remove('hidden'); }
 onTap($('modalYes'), ()=>{ $('modal').classList.add('hidden'); const f=modalYes; modalYes=null; if(f) f(); });
 onTap($('modalNo'),  ()=>{ $('modal').classList.add('hidden'); modalYes=null; });
@@ -1081,3 +1135,18 @@ renderLobby();
 openRoom();
 refreshSets();
 showSaveState();
+setupRc();
+
+/* 科任老師模式：標題換成班級名稱；白板拔河的連結帶著班級 */
+async function setupRc(){
+  if(!RC_COURSE) return;
+  const link=document.querySelector('.board-link');
+  if(link) link.href='board-tug.html?'+rcQuery().toString();
+  const home=document.querySelector('.topbar .icon-btn.left');
+  if(home){ home.href='reading.html'; home.setAttribute('aria-label','回熊熊遊樂園後台'); }
+  const name=await rcCourseName();
+  if(name){ document.querySelector('.topbar h1').textContent='🐻 熊熊遊樂園・'+name; document.title='熊熊遊樂園・'+name+'（白板）'; }
+  else if(!(await rcSession())){
+    $('pathCheck').insertAdjacentHTML('afterend','<div class="save-state warn" style="margin-top:6px">還沒登入熊熊遊樂園後台：只能玩，題庫和成績要登入才看得到</div>');
+  }
+}

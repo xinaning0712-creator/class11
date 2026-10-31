@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>11班專屬樂園・加入對戰</title>
+<title>熊熊遊樂園・加入對戰</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610202039">
+<link rel="stylesheet" href="css/live.css?v=202610311723">
 <style>
 .center{max-width:720px; margin:0 auto; text-align:center}
 .join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
@@ -20,6 +20,7 @@
 #codeIn{letter-spacing:.3em}
 .msg{min-height:1.6em; margin-top:12px; font-weight:800; font-size:1.15rem; color:#b2453f}
 #joinBtn{width:100%; margin-top:18px}
+.back-btn{width:100%; margin:0 0 6px; background:#e9f6ec; border-color:#7bbf8a; color:#2f6b3c}
 .seat-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
 .seat-btn{height:56px; border-radius:14px; border:3px solid var(--cream-d); background:#fff; color:var(--ink);
   font:inherit; font-size:1.5rem; font-weight:900; font-variant-numeric:tabular-nums; box-shadow:0 3px 0 var(--cream-d)}
@@ -114,7 +115,7 @@ body.cozy .result-big, body.cozy .result-sub, body.cozy .score-line{color:var(--
 <body>
 <div id="app">
   <header class="topbar">
-    <h1>🎡 11班專屬樂園</h1>
+    <h1>🐻 熊熊遊樂園</h1>
     <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
   </header>
 
@@ -124,6 +125,7 @@ body.cozy .result-big, body.cozy .result-sub, body.cozy .score-line{color:var(--
       <div class="card center join-box">
         <div class="big-emoji">🐰🧋🐻</div>
         <h2>加入全班對戰</h2>
+        <button id="backBtn" class="btn big back-btn hidden">🔄 回到剛剛的遊戲</button>
         <label class="field" for="codeIn">🔢 房間代碼（看白板）</label>
         <input id="codeIn" class="inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
         <label class="field" for="nameIn">😊 你的暱稱（可以不填）</label>
@@ -199,6 +201,6 @@ body.cozy .result-big, body.cozy .result-sub, body.cozy .score-line{color:var(--
     </section>
   </main>
 </div>
-<script type="module" src="js/live-play.js?v=202610202039"></script>
+<script type="module" src="js/live-play.js?v=202610311723"></script>
 </body>
 </html>

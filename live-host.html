@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>11班專屬樂園・全班連線（白板）</title>
+<title>熊熊遊樂園・全班連線（白板）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="stylesheet" href="css/live.css?v=202610202039">
+<link rel="stylesheet" href="css/live.css?v=202610311723">
 <style>
 /* ── 大廳 ── */
 .lobby-grid{display:grid; grid-template-columns:minmax(260px,.9fr) minmax(0,1.6fr) minmax(300px,1fr); gap:14px; align-items:start}
@@ -35,6 +35,13 @@
 .chip .seat{display:inline-block; min-width:1.5em; margin-right:6px; padding:0 6px; border-radius:999px; background:var(--cream); color:#8b3550; font-size:.85em; text-align:center}
 .icon-btn.music{right:70px}
 .icon-btn.music.off{opacity:.45}
+.icon-btn.rejoin{left:70px; width:auto; padding:0 14px; border-radius:999px; font-size:1.05rem; font-weight:900; white-space:nowrap}
+.rejoin-card{max-width:560px !important}
+.rejoin-card .qr-box{width:min(100%,320px)}
+.rejoin-card .room-code{font-size:clamp(3rem,8vw,5.5rem); margin:0 0 6px}
+.award-btn{display:block; margin:10px auto 0; font-size:1.3rem}
+.award-btn.done{background:#e9f6ec; border-color:#7bbf8a; color:#2f6b3c}
+.rejoin-tip{font-size:1.15rem; color:#9a6b55; margin:6px 0 10px}
 .save-state{margin-top:6px; font-size:.8rem; color:var(--muted); opacity:.6}
 .save-state.ok{color:var(--ok)} .save-state.warn{color:#b26a00}
 .end-save{margin-top:6px; font-size:.8rem; color:var(--muted); text-align:right; opacity:.6}
@@ -220,7 +227,8 @@ body.cozy .seers{background:#f3ecff; border:3px solid var(--line); color:var(--l
 <div id="app">
   <header class="topbar">
     <a class="icon-btn left" href="index.html" aria-label="回班網">🏠</a>
-    <h1>🎡 11班專屬樂園・全班連線</h1>
+    <button id="rejoinBtn" class="icon-btn rejoin hidden" aria-label="顯示加入用的 QR code">📲 回來玩</button>
+    <h1>🐻 熊熊遊樂園・全班連線</h1>
     <button id="musicBtn" class="icon-btn right music" aria-label="背景音樂開關" title="背景音樂">🎵</button>
     <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
   </header>
@@ -402,6 +410,16 @@ body.cozy .seers{background:#f3ecff; border:3px solid var(--line); color:var(--l
   </div>
 </div>
 
-<script type="module" src="js/live-host.js?v=202610202039"></script>
+<div id="rejoinModal" class="modal hidden">
+  <div class="card rejoin-card">
+    <div class="label">📲 不小心離開的同學，掃一下就能回來</div>
+    <div id="rejoinQr" class="qr-box"></div>
+    <div id="rejoinCode" class="room-code">----</div>
+    <div class="rejoin-tip">座號選原本的，分數和隊伍都會接著算</div>
+    <button id="rejoinClose" class="btn btn-rose big">好了，關掉</button>
+  </div>
+</div>
+
+<script type="module" src="js/live-host.js?v=202610311723"></script>
 </body>
 </html>

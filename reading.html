@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>熊熊遊樂園・老師後台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=202610311723">
+  <link rel="stylesheet" href="css/reading.css?v=202610311723">
+</head>
+<body class="admin rc">
+  <!-- 登入 -->
+  <section id="login-view" class="login" hidden>
+    <form id="login-form" class="card login-card">
+      <div class="rc-login-bear" id="login-bear" aria-hidden="true"></div>
+      <h1>🐻 熊熊遊樂園</h1>
+      <p class="muted">老師後台・上課計分、題庫、成績</p>
+      <label for="rc-account">帳號</label>
+      <input id="rc-account" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required placeholder="例如：reading">
+      <label for="pw">密碼</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <label class="check">
+        <input id="remember" type="checkbox">
+        在這台裝置記住我
+      </label>
+      <p class="hint">自己的電腦可以勾。<strong>教室公用電腦請不要勾</strong>，關掉分頁就會自動登出。</p>
+      <p id="login-err" class="error" hidden></p>
+      <button class="btn primary" type="submit">登入</button>
+    </form>
+  </section>
+
+  <!-- 後台 -->
+  <section id="app-view" hidden>
+    <header class="admin-header rc-header">
+      <div class="rc-title">
+        <h1>🐻 熊熊遊樂園</h1>
+        <span id="rc-who" class="muted"></span>
+      </div>
+      <div class="admin-actions">
+        <button id="rc-full" class="btn small" type="button" title="白板全螢幕">⛶ 全螢幕</button>
+        <button id="logout" class="btn small" type="button">登出</button>
+      </div>
+    </header>
+
+    <div class="rc-classes" id="rc-classes" role="tablist" aria-label="切換班級"></div>
+
+    <nav class="tabs" aria-label="後台功能">
+      <button class="tab active" type="button" data-tab="board" data-own>🌟 上課計分</button>
+      <button class="tab" type="button" data-tab="roster">👥 名單與分組</button>
+      <button class="tab" type="button" data-tab="exchange" data-home>🎟 兌換集點 <span class="tab-badge" id="ex-badge" hidden></span></button>
+      <button class="tab" type="button" data-tab="stats">📊 學期統計</button>
+      <button class="tab" type="button" data-tab="quiz" data-own>🎮 題庫</button>
+      <button class="tab" type="button" data-tab="settings" data-own>⚙️ 設定</button>
+    </nav>
+
+    <!-- ============ 🌟 上課計分（投影在白板上） ============ -->
+    <main id="tab-board" class="tab-panel">
+      <div class="rc-board-bar">
+        <div class="rs-switch" role="tablist" aria-label="計分對象">
+          <button id="bd-who-stu" class="rs-pill active" type="button">🧒 個人</button>
+          <button id="bd-who-grp" class="rs-pill" type="button">👥 小組</button>
+        </div>
+        <button id="bd-multi" class="btn" type="button">☑️ 多選</button>
+        <button id="bd-all" class="btn" type="button">🌈 全班</button>
+        <span class="rc-spacer"></span>
+        <a id="bd-play" class="btn primary" href="live-host.html">🎡 開熊熊遊樂園</a>
+        <button id="bd-exit-full" class="btn" type="button" hidden>✕ 離開全螢幕</button>
+      </div>
+      <div id="bd-empty" class="card rc-empty" hidden></div>
+      <section id="bd-grid" class="rc-grid" aria-live="polite"></section>
+      <div id="bd-multibar" class="rc-multibar" hidden>
+        <span id="bd-multi-n">已選 0 人</span>
+        <button id="bd-multi-go" class="btn primary" type="button" disabled>⭐ 加扣分</button>
+        <button id="bd-multi-clear" class="btn" type="button">取消</button>
+      </div>
+    </main>
+
+    <!-- ============ 👥 名單與分組 ============ -->
+    <main id="tab-roster" class="tab-panel" hidden>
+      <div class="card rc-paste">
+        <p class="form-title">📋 貼上名單</p>
+        <p class="hint">在 Excel 選取「座號、姓名」兩欄，複製後貼到下面。一行一個人，第一列是標題也沒關係。<br>
+          重新貼一次只會更新姓名，小角色和組別會保留。</p>
+        <textarea id="ro-paste" rows="5" placeholder="1	王小明&#10;2	李小美&#10;3	陳大寶"></textarea>
+        <div id="ro-preview" class="rc-preview"></div>
+        <div class="row-actions">
+          <button id="ro-import" class="btn primary" type="button" disabled>匯入名單</button>
+          <button id="ro-clear" class="btn ghost" type="button">清空</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rc-section-head">
+          <p class="form-title">👥 分組</p>
+          <div class="row-actions">
+            <button id="gr-add" class="btn small" type="button">＋ 新增一組</button>
+            <button id="gr-auto" class="btn small ghost" type="button">🔢 依座號自動分組</button>
+          </div>
+        </div>
+        <p class="hint">把孩子拖到組別裡（電子白板、平板也可以用手指拖）；或先點孩子，再點組別的標題。點組名可以改名字。</p>
+        <div id="gr-board" class="rc-groups"></div>
+      </div>
+
+      <div class="card">
+        <p class="form-title">🧒 名單</p>
+        <p class="hint">點小角色可以換一隻；姓名改完按 Enter 或點別的地方就會儲存。</p>
+        <div id="ro-list" class="rc-roster"></div>
+      </div>
+    </main>
+
+    <!-- ============ 🎟 兌換集點（只有 11 班） ============ -->
+    <main id="tab-exchange" class="tab-panel" hidden>
+      <div class="card rc-ex-head">
+        <p class="form-title">🎟 換成 11 班的扭蛋集點</p>
+        <p class="hint" id="ex-rule"></p>
+        <p class="hint">在孩子的實體集點卡蓋好章之後，再按「蓋好了」，系統會自動扣掉用掉的分數。按錯可以在下面撤銷。</p>
+      </div>
+      <section id="ex-list" class="rc-ex-list"></section>
+      <details class="card">
+        <summary>兌換紀錄</summary>
+        <div id="ex-history" class="rc-history"></div>
+      </details>
+    </main>
+
+    <!-- ============ 📊 學期統計 ============ -->
+    <main id="tab-stats" class="tab-panel" hidden>
+      <div class="rs-toolbar">
+        <label class="rs-filter">期間
+          <select id="st-range">
+            <option value="term" selected>這學期</option>
+            <option value="last">上學期</option>
+            <option value="30">最近 30 天</option>
+            <option value="all">全部</option>
+          </select>
+        </label>
+        <span id="st-range-text" class="muted"></span>
+        <span class="rc-spacer"></span>
+        <button id="st-export" class="btn primary" type="button">📥 匯出 Excel（.csv）</button>
+      </div>
+      <div class="card rc-table-card">
+        <p class="form-title">🧒 個人分</p>
+        <div id="st-students" class="rc-table-wrap"></div>
+      </div>
+      <div class="card rc-table-card">
+        <p class="form-title">👥 小組分</p>
+        <div id="st-groups" class="rc-table-wrap"></div>
+      </div>
+      <details class="card" id="st-games-card">
+        <summary>🎡 熊熊遊樂園場次</summary>
+        <p class="hint">每一場可以「記到課堂分數」一次（白板結算畫面按，或在這裡按）。按錯可以到下面的加扣分紀錄撤銷。</p>
+        <div id="st-games" class="rc-history"></div>
+      </details>
+      <details class="card">
+        <summary>🧾 加扣分紀錄</summary>
+        <div id="st-log" class="rc-history"></div>
+      </details>
+    </main>
+
+    <!-- ============ 🎮 題庫 ============ -->
+    <main id="tab-quiz" class="tab-panel" hidden>
+      <!-- 題組列表 -->
+      <section id="qz-list-view">
+        <div class="card qz-setup" id="qz-setup" hidden>
+          <p class="form-title">還差一步：先建立題庫資料表</p>
+          <ol>
+            <li>打開 Supabase 專案，左邊選 <strong>SQL Editor</strong> → <strong>New query</strong>。</li>
+            <li>把專案裡的 <code>supabase/10_熊熊遊樂園_科任老師.sql</code> 整份複製貼上，按 <strong>Run</strong>。</li>
+            <li>回到這裡重新整理頁面。</li>
+          </ol>
+        </div>
+        <div class="qz-toolbar">
+          <button id="qz-new" class="btn primary" type="button">＋ 新增題組</button>
+          <a id="rc-quiz-play" class="btn" href="live-host.html">🎡 開熊熊遊樂園</a>
+        </div>
+        <p class="hint">這裡是你自己的題庫（班導看不到也改不到）。從這個後台開熊熊遊樂園時，白板上就會列出這些題組，搶答、拔河、賽跑都能用。</p>
+        <section id="qz-list" class="qz-list"></section>
+      </section>
+
+      <!-- 編輯題組 -->
+      <section id="qz-edit-view" hidden>
+        <div class="qz-editbar">
+          <button id="qz-back" class="btn" type="button">← 題組列表</button>
+          <span id="qz-status" class="muted"></span>
+          <button id="qz-save" class="btn primary" type="button">💾 儲存</button>
+        </div>
+        <div class="card qz-meta">
+          <label class="field wide"><span>題組名稱</span><input id="qz-title" type="text" maxlength="40" placeholder="例如：五上 第三單元 分數"></label>
+          <label class="field"><span>科目</span><select id="qz-subject"></select></label>
+          <label class="check"><input id="qz-frac" type="checkbox"> 把 3/4 顯示成上下排版的分數</label>
+          <label class="check"><input id="qz-shuffle" type="checkbox"> 選項順序打亂（建議打勾，比較難猜）</label>
+        </div>
+        <div class="qz-toolbar">
+          <button id="qz-add" class="btn" type="button">＋ 新增一題</button>
+          <button id="qz-bulk-toggle" class="btn" type="button">📋 整批貼上</button>
+          <span id="qz-count" class="muted"></span>
+        </div>
+        <div id="qz-bulk" class="card qz-bulk" hidden>
+          <p class="form-title">從 Excel 匯入，或從試算表整批貼上</p>
+          <div class="qz-file-row">
+            <a class="btn" href="templates/quiz-template.xlsx" download="題庫範本.xlsx">📥 下載 Excel 範本</a>
+            <button id="qz-file-pick" class="btn primary" type="button">📂 從檔案匯入（.xlsx／.csv）</button>
+            <input id="qz-sheet-file" type="file" accept=".xlsx,.xlsm,.csv,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>
+          </div>
+          <p class="hint">填好範本存檔後，按「從檔案匯入」選它；或是在試算表選取題目複製，貼到下面也可以。</p>
+          <p class="hint">在試算表裡排好：<strong>題目｜選項A｜選項B｜選項C｜選項D｜正確答案</strong>（一列一題），選起來複製，貼到下面。<br>
+            正確答案寫 A～D、1～4，或直接寫正確選項的文字都可以。選項可以只有 2～3 個（例如是非題：⭕ 對｜❌ 錯）。第一列是標題「題目」也沒關係，會自動跳過。</p>
+          <textarea id="qz-bulk-text" rows="7" placeholder="3/4 和哪一個分數一樣大？	6/8	4/5	3/8	6/4	A"></textarea>
+          <div id="qz-bulk-preview" class="qz-bulk-preview"></div>
+          <div class="row-actions">
+            <button id="qz-bulk-add" class="btn primary" type="button" disabled>加入題目</button>
+            <button id="qz-bulk-cancel" class="btn ghost" type="button">取消</button>
+          </div>
+        </div>
+        <section id="qz-questions" class="qz-questions"></section>
+        <button id="qz-add-bottom" class="btn qz-add-bottom" type="button">＋ 再新增一題</button>
+      </section>
+      <input id="qz-file" type="file" accept="image/*" hidden>
+    </main>
+
+    <!-- ============ ⚙️ 設定 ============ -->
+    <main id="tab-settings" class="tab-panel" hidden>
+      <div class="card">
+        <div class="rc-section-head">
+          <p class="form-title">⭐ 加扣分項目</p>
+          <button id="bh-add" class="btn small primary" type="button">＋ 新增項目</button>
+        </div>
+        <p class="hint">兩個班共用同一套。正數是加分、負數是扣分；拖曳左邊的 ⠿ 可以調整順序。</p>
+        <div id="bh-list" class="rc-behaviors"></div>
+      </div>
+
+      <form id="rule-form" class="card rc-rules">
+        <p class="form-title">🎡 熊熊遊樂園換成課堂分數的規則</p>
+        <label class="field">有答題的同學，每人 +<input id="rule-join" type="number" min="0" max="10" step="1"> 分</label>
+        <label class="field">個人賽（搶答、糖果球）前三名，再 +<input id="rule-top" type="number" min="0" max="10" step="1"> 分</label>
+        <label class="field">團隊賽（拔河、玻璃球）獲勝隊伍，每人再 +<input id="rule-win" type="number" min="0" max="10" step="1"> 分</label>
+        <label class="field" id="rate-field">11 班：個人分每 <input id="rule-rate" type="number" min="1" max="100" step="1"> 分換 1 個扭蛋集點</label>
+        <div class="row-actions"><button class="btn primary" type="submit">儲存規則</button></div>
+      </form>
+
+      <div class="card">
+        <div class="rc-section-head">
+          <p class="form-title">🏫 我的班級</p>
+          <button id="cls-add" class="btn small" type="button">＋ 新增班級</button>
+        </div>
+        <div id="cls-list" class="rc-classes-edit"></div>
+      </div>
+
+      <form id="me-form" class="card rc-rules">
+        <p class="form-title">🙋 我的名字（顯示在後台上方）</p>
+        <label class="field">名字 <input id="me-name" type="text" maxlength="20"></label>
+        <label class="field">科目 <input id="me-subject" type="text" maxlength="20"></label>
+        <div class="row-actions"><button class="btn primary" type="submit">儲存</button></div>
+      </form>
+    </main>
+  </section>
+
+  <!-- 加扣分視窗 -->
+  <dialog id="bh-dialog" class="sheet rc-sheet">
+    <div class="sheet-body">
+      <div id="bh-target" class="rc-target"></div>
+      <div id="bh-plus" class="rc-bh-grid plus"></div>
+      <div id="bh-minus" class="rc-bh-grid minus"></div>
+      <button id="bh-close" class="btn" type="button">取消</button>
+    </div>
+  </dialog>
+
+  <!-- 換小角色 -->
+  <dialog id="av-dialog" class="sheet rc-sheet wide">
+    <div class="sheet-body">
+      <h2 id="av-title">選一隻小角色</h2>
+      <div id="av-grid" class="rc-av-grid"></div>
+      <button id="av-close" class="btn" type="button">取消</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/reading.js?v=202610311723"></script>
+</body>
+</html>

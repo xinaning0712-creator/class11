@@ -3,7 +3,7 @@
 //  - 教室模式：一直記在這台裝置上。
 //  - 老師登入：勾「記住我」才會一直記住，否則關掉分頁就登出。
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610202039';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=202610311723';
 
 export const configured = SUPABASE_URL.startsWith('https://') && SUPABASE_KEY.length > 20;
 
@@ -39,8 +39,39 @@ const teacherStorage = {
   },
 };
 
+// 熊熊遊樂園後台（科任老師）：一樣依「記住我」決定要不要一直記得
+const RC_REMEMBER_KEY = 'shiny11-rc-remember';
+export function setRememberRc(on) {
+  safe(() => on ? localStorage.setItem(RC_REMEMBER_KEY, '1') : localStorage.removeItem(RC_REMEMBER_KEY));
+}
+const rcStorage = {
+  getItem: (k) => safe(() => localStorage.getItem(k)) ?? safe(() => sessionStorage.getItem(k)),
+  setItem: (k, v) => {
+    if (safe(() => localStorage.getItem(RC_REMEMBER_KEY) === '1', false)) {
+      safe(() => localStorage.setItem(k, v));
+      safe(() => sessionStorage.removeItem(k));
+    } else {
+      safe(() => sessionStorage.setItem(k, v));
+      safe(() => localStorage.removeItem(k));
+    }
+  },
+  removeItem: (k) => {
+    safe(() => localStorage.removeItem(k));
+    safe(() => sessionStorage.removeItem(k));
+  },
+};
+
 let teacher = null;
 let classroom = null;
+let rc = null;
+
+export function rcDb() {
+  if (!configured) return null;
+  rc ??= createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { storageKey: 'shiny11-rc', storage: rcStorage },
+  });
+  return rc;
+}
 
 export function teacherDb() {
   if (!configured) return null;

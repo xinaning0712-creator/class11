@@ -1,12 +1,12 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202610202039';
-import { el, toast } from './ui.js?v=202610202039';
+import { friendlyError } from './db.js?v=202610311723';
+import { el, toast } from './ui.js?v=202610311723';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202610202039';
-import { readSheetFile } from './sheet-import.js?v=202610202039';
+} from './quiz-bank.js?v=202610311723';
+import { readSheetFile } from './sheet-import.js?v=202610311723';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -40,8 +40,12 @@ function fromEditQ(q) {
   return out ? { q: out } : { error: '格式不正確' };
 }
 
-export function init(client) {
+// scope：班導後台不用傳；科任老師後台傳 { owner: 自己的帳號 id }，只列出自己的題組
+let scope = {};
+
+export function init(client, opts = {}) {
   db = client;
+  scope = opts;
   $('qz-subject').replaceChildren(...SUBJECTS.map((s) => el('option', { value: s }, s)));
   $('qz-new').addEventListener('click', () => openEditor(null));
   $('qz-back').addEventListener('click', () => {
@@ -80,8 +84,14 @@ export function init(client) {
    題組列表
    ============================================================ */
 export async function load() {
-  const { data, error } = await db.from(TABLE).select('id, title, subject, frac, shuffle, questions, updated_at')
-    .order('updated_at', { ascending: false });
+  const cols = 'id, title, subject, frac, shuffle, questions, updated_at';
+  let q = db.from(TABLE).select(cols).order('updated_at', { ascending: false });
+  q = scope.owner ? q.eq('owner', scope.owner) : q.eq('kind', 'class11');
+  let { data, error } = await q;
+  // 還沒執行 10_熊熊遊樂園_科任老師.sql（沒有 kind 欄位）：照舊列出全部
+  if (error && !scope.owner && /kind/.test(error.message || '')) {
+    ({ data, error } = await db.from(TABLE).select(cols).order('updated_at', { ascending: false }));
+  }
   $('qz-setup').hidden = !(error && missingTable(error));
   $('qz-new').disabled = !!error;
   if (error) { if (!missingTable(error)) fail('讀取題庫', error); sets = []; renderList(); return; }

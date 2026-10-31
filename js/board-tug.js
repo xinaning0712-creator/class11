@@ -1,12 +1,13 @@
 // ============================================================
-// 🪢 白板拔河（11班專屬樂園）：不用 iPad，兩隊在電子白板上直接答題拉繩子
+// 🪢 白板拔河（熊熊遊樂園）：不用 iPad，兩隊在電子白板上直接答題拉繩子
 //  - 左半邊：草莓兔兔隊；右半邊：奶茶熊熊隊（隊名可以改）
 //  - 題目：自動出分數題，或老師在後台建的題組（每隊各自抽題）
 //  - 手繪療癒風；不連線、不記錄成績
 // ============================================================
-import { makeQuestion, promptHTML, typeLabel, optionHTML, loadSets, makeDeck, esc, sound, onTap, replayAnim, tween } from './live-common.js?v=202610202039';
-import { resetZoom } from './no-zoom.js?v=202610202039';
-import { music } from './live-music.js?v=202610202039';
+import { setsOwner, rcQuery } from './rc-mode.js?v=202610311723';
+import { makeQuestion, promptHTML, typeLabel, optionHTML, loadSets, makeDeck, esc, sound, onTap, replayAnim, tween } from './live-common.js?v=202610311723';
+import { resetZoom } from './no-zoom.js?v=202610311723';
+import { music } from './live-music.js?v=202610311723';
 
 const $ = id => document.getElementById(id);
 const LIMIT = 8;                       // 拉到 ±8 格就獲勝
@@ -28,7 +29,7 @@ radio('.time-btn',  b=>{ S.seconds=parseInt(b.dataset.s,10)||90; });
 async function refreshSets(){
   const sel=$('srcSel'); sel.disabled=true;
   const keep=S.src&&S.src.id;
-  S.sets=await loadSets();
+  S.sets=await loadSets(await setsOwner());
   sel.innerHTML='<option value="auto">🎲 自動出題：分數擴分約分</option>'
     + S.sets.map((s,i)=>'<option value="'+i+'">📚 '+esc(s.title)+'（'+s.questions.length+' 題）</option>').join('');
   const idx=S.sets.findIndex(s=>s.id===keep);
@@ -248,3 +249,10 @@ document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { on
 void resetZoom;
 
 refreshSets();
+
+/* 科任老師模式：回熊熊遊樂園時帶著班級 */
+{
+  const q=rcQuery().toString();
+  const back=document.querySelector('.topbar .icon-btn.left');
+  if(q&&back) back.href='live-host.html?'+q;
+}

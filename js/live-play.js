@@ -1,5 +1,5 @@
 // ============================================================
-// 11班專屬樂園・全班連線版：孩子的 iPad 端
+// 熊熊遊樂園・全班連線版：孩子的 iPad 端
 //  - 輸入房間代碼與暱稱加入
 //  - 拔河／賽跑：自己一直答題，答對就幫隊伍出力
 //  - 搶答：看白板的題目，在 iPad 上選答案
@@ -8,9 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610202039';
-import { candyBallImg } from './candy-faces.js?v=202610202039';
-import { resetZoom } from './no-zoom.js?v=202610202039';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610311723';
+import { candyBallImg } from './candy-faces.js?v=202610311723';
+import { resetZoom } from './no-zoom.js?v=202610311723';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -34,11 +34,21 @@ function send(event,payload){
   if(!P.net) return;
   Promise.resolve(P.net.send(event,payload)).catch(()=>setNet('ERR'));
 }
+let healTimer=0, healTries=0, netGen=0;   // netGen：舊連線關掉時的訊息不要理它
 function setNet(st){
   const d=$('netDot'); d.classList.remove('ok','bad');
-  if(st==='SUBSCRIBED'){ d.classList.add('ok'); d.textContent='已連線'; }
-  else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'||st==='ERR'){ d.classList.add('bad'); d.textContent='網路不穩，請靠近 Wi-Fi'; }
+  if(st==='SUBSCRIBED'){ d.classList.add('ok'); d.textContent='已連線'; healTries=0; }
+  else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'||st==='ERR'){
+    d.classList.add('bad'); d.textContent='網路不穩，重新連線中…';
+    heal();
+  }
   else d.textContent='連線中…';
+}
+/* 遊戲中網路斷掉：自動重新連線（3、6、10 秒後再試，之後每 15 秒），回來就接著玩 */
+function heal(){
+  if(!P.joined||healTimer) return;
+  const wait=[3000,6000,10000][healTries]||15000;
+  healTimer=setTimeout(()=>{ healTimer=0; healTries++; if(P.joined) resume(); }, wait);
 }
 function msg(t){ $('joinMsg').textContent=t||''; }
 
@@ -87,7 +97,8 @@ async function doJoin(){
   $('joinBtn').disabled=true; msg('連線中…');
   try{
     if(P.net) P.net.close();
-    P.net=await connect({ code, role:'player', onMessage:handle, onStatus:setNet });
+    const gen=++netGen;
+    P.net=await connect({ code, role:'player', onMessage:handle, onStatus:st=>{ if(gen===netGen) setNet(st); } });
   }catch(e){ fail('連不上網路，請確認 Wi-Fi 後再試一次'); return; }
   P.tries=0; sendJoin();
 }
@@ -126,7 +137,8 @@ function handle(event,p){
       $('nameIn').value=P.name;            // 沒填暱稱的孩子，會拿到白板送的可愛暱稱
       store.set('fr-code',P.code); store.set('fr-name',P.name); store.set('fr-seat',String(P.seat));
       keep.set('fr-name',P.name); keep.set('fr-seat',String(P.seat));
-      keep.set('fr-code',P.code); keep.set('fr-at',String(Date.now()));
+      keep.set('fr-code',P.code); keep.set('fr-at',String(Date.now())); keep.set('fr-n',String(SEAT_COUNT));
+      $('backBtn').classList.add('hidden');
       guardBack();
       $('joinBtn').disabled=false; msg('');
       applySync(p.sync||{});
@@ -197,6 +209,7 @@ function kicked(){
   P.joined=false;
   if(P.net){ P.net.close(); P.net=null; }
   store.del('fr-code'); store.del('fr-name');
+  keep.set('fr-at','0');   // 被老師移出：不要再自動回到這個房間
   $('nameIn').value='';
   $('joinBtn').disabled=false;
   msg('老師請你重新加入一次（可以換一個暱稱）🙂');
@@ -522,7 +535,8 @@ async function resume(){
   if(!P.joined&&P.screen==='pJoin') return;      // 還沒加入過，不用管
   try{
     if(P.net) P.net.close();
-    P.net=await connect({ code:P.code, role:'player', onMessage:handle, onStatus:setNet });
+    const gen=++netGen;
+    P.net=await connect({ code:P.code, role:'player', onMessage:handle, onStatus:st=>{ if(gen===netGen) setNet(st); } });
   }catch(e){ setNet('ERR'); return; }
   P.tries=0; sendJoin();                         // 白板會回傳目前進度（拔河中、搶答第幾題…）
 }
@@ -538,7 +552,10 @@ onTap($('soundBtn'), ()=>{ sound.on=!sound.on; $('soundBtn').textContent=sound.o
 document.addEventListener('pointerdown', ()=>{ if(sound.on) sound.ctx(); }, { once:true });
 
 const urlCode=(new URLSearchParams(location.search).get('code')||'').replace(/\D/g,'').slice(0,4);
-$('codeIn').value=urlCode||store.get('fr-code')||'';
+// 剛剛（2 小時內）玩過的房間：iPad 會記得
+const lastCode=(keep.get('fr-code')||'').replace(/\D/g,'').slice(0,4);
+const lastFresh=lastCode.length===4 && Date.now()-Number(keep.get('fr-at')||0) < 2*60*60*1000;
+$('codeIn').value=urlCode||store.get('fr-code')||(lastFresh?lastCode:'');
 $('nameIn').value=store.get('fr-name')||keep.get('fr-name')||'';
 P.seat=cleanSeat(store.get('fr-seat')||keep.get('fr-seat'));
 buildSeats();
@@ -547,3 +564,9 @@ buildSeats();
 //  ・分頁關掉後重新掃同一個房間的 QR code（2 小時內），不用再按「加入」
 const recent=keep.get('fr-code')===$('codeIn').value && Date.now()-Number(keep.get('fr-at')||0) < 2*60*60*1000;
 if(P.seat&&((store.get('fr-code')&&store.get('fr-name'))||recent)) doJoin();
+// 「回到剛剛的遊戲」按鈕：自動連不上時（例如白板重開了房間）也可以自己按
+if(lastFresh&&P.seat){
+  $('backBtn').textContent='🔄 回到剛剛的遊戲（房間 '+lastCode+'・'+P.seat+' 號）';
+  $('backBtn').classList.remove('hidden');
+}
+onTap($('backBtn'), ()=>{ $('codeIn').value=lastCode; sound.pop(); doJoin(); });

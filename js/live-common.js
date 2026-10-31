@@ -1,12 +1,24 @@
 // ============================================================
-// 11班專屬樂園・全班連線版：白板（live-host）和 iPad（live）共用的程式
+// 熊熊遊樂園・全班連線版：白板（live-host）和 iPad（live）共用的程式
 //  - 出題：擴分填空 / 約分到最簡 / 判斷相等，陷阱依迷思產生，並標記陷阱種類
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT } from './config.js?v=202610202039';
-export { SEAT_COUNT };
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610202039';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT as HOME_SEATS } from './config.js?v=202610311723';
+/* 座號數量：11 班 24 人；其他班（例如 509）白板開房間時會把人數放進網址 ?n=29、QR code 也會帶著
+   孩子關掉網頁再打開（沒有掃 QR code）時，用 2 小時內記下的人數 */
+function seatCount(){
+  const ok=n=>Number.isInteger(n)&&n>=1&&n<=40;
+  const u=Number(new URLSearchParams(location.search).get('n'));
+  if(ok(u)) return u;
+  try{
+    const k=Number(localStorage.getItem('fr-n')), at=Number(localStorage.getItem('fr-at')||0);
+    if(ok(k)&&Date.now()-at<2*60*60*1000) return k;
+  }catch(e){}
+  return HOME_SEATS;
+}
+export const SEAT_COUNT = seatCount();
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610311723';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */
@@ -203,11 +215,14 @@ export function optionHTML(o,q){
 }
 
 /* 白板讀取老師在後台建好的題組（測試模式用示範題組） */
-export async function loadSets(){
+/* owner 有值：只列這位科任老師的題組；沒有：只列班導的題組（kind = class11） */
+export async function loadSets(owner){
   if(isTestMode) return [cleanSet(DEMO_SET)];
   try{
-    const r=await fetch(SUPABASE_URL+'/rest/v1/quiz_sets?select=id,title,subject,frac,shuffle,questions&order=updated_at.desc',
-      { headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY } });
+    const base=SUPABASE_URL+'/rest/v1/quiz_sets?select=id,title,subject,frac,shuffle,questions&order=updated_at.desc';
+    const get=u=>fetch(u,{ headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY } });
+    let r=await get(base+(owner?'&owner=eq.'+encodeURIComponent(owner):'&kind=eq.class11'));
+    if(!r.ok&&!owner) r=await get(base);          // 還沒執行 10 號 SQL（沒有 kind 欄位）
     if(!r.ok) return [];
     const rows=await r.json();
     return (Array.isArray(rows)?rows:[]).map(cleanSet).filter(Boolean);
