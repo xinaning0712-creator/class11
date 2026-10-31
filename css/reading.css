@@ -277,11 +277,79 @@ body[data-rc-theme="night"] {
 }
 body[data-rc-theme="night"] .rc-card { border-bottom-width: 6px; }
 body[data-rc-theme="night"] .rc-name b, body[data-rc-theme="night"] .rc-target-one b { color: #ffd86b; }
-body[data-rc-theme="night"] .btn:not(.primary), body[data-rc-theme="night"] .tab, body[data-rc-theme="night"] .rs-switch { background: var(--surface); color: var(--ink); }
-body[data-rc-theme="night"] .tab.active { background: var(--accent); color: #2a1f3a; border-color: var(--accent); }
-body[data-rc-theme="night"] .btn.primary { background: var(--accent); border-color: var(--accent); color: #2a1f3a; }
+body[data-rc-dark] .btn:not(.primary), body[data-rc-dark] .tab, body[data-rc-dark] .rs-switch { background: var(--surface); color: var(--ink); }
+body[data-rc-dark] .tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+body[data-rc-dark] .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 body[data-rc-theme="night"] .rc-bh.minus, body[data-rc-theme="night"] .rc-bh-row.minus { background: #2b2f50; border-color: #4a4f80; box-shadow: 0 4px 0 #4a4f80; }
-body[data-rc-theme="night"] input[type="text"], body[data-rc-theme="night"] select, body[data-rc-theme="night"] textarea { background: #1f2340; color: var(--ink); border-color: var(--line); }
+body[data-rc-dark] input[type="text"], body[data-rc-dark] input[type="number"], body[data-rc-dark] select, body[data-rc-dark] textarea { background: var(--bg); color: var(--ink); border-color: var(--line); }
+body[data-rc-dark] .rc-pick-btn, body[data-rc-dark] .rc-chip { color: var(--ink); }
+body[data-rc-dark] .toast { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------- 成熟風：換成俐落的黑體 ---------- */
+body[data-rc-mature], body[data-rc-mature] button, body[data-rc-mature] input, body[data-rc-mature] select, body[data-rc-mature] textarea {
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+body[data-rc-mature] h1 { font-weight: 700; letter-spacing: .06em; }
+body[data-rc-mature] .rc-name { font-weight: 500; letter-spacing: .04em; }
+body[data-rc-mature] .rc-pts { font-weight: 700; font-variant-numeric: tabular-nums; }
+body[data-rc-mature] .rc-bh-label, body[data-rc-mature] .rc-grp-name { font-weight: 500; }
+
+/* 🖤 黑金典雅：深炭黑＋金色細線 */
+body[data-rc-theme="lux"] {
+  --bg: #141418; --surface: #1d1d23; --ink: #f2ede4; --muted: #a39e93; --line: #36332d; --accent: #c9a25b; --accent-ink: #141418;
+  --rc-cream: #1d1d23; --rc-milk: #3a362e; --rc-card: #1c1c22; --rc-pick: #2a2620; --rc-soft: #23221f; --rc-soft-line: #5a4d33;
+  --rc-pts-bg: transparent; --rc-pts-ink: #e3c27f; --rc-float: #e3c27f;
+  background-image: linear-gradient(180deg, #19191e 0, #121215 100%); background-attachment: fixed;
+}
+body[data-rc-theme="lux"] .rc-card {
+  border: 1px solid rgba(201, 162, 91, .35); border-radius: 14px;
+  box-shadow: inset 0 3px 0 var(--gc), 0 8px 20px rgba(0, 0, 0, .35);
+}
+body[data-rc-theme="lux"] .rc-card.picked { outline-color: #c9a25b; }
+body[data-rc-theme="lux"] .rc-pts { border: 1px solid rgba(201, 162, 91, .7); }
+body[data-rc-theme="lux"] .rc-name b, body[data-rc-theme="lux"] .rc-target-one b { color: #e3c27f; }
+body[data-rc-theme="lux"] .rc-current:not(:empty) { background: transparent; border: 1px solid #c9a25b; color: #e3c27f; }
+body[data-rc-theme="lux"] .rc-bh { box-shadow: none; }
+body[data-rc-theme="lux"] .rc-bh-pts { color: #e3c27f; }
+body[data-rc-theme="lux"] .rc-bh.minus, body[data-rc-theme="lux"] .rc-bh-row.minus { background: #1a1a1e; border-color: #34322c; }
+
+/* 🤍 極簡美術館：白底、細灰線、黑色重點 */
+body[data-rc-theme="gallery"] {
+  --bg: #f4f3f0; --surface: #ffffff; --ink: #141414; --muted: #7a7873; --line: #e2e0db; --accent: #141414; --accent-ink: #ffffff;
+  --rc-cream: #faf9f7; --rc-milk: #e2e0db; --rc-card: #ffffff; --rc-pick: #f0efeb; --rc-soft: #faf9f7; --rc-soft-line: #dcdad4;
+  --rc-pts-bg: #141414; --rc-pts-ink: #ffffff; --rc-float: #141414;
+}
+body[data-rc-theme="gallery"] .rc-card {
+  border: 1px solid #e2e0db; border-radius: 6px; box-shadow: inset 4px 0 0 var(--gc);
+}
+body[data-rc-theme="gallery"] .rc-card:hover { border-color: #141414; }
+body[data-rc-theme="gallery"] .rc-pts { border: 0; border-radius: 4px; }
+body[data-rc-theme="gallery"] .rc-name b { color: #141414; font-weight: 700; }
+body[data-rc-theme="gallery"] .rc-current:not(:empty) { border-radius: 4px; }
+body[data-rc-theme="gallery"] .tab, body[data-rc-theme="gallery"] .btn, body[data-rc-theme="gallery"] .rs-switch,
+body[data-rc-theme="gallery"] .rs-pill, body[data-rc-theme="gallery"] .card { border-radius: 6px; }
+body[data-rc-theme="gallery"] .rc-bh { border-radius: 6px; box-shadow: none; border-color: #dcdad4; background: #fff; }
+body[data-rc-theme="gallery"] .rc-bh-pts { color: #141414; font-weight: 700; }
+
+/* ⚡ 電競霓虹：深藍底＋發光霓虹框 */
+body[data-rc-theme="neon"] {
+  --bg: #0a0e1d; --surface: #121933; --ink: #eaf6ff; --muted: #8ea3c7; --line: #243055; --accent: #3fe0ff; --accent-ink: #04121a;
+  --rc-cream: #121933; --rc-milk: #2a3a6e; --rc-card: #111833; --rc-pick: #1a2850; --rc-soft: #152044; --rc-soft-line: #2f4c8a;
+  --rc-pts-bg: #3fe0ff; --rc-pts-ink: #04121a; --rc-float: #ff4fd8;
+  background-image: radial-gradient(ellipse at 20% 0%, rgba(63, 224, 255, .12), transparent 55%), radial-gradient(ellipse at 90% 100%, rgba(255, 79, 216, .12), transparent 55%);
+  background-attachment: fixed;
+}
+body[data-rc-theme="neon"] .rc-card {
+  border: 2px solid var(--gc); border-radius: 12px;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gc) 70%, transparent), inset 0 0 18px color-mix(in srgb, var(--gc) 18%, transparent);
+}
+body[data-rc-theme="neon"] .rc-name b, body[data-rc-theme="neon"] .rc-target-one b { color: #3fe0ff; text-shadow: 0 0 8px rgba(63, 224, 255, .6); }
+body[data-rc-theme="neon"] .rc-pts { border: 0; box-shadow: 0 0 10px rgba(63, 224, 255, .7); }
+body[data-rc-theme="neon"] .rc-current:not(:empty) { box-shadow: 0 0 12px rgba(63, 224, 255, .7); }
+body[data-rc-theme="neon"] h1 { text-shadow: 0 0 12px rgba(63, 224, 255, .5); }
+body[data-rc-theme="neon"] .rc-bh { box-shadow: 0 0 8px rgba(63, 224, 255, .25); }
+body[data-rc-theme="neon"] .rc-bh-pts { color: #3fe0ff; }
+body[data-rc-theme="neon"] .rc-bh.minus, body[data-rc-theme="neon"] .rc-bh-row.minus { background: #10162c; border-color: #2a3352; }
 
 /* 設定裡的風格選擇 */
 .rc-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .7rem; margin-top: .6rem; }

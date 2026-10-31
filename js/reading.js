@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311859';
-import { el, toast } from './ui.js?v=202610311859';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311859';
-import { ask, sure } from './dialogs.js?v=202610311859';
-import * as quizbank from './admin-quiz.js?v=202610311859';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311901';
+import { el, toast } from './ui.js?v=202610311901';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311901';
+import { ask, sure } from './dialogs.js?v=202610311901';
+import * as quizbank from './admin-quiz.js?v=202610311901';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -94,11 +94,17 @@ const THEMES = [
   { id: 'matcha', name: '🍵 抹茶拿鐵', sw: ['#eef3e6', '#6f9a5b', '#fff3c4'] },
   { id: 'bear', name: '🧸 奶茶熊', sw: ['#f4ece2', '#9c6f45', '#f6d9a8'] },
   { id: 'candy', name: '🍬 糖果繽紛', sw: ['#fff5fb', '#e0609b', '#9fd3a8'] },
-  { id: 'night', name: '🌙 星空夜晚', sw: ['#1f2340', '#f2a7c3', '#ffd86b'] },
+  { id: 'night', name: '🌙 星空夜晚', sw: ['#1f2340', '#f2a7c3', '#ffd86b'], dark: true },
+  { id: 'lux', name: '🖤 黑金典雅', sw: ['#141418', '#c9a25b', '#f2ede4'], dark: true, mature: true },
+  { id: 'gallery', name: '🤍 極簡美術館', sw: ['#f4f3f0', '#141414', '#e2e0db'], mature: true },
+  { id: 'neon', name: '⚡ 電競霓虹', sw: ['#0a0e1d', '#3fe0ff', '#ff4fd8'], dark: true, mature: true },
 ];
 function applyTheme(id) {
-  const t = THEMES.find((x) => x.id === id) ? id : 'rose';
+  const th = THEMES.find((x) => x.id === id) || THEMES[0];
+  const t = th.id;
   if (t === 'rose') delete document.body.dataset.rcTheme; else document.body.dataset.rcTheme = t;
+  document.body.toggleAttribute('data-rc-dark', !!th.dark);       // 深色底：按鈕、輸入框跟著變深
+  document.body.toggleAttribute('data-rc-mature', !!th.mature);   // 成熟風：換成黑體
   try { localStorage.setItem(THEME_KEY, t); } catch { /* ignore */ }
   document.querySelectorAll('.rc-theme').forEach((b) => b.classList.toggle('on', b.dataset.theme === t));
 }

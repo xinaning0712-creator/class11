@@ -8,9 +8,9 @@ import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
   optionHTML, cleanSet, makeDeck,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202610311859';
-import { candyBallImg } from './candy-faces.js?v=202610311859';
-import { resetZoom } from './no-zoom.js?v=202610311859';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202610311901';
+import { candyBallImg } from './candy-faces.js?v=202610311901';
+import { resetZoom } from './no-zoom.js?v=202610311901';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
