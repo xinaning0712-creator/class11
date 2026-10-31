@@ -18,7 +18,7 @@ export async function rcSession() {
   if (!RC_COURSE) return null;
   if (cached) return cached;
   try {
-    const { rcDb } = await import('./db.js?v=202610311901');
+    const { rcDb } = await import('./db.js?v=202610311902');
     const db = rcDb();
     if (!db) return null;
     const { data: { session } } = await db.auth.getSession();

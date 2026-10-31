@@ -1,13 +1,13 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202610311901';
-import { el, toast } from './ui.js?v=202610311901';
+import { friendlyError } from './db.js?v=202610311902';
+import { el, toast } from './ui.js?v=202610311902';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202610311901';
-import { sure } from './dialogs.js?v=202610311901';
-import { readSheetFile } from './sheet-import.js?v=202610311901';
+} from './quiz-bank.js?v=202610311902';
+import { sure } from './dialogs.js?v=202610311902';
+import { readSheetFile } from './sheet-import.js?v=202610311902';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -124,6 +124,7 @@ function renderList() {
       el('span', { class: 'row-actions' },
         el('button', { class: 'btn small primary', type: 'button', onclick: () => openEditor(s) }, '編輯'),
         el('button', { class: 'btn small ghost', type: 'button', onclick: () => copySet(s) }, '複製'),
+        el('button', { class: 'btn small ghost', type: 'button', onclick: () => exportSet(s) }, '匯出'),
         el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeSet(s) }, '刪除')));
   }));
 }
@@ -134,6 +135,25 @@ async function useDemo() {
   if (error) return fail('建立', error);
   toast('已建立示範題組');
   load();
+}
+
+/* 匯出成 Excel 可以開的 CSV：欄位跟匯入範本一樣，匯出的檔案可以直接再匯入（例如分享給別的老師） */
+function exportSet(s) {
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const qs = Array.isArray(s.questions) ? s.questions : [];
+  const lines = [['題目', '選項A', '選項B', '選項C', '選項D', '正確答案'].map(q).join(',')];
+  let noText = 0;
+  for (const x of qs) {
+    const opts = [0, 1, 2, 3].map((i) => x.options?.[i] ?? '');
+    if (!String(x.text || '').trim()) noText++;
+    lines.push([x.text || '（圖片題）', ...opts, LETTERS[x.answer] || 'A'].map(q).join(','));
+  }
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: `${s.title.replace(/[\\/:*?"<>|]/g, '_')}.csv` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  const hasImg = qs.some((x) => x.img);
+  toast(hasImg || noText ? '已匯出（題目圖片不會匯出，匯入後要再加一次圖片）' : `已匯出 ${qs.length} 題`, { seconds: hasImg ? 6 : 3 });
 }
 
 async function copySet(s) {
