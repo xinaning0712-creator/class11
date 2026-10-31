@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311847';
-import { el, toast } from './ui.js?v=202610311847';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311847';
-import { ask, sure } from './dialogs.js?v=202610311847';
-import * as quizbank from './admin-quiz.js?v=202610311847';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311856';
+import { el, toast } from './ui.js?v=202610311856';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311856';
+import { ask, sure } from './dialogs.js?v=202610311856';
+import * as quizbank from './admin-quiz.js?v=202610311856';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -154,21 +154,44 @@ async function start() {
   }
   let saved = null;
   try { saved = Number(sessionStorage.getItem('rc-course')); } catch { /* ignore */ }
-  await selectCourse(A.courses.find((c) => c.id === saved) || A.courses[0]);
+  // 有好幾個班：先問今天要上哪一班（重新整理時記得剛剛選的班，不會再問）
+  const first = A.courses.find((c) => c.id === saved) || (A.courses.length > 1 ? await pickCourse(false) : A.courses[0]);
+  await selectCourse(first);
   showTab(A.isOwner ? 'board' : 'roster');
 }
 
 /* ============================================================
    班級切換與資料讀取
    ============================================================ */
+/* 畫面上只顯示「現在這一班」；其他班的名字只會出現在按「換班」後的選班視窗裡
+   （投影到白板時，孩子不會看到老師還帶哪些班） */
 function renderClassPills() {
-  $('rc-classes').replaceChildren(...A.courses.map((c) => el('button', {
-    class: 'rc-class-pill' + (c.id === A.course?.id ? ' active' : ''),
-    type: 'button', role: 'tab', 'aria-selected': c.id === A.course?.id ? 'true' : 'false',
-    onclick: () => selectCourse(c),
-  }, c.name)));
-  $('rc-classes').hidden = A.courses.length < 2;
+  $('rc-current').textContent = A.course ? A.course.name : '';
+  $('rc-switch').hidden = A.courses.length < 2;
 }
+
+/* 選班視窗：回傳選到的班；canCancel = false 時一定要選一班 */
+let pickResolve = null;
+function pickCourse(canCancel = true) {
+  $('cls-pick').replaceChildren(...A.courses.map((c) => el('button', {
+    class: 'rc-pick-btn' + (c.id === A.course?.id ? ' active' : ''), type: 'button',
+    onclick: () => { const r = pickResolve; pickResolve = null; $('cls-dialog').close(); r?.(c); },
+  }, c.name)));
+  $('cls-cancel').hidden = !canCancel;
+  return new Promise((resolve) => {
+    pickResolve = resolve;
+    $('cls-dialog').showModal();
+  });
+}
+$('cls-cancel').addEventListener('click', () => { const r = pickResolve; pickResolve = null; $('cls-dialog').close(); r?.(null); });
+$('cls-dialog').addEventListener('cancel', (e) => {
+  if ($('cls-cancel').hidden) { e.preventDefault(); return; }   // 第一次一定要選
+  const r = pickResolve; pickResolve = null; r?.(null);
+});
+$('rc-switch').addEventListener('click', async () => {
+  const c = await pickCourse(true);
+  if (c && c.id !== A.course?.id) { await selectCourse(c); toast(`已切換到 ${c.name}`); }
+});
 
 async function selectCourse(c) {
   A.course = c;

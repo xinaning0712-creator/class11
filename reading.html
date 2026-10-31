@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610311847">
-  <link rel="stylesheet" href="css/reading.css?v=202610311847">
+  <link rel="stylesheet" href="css/style.css?v=202610311856">
+  <link rel="stylesheet" href="css/reading.css?v=202610311856">
 </head>
 <body class="admin rc">
   <!-- 登入 -->
@@ -37,15 +37,16 @@
     <header class="admin-header rc-header">
       <div class="rc-title">
         <h1>🐻 熊熊遊樂園</h1>
+        <span id="rc-current" class="rc-current"></span>
         <span id="rc-who" class="muted"></span>
       </div>
       <div class="admin-actions">
+        <button id="rc-switch" class="btn small" type="button" hidden>🔄 換班</button>
         <button id="rc-full" class="btn small" type="button" title="白板全螢幕">⛶ 全螢幕</button>
         <button id="logout" class="btn small" type="button">登出</button>
       </div>
     </header>
 
-    <div class="rc-classes" id="rc-classes" role="tablist" aria-label="切換班級"></div>
 
     <nav class="tabs" aria-label="後台功能">
       <button class="tab active" type="button" data-tab="board" data-own>🌟 上課計分</button>
@@ -267,6 +268,15 @@
     </div>
   </dialog>
 
+  <!-- 選班級（投影時畫面上只會有這一班） -->
+  <dialog id="cls-dialog" class="sheet rc-sheet">
+    <div class="sheet-body">
+      <h2 class="rc-pick-title">今天要上哪一班？</h2>
+      <div id="cls-pick" class="rc-pick"></div>
+      <button id="cls-cancel" class="btn" type="button">取消</button>
+    </div>
+  </dialog>
+
   <!-- 換小角色 -->
   <dialog id="av-dialog" class="sheet rc-sheet wide">
     <div class="sheet-body">
@@ -276,6 +286,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/reading.js?v=202610311847"></script>
+  <script type="module" src="js/reading.js?v=202610311856"></script>
 </body>
 </html>

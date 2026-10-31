@@ -2,8 +2,7 @@
    🐻 熊熊遊樂園・老師後台（搭配 style.css 的玫粉主題）
    ============================================================ */
 .rc { --rc-line: #5b4038; --rc-cream: #fff6ea; --rc-milk: #f3e3cf; --rc-shadow: rgba(91, 64, 56, .14); }
-.rc main, .rc .admin-header, .rc .tabs, .rc .rc-classes { max-width: 1280px; }
-.rc .rc-classes { margin-inline: auto; }
+.rc main, .rc .admin-header, .rc .tabs { max-width: 1280px; }
 
 /* 班導只看得到名單、兌換、統計；兌換只有 11 班 */
 .rc-homeroom .tab[data-own] { display: none; }
@@ -18,7 +17,20 @@ textarea {
 }
 select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font: inherit; }
 
-/* ---------- 班級切換 ---------- */
+/* ---------- 現在這一班、選班視窗 ---------- */
+.rc-current:not(:empty) {
+  padding: .1rem .9rem; border-radius: 999px; background: var(--accent); color: #fff; font-size: 1.15rem;
+}
+.rc-pick-title { text-align: center; font-size: 1.5rem !important; }
+.rc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .8rem; }
+.rc-pick-btn {
+  min-height: 96px; border-radius: 20px; border: 2.5px solid var(--rc-milk); background: var(--rc-cream);
+  font: inherit; font-size: 2rem; color: var(--ink); cursor: pointer; box-shadow: 0 4px 0 var(--rc-milk);
+}
+.rc-pick-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rc-milk); }
+.rc-pick-btn.active { border-color: var(--accent); background: #fff1f5; }
+
+/* ---------- （舊）班級切換 ---------- */
 .rc-classes { display: flex; gap: .5rem; margin-bottom: .8rem; flex-wrap: wrap; }
 .rc-class-pill {
   min-height: 52px; min-width: 96px; padding: .3rem 1.4rem; border-radius: 16px;
@@ -96,7 +108,7 @@ select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line)
 /* 白板全螢幕：只留計分 */
 .rc-fullboard { padding: 10px; }
 .rc-fullboard .admin-header, .rc-fullboard .tabs { display: none; }
-.rc-fullboard main, .rc-fullboard .rc-classes { max-width: none; }
+.rc-fullboard main { max-width: none; }
 .rc-fullboard .rc-grid { grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 11.5vw, 200px), 1fr)); }
 
 /* ---------- 加扣分視窗 ---------- */
