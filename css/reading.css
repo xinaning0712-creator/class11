@@ -1,7 +1,11 @@
 /* ============================================================
    🐻 熊熊遊樂園・老師後台（搭配 style.css 的玫粉主題）
    ============================================================ */
-.rc { --rc-line: #5b4038; --rc-cream: #fff6ea; --rc-milk: #f3e3cf; --rc-shadow: rgba(91, 64, 56, .14); }
+.rc {
+  --rc-line: #5b4038; --rc-cream: #fff6ea; --rc-milk: #f3e3cf; --rc-shadow: rgba(91, 64, 56, .14);
+  --rc-card: #fff; --rc-pick: #fff1f5; --rc-soft: #fff4f7; --rc-soft-line: #f3c4d2;
+  --rc-pts-bg: #ffe9a8; --rc-pts-ink: #7a4b00; --rc-float: #e8557d;
+}
 .rc main, .rc .admin-header, .rc .tabs { max-width: 1280px; }
 
 /* 班導只看得到名單、兌換、統計；兌換只有 11 班 */
@@ -28,7 +32,7 @@ select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line)
   font: inherit; font-size: 2rem; color: var(--ink); cursor: pointer; box-shadow: 0 4px 0 var(--rc-milk);
 }
 .rc-pick-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rc-milk); }
-.rc-pick-btn.active { border-color: var(--accent); background: #fff1f5; }
+.rc-pick-btn.active { border-color: var(--accent); background: var(--rc-pick); }
 
 /* ---------- （舊）班級切換 ---------- */
 .rc-classes { display: flex; gap: .5rem; margin-bottom: .8rem; flex-wrap: wrap; }
@@ -56,12 +60,12 @@ select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line)
   --gc: var(--rc-milk);
   position: relative; display: flex; flex-direction: column; align-items: center; gap: .1rem;
   padding: .6rem .4rem .7rem; border-radius: 22px; cursor: pointer;
-  background: #fff; border: 3px solid var(--gc); border-bottom-width: 7px;
+  background: var(--rc-card); border: 3px solid var(--gc); border-bottom-width: 7px;
   font: inherit; color: var(--ink); touch-action: manipulation;
   transition: transform .12s ease, box-shadow .2s ease;
 }
 .rc-card:active { transform: scale(.96); }
-.rc-card.picked { background: #fff1f5; outline: 4px solid var(--accent); outline-offset: 2px; }
+.rc-card.picked { background: var(--rc-pick); outline: 4px solid var(--accent); outline-offset: 2px; }
 .rc-card.picked::after {
   content: '✓'; position: absolute; left: 8px; top: 6px; width: 30px; height: 30px; border-radius: 50%;
   background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.1rem;
@@ -72,7 +76,7 @@ select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line)
 .rc-name b { color: var(--accent); font-variant-numeric: tabular-nums; }
 .rc-pts {
   position: absolute; right: 6px; top: 6px; min-width: 2.1em; padding: .05em .45em; border-radius: 999px;
-  background: #ffe9a8; color: #7a4b00; border: 2px solid var(--rc-line);
+  background: var(--rc-pts-bg); color: var(--rc-pts-ink); border: 2px solid var(--rc-line);
   font-size: clamp(1rem, 1.3vw, 1.35rem); font-variant-numeric: tabular-nums; text-align: center;
 }
 .rc-pts.neg { background: #e7e2df; color: #6b5a52; }
@@ -87,7 +91,7 @@ select { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line)
 /* 加分動畫 */
 .rc-float {
   position: absolute; left: 50%; top: 30%; transform: translate(-50%, 0); pointer-events: none;
-  font-size: clamp(2.2rem, 4vw, 3.6rem); color: #e8557d; text-shadow: 0 3px 0 #fff, 0 0 12px #fff;
+  font-size: clamp(2.2rem, 4vw, 3.6rem); color: var(--rc-float); text-shadow: 0 3px 0 #fff, 0 0 12px #fff;
   animation: rcFloat 1.2s ease-out forwards;
 }
 .rc-float.neg { color: #7d6b5c; }
@@ -122,10 +126,10 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
 .rc-bh {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .4rem;
   min-height: 72px; padding: .5rem .8rem; border-radius: 18px; cursor: pointer;
-  border: 2px solid #f3c4d2; background: #fff4f7; font: inherit; color: var(--ink); text-align: left;
-  box-shadow: 0 4px 0 #f3c4d2; touch-action: manipulation;
+  border: 2px solid var(--rc-soft-line); background: var(--rc-soft); font: inherit; color: var(--ink); text-align: left;
+  box-shadow: 0 4px 0 var(--rc-soft-line); touch-action: manipulation;
 }
-.rc-bh:active { transform: translateY(3px); box-shadow: 0 1px 0 #f3c4d2; }
+.rc-bh:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rc-soft-line); }
 .rc-bh.minus { border-color: #ddd2ca; background: #f7f3f0; box-shadow: 0 4px 0 #ddd2ca; }
 .rc-bh-emoji { font-size: 1.9rem; }
 .rc-bh-label { font-size: 1.15rem; line-height: 1.25; min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
@@ -142,11 +146,11 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
 .rc-groups { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); margin-top: .8rem; }
 .rc-col {
   --gc: var(--rc-milk);
-  min-height: 140px; border-radius: 18px; padding: .5rem; background: #fff;
+  min-height: 140px; border-radius: 18px; padding: .5rem; background: var(--rc-card);
   border: 2.5px solid var(--gc); transition: background .15s ease, transform .15s ease;
 }
 .rc-col.none { border-style: dashed; background: var(--rc-cream); }
-.rc-col.over { background: #fff1f5; transform: scale(1.02); }
+.rc-col.over { background: var(--rc-pick); transform: scale(1.02); }
 .rc-col-head { display: flex; align-items: center; gap: .4rem; padding: .1rem .2rem .4rem; cursor: pointer; }
 .rc-col-name {
   border: 0; background: var(--gc); border-radius: 10px; padding: .2rem .7rem; font: inherit; font-size: 1.15rem;
@@ -161,7 +165,7 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
   cursor: grab; user-select: none; touch-action: none; font-size: 1rem;
 }
 .rc-chip b { color: var(--accent); }
-.rc-chip.chosen { outline: 3px solid var(--accent); background: #fff1f5; }
+.rc-chip.chosen { outline: 3px solid var(--accent); background: var(--rc-pick); }
 .rc-chip.dragging { opacity: .35; }
 .rc-ghost {
   position: fixed; z-index: 100; pointer-events: none; transform: translate(-50%, -50%) rotate(-3deg) scale(1.1);
@@ -173,20 +177,20 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
 .rc-ro-row { display: grid; grid-template-columns: 2.4em 56px minmax(0, 1fr) minmax(0, 11em) auto; align-items: center; gap: .5rem; }
 .rc-ro-seat { text-align: right; color: var(--accent); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
 .rc-ro-av { border: 0; background: transparent; padding: 0; cursor: pointer; border-radius: 50%; }
-.rc-ro-av:hover { background: #fff1f5; }
+.rc-ro-av:hover { background: var(--rc-pick); }
 .rc-ro-row input[type="text"] { min-height: 44px; }
 
 .rc-av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: .3rem; max-height: 60vh; overflow-y: auto; }
 .rc-av-pick { border: 2px solid transparent; border-radius: 16px; background: transparent; padding: 2px; cursor: pointer; }
-.rc-av-pick:hover { background: #fff1f5; }
-.rc-av-pick.on { border-color: var(--accent); background: #fff1f5; }
+.rc-av-pick:hover { background: var(--rc-pick); }
+.rc-av-pick.on { border-color: var(--accent); background: var(--rc-pick); }
 
 /* ============================================================
    🎟 兌換、📊 統計
    ============================================================ */
 .rc-ex-list { display: grid; gap: .5rem; }
 .rc-ex { display: grid; grid-template-columns: 60px minmax(0, 1fr) auto auto; align-items: center; gap: .8rem; padding: .5rem 1rem; }
-.rc-ex.ready { border: 2px solid #f3c4d2; background: #fff7f9; }
+.rc-ex.ready { border: 2px solid var(--rc-soft-line); background: var(--rc-soft); }
 .rc-ex-name { font-size: 1.2rem; }
 .rc-ex-name b { color: var(--accent); }
 .rc-ex-bal { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
@@ -212,7 +216,7 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
    ⚙️ 設定
    ============================================================ */
 .rc-behaviors { display: grid; gap: .4rem; margin-top: .6rem; }
-.rc-bh-row { display: grid; grid-template-columns: 28px 4em minmax(0, 1fr) 6em auto; align-items: center; gap: .5rem; padding: .25rem .4rem; border-radius: 12px; background: #fff7f9; }
+.rc-bh-row { display: grid; grid-template-columns: 28px 4em minmax(0, 1fr) 6em auto; align-items: center; gap: .5rem; padding: .25rem .4rem; border-radius: 12px; background: var(--rc-soft); }
 .rc-bh-row.minus { background: #f7f3f0; }
 .rc-bh-row.dragging { outline: 2px dashed var(--accent); opacity: .7; }
 .rc-handle { cursor: grab; color: var(--muted); font-size: 1.3rem; text-align: center; touch-action: none; user-select: none; }
@@ -237,3 +241,54 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
   .rc-bh-row .btn { grid-column: 3 / -1; justify-self: end; }
 }
 .rc-homeroom #rc-full { display: none; }
+
+/* ============================================================
+   🎨 版面風格（⚙️ 設定 → 版面風格；記在這台電腦）
+   ============================================================ */
+/* 🍵 抹茶拿鐵：綠色＋奶油色，清爽 */
+body[data-rc-theme="matcha"] {
+  --bg: #eef3e6; --surface: #fbfdf7; --ink: #2f3a2a; --muted: #6b7a62; --line: #d5e2c6; --accent: #6f9a5b;
+  --rc-cream: #f6f8ee; --rc-milk: #dfe8cf; --rc-card: #fffefa; --rc-pick: #eef7e6; --rc-soft: #f2f8ec; --rc-soft-line: #c4dcb3;
+  --rc-pts-bg: #fff3c4; --rc-pts-ink: #5b4a00; --rc-float: #5e9e4a;
+}
+/* 🧸 奶茶熊：暖暖的奶茶棕 */
+body[data-rc-theme="bear"] {
+  --bg: #f4ece2; --surface: #fffaf3; --ink: #3a2e25; --muted: #7d6b5c; --line: #e3d5c3; --accent: #9c6f45;
+  --rc-cream: #fbf3e8; --rc-milk: #ead9c3; --rc-card: #fffdf9; --rc-pick: #f8ecdd; --rc-soft: #fbf3ea; --rc-soft-line: #e2c9ab;
+  --rc-pts-bg: #f6d9a8; --rc-pts-ink: #5a3b12; --rc-float: #b5743c;
+}
+body[data-rc-theme="bear"] .rc-card { border-radius: 28px 28px 22px 22px; }
+/* 🍬 糖果繽紛：卡片塗滿組別顏色，熱鬧可愛 */
+body[data-rc-theme="candy"] {
+  --bg: #fff5fb; --surface: #ffffff; --ink: #4a2c4a; --muted: #8f6d8f; --line: #f5d3ea; --accent: #e0609b;
+  --rc-cream: #fff8fc; --rc-milk: #f6dcef; --rc-card: #fff; --rc-pick: #ffe6f3; --rc-soft: #fff0f8; --rc-soft-line: #f6bcdc;
+  --rc-pts-bg: #fff; --rc-pts-ink: #c2416a; --rc-float: #ff4f9a;
+}
+body[data-rc-theme="candy"] .rc-card { background: color-mix(in srgb, var(--gc) 45%, #fff); border-color: color-mix(in srgb, var(--gc) 80%, #5b4038); border-radius: 50px 50px 26px 26px; }
+body[data-rc-theme="candy"] .rc-card .rc-name b { color: color-mix(in srgb, var(--gc) 45%, #4a2c4a); }
+body[data-rc-theme="candy"] .rc-pts { border-color: #fff; box-shadow: 0 2px 0 rgba(91, 64, 56, .25); }
+/* 🌙 星空夜晚：深色底，投影不刺眼 */
+body[data-rc-theme="night"] {
+  --bg: #1f2340; --surface: #2a2f55; --ink: #f3eefc; --muted: #b7b2d6; --line: #3d4372; --accent: #f2a7c3;
+  --rc-cream: #2a2f55; --rc-milk: #444a80; --rc-card: #30365f; --rc-pick: #3d3a6b; --rc-soft: #343a66; --rc-soft-line: #5a5f99;
+  --rc-pts-bg: #ffd86b; --rc-pts-ink: #3a2c00; --rc-float: #ffd86b; --accent-ink: #2a1f3a;
+  background-image: radial-gradient(circle at 12% 18%, rgba(255,255,255,.5) 0 1px, transparent 2px), radial-gradient(circle at 78% 8%, rgba(255,255,255,.4) 0 1px, transparent 2px), radial-gradient(circle at 55% 30%, rgba(255,255,255,.35) 0 1px, transparent 2px);
+  background-size: 260px 220px, 340px 300px, 420px 360px;
+}
+body[data-rc-theme="night"] .rc-card { border-bottom-width: 6px; }
+body[data-rc-theme="night"] .rc-name b, body[data-rc-theme="night"] .rc-target-one b { color: #ffd86b; }
+body[data-rc-theme="night"] .btn:not(.primary), body[data-rc-theme="night"] .tab, body[data-rc-theme="night"] .rs-switch { background: var(--surface); color: var(--ink); }
+body[data-rc-theme="night"] .tab.active { background: var(--accent); color: #2a1f3a; border-color: var(--accent); }
+body[data-rc-theme="night"] .btn.primary { background: var(--accent); border-color: var(--accent); color: #2a1f3a; }
+body[data-rc-theme="night"] .rc-bh.minus, body[data-rc-theme="night"] .rc-bh-row.minus { background: #2b2f50; border-color: #4a4f80; box-shadow: 0 4px 0 #4a4f80; }
+body[data-rc-theme="night"] input[type="text"], body[data-rc-theme="night"] select, body[data-rc-theme="night"] textarea { background: #1f2340; color: var(--ink); border-color: var(--line); }
+
+/* 設定裡的風格選擇 */
+.rc-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .7rem; margin-top: .6rem; }
+.rc-theme {
+  display: grid; gap: .3rem; justify-items: center; padding: .7rem .5rem; border-radius: 18px; cursor: pointer;
+  border: 2.5px solid var(--line); background: var(--surface); font: inherit; color: var(--ink);
+}
+.rc-theme.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.rc-theme-sw { display: flex; gap: 4px; }
+.rc-theme-sw i { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); }

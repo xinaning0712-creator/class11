@@ -4,7 +4,7 @@
 //  - 分數上下排版
 //  - 連線：Supabase 即時廣播（正式上課）或 BroadcastChannel（同一台電腦測試用，網址加 ?test=1）
 // ============================================================
-import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT as HOME_SEATS } from './config.js?v=202610311856';
+import { SUPABASE_URL, SUPABASE_KEY, SEAT_COUNT as HOME_SEATS } from './config.js?v=202610311859';
 /* 座號數量：11 班 24 人；其他班（例如 509）白板開房間時會把人數放進網址 ?n=29、QR code 也會帶著
    孩子關掉網頁再打開（沒有掃 QR code）時，用 2 小時內記下的人數 */
 function seatCount(){
@@ -18,7 +18,7 @@ function seatCount(){
   return HOME_SEATS;
 }
 export const SEAT_COUNT = seatCount();
-import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610311856';
+import { richText, cleanImg, cleanSet, makeDeck, toGameQuestion, DEMO_SET } from './quiz-bank.js?v=202610311859';
 export { cleanSet, makeDeck, toGameQuestion };
 
 /* ── 老師可以調整的設定 ── */

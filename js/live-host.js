@@ -8,13 +8,13 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat, SEAT_COUNT,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202610311856';
-import { resetZoom } from './no-zoom.js?v=202610311856';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202610311856';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610311856';
-import { candyBallImg } from './candy-faces.js?v=202610311856';
-import { music } from './live-music.js?v=202610311856';
-import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202610311856';
+} from './live-common.js?v=202610311859';
+import { resetZoom } from './no-zoom.js?v=202610311859';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202610311859';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202610311859';
+import { candyBallImg } from './candy-faces.js?v=202610311859';
+import { music } from './live-music.js?v=202610311859';
+import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202610311859';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -326,7 +326,7 @@ function applySrc(){
   $('optLevel').classList.toggle('hidden', !!S.src);
   $('optQuiz').classList.toggle('hidden', S.mode!=='quiz'||!!S.src);
   $('optOrder').classList.toggle('hidden', S.mode!=='quiz'||!S.src);
-  $('srcInfo').textContent= S.src ? S.src.subject+'・'+S.src.questions.length+' 題'+(S.mode==='quiz'?'':'（每個人隨機抽題）') : '';
+  $('srcInfo').textContent= S.src ? (RC_COURSE?'':S.src.subject+'・')+S.src.questions.length+' 題'+(S.mode==='quiz'?'':'（每個人隨機抽題）') : '';
 }
 $('srcSel').addEventListener('change', ()=>{ applySrc(); sound.pop(); });
 onTap($('srcRefresh'), refreshSets);
@@ -1001,7 +1001,7 @@ async function getSaver(force){
     return saver;
   }
   try{
-    const m=await import('./db.js?v=202610311856');
+    const m=await import('./db.js?v=202610311859');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }

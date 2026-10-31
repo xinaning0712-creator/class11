@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311856';
-import { el, toast } from './ui.js?v=202610311856';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311856';
-import { ask, sure } from './dialogs.js?v=202610311856';
-import * as quizbank from './admin-quiz.js?v=202610311856';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202610311859';
+import { el, toast } from './ui.js?v=202610311859';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202610311859';
+import { ask, sure } from './dialogs.js?v=202610311859';
+import * as quizbank from './admin-quiz.js?v=202610311859';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -84,6 +84,33 @@ function currentRange() {
 const inRange = (iso, r) => { const t = new Date(iso); return t >= r.start && t < r.end; };
 const fmtDate = (d) => d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric' });
 const fmtTime = (iso) => new Date(iso).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/* ============================================================
+   🎨 版面風格（記在這台電腦）
+   ============================================================ */
+const THEME_KEY = 'shiny11-rc-theme';
+const THEMES = [
+  { id: 'rose', name: '🌸 玫瑰奶茶', sw: ['#fbf0f3', '#c25d7c', '#ffe9a8'] },
+  { id: 'matcha', name: '🍵 抹茶拿鐵', sw: ['#eef3e6', '#6f9a5b', '#fff3c4'] },
+  { id: 'bear', name: '🧸 奶茶熊', sw: ['#f4ece2', '#9c6f45', '#f6d9a8'] },
+  { id: 'candy', name: '🍬 糖果繽紛', sw: ['#fff5fb', '#e0609b', '#9fd3a8'] },
+  { id: 'night', name: '🌙 星空夜晚', sw: ['#1f2340', '#f2a7c3', '#ffd86b'] },
+];
+function applyTheme(id) {
+  const t = THEMES.find((x) => x.id === id) ? id : 'rose';
+  if (t === 'rose') delete document.body.dataset.rcTheme; else document.body.dataset.rcTheme = t;
+  try { localStorage.setItem(THEME_KEY, t); } catch { /* ignore */ }
+  document.querySelectorAll('.rc-theme').forEach((b) => b.classList.toggle('on', b.dataset.theme === t));
+}
+function renderThemes() {
+  let cur = 'rose';
+  try { cur = localStorage.getItem(THEME_KEY) || 'rose'; } catch { /* ignore */ }
+  $('theme-list').replaceChildren(...THEMES.map((t) => el('button', {
+    class: 'rc-theme' + (t.id === cur ? ' on' : ''), type: 'button', 'data-theme': t.id,
+    onclick: () => { applyTheme(t.id); sfx.pop(); },
+  }, el('span', { class: 'rc-theme-sw' }, ...t.sw.map((c) => el('i', { style: `background:${c}` }))), el('span', {}, t.name))));
+}
+try { applyTheme(localStorage.getItem(THEME_KEY) || 'rose'); } catch { /* ignore */ }
 
 /* ============================================================
    登入
@@ -865,6 +892,7 @@ $('st-export').addEventListener('click', () => {
    ============================================================ */
 function renderSettings() {
   if (!A.isOwner) return;
+  renderThemes();
   renderBehaviorList();
   $('rule-join').value = A.me.game_join;
   $('rule-top').value = A.me.game_top;
