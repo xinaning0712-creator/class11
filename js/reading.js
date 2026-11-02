@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021950';
-import { el, toast } from './ui.js?v=202611021950';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021950';
-import { ask, sure } from './dialogs.js?v=202611021950';
-import * as quizbank from './admin-quiz.js?v=202611021950';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021956';
+import { el, toast } from './ui.js?v=202611021956';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021956';
+import { ask, sure } from './dialogs.js?v=202611021956';
+import * as quizbank from './admin-quiz.js?v=202611021956';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -536,8 +536,11 @@ $('bd-auto-seat').addEventListener('click', async () => {
     if (!drag || e.pointerId !== drag.pid) return;
     if (!drag.ghost) {
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+      const r = drag.card.getBoundingClientRect();
       drag.ghost = drag.card.cloneNode(true);
-      drag.ghost.classList.add('rc-ghost');
+      drag.ghost.classList.add('rc-ghost', 'rc-seat-ghost');
+      drag.ghost.style.width = `${r.width}px`;         // 拖曳中的卡片維持原本大小（不然會變成整個畫面那麼大）
+      drag.ghost.style.height = `${r.height}px`;
       document.body.append(drag.ghost);
       drag.card.classList.add('dragging');
       document.body.classList.add('rc-dragging');

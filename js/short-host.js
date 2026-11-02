@@ -2,10 +2,10 @@
 // ✍️ 小組簡答・白板端（老師）
 //  網址：short-host.html?rc=班級編號（從熊熊遊樂園後台「✍️ 小組簡答」進來）
 // ============================================================
-import { connect, sound, onTap, store, isTestMode } from './live-common.js?v=202611021950';
-import { qrSvg } from './qr.js?v=202611021950';
-import { RC_COURSE, rcSession } from './rc-mode.js?v=202611021950';
-import { groupColor, cleanAnswer, esc } from './short-common.js?v=202611021950';
+import { connect, sound, onTap, store, isTestMode } from './live-common.js?v=202611021956';
+import { qrSvg } from './qr.js?v=202611021956';
+import { RC_COURSE, rcSession } from './rc-mode.js?v=202611021956';
+import { groupColor, cleanAnswer, esc } from './short-common.js?v=202611021956';
 
 const $ = (id) => document.getElementById(id);
 const S = {

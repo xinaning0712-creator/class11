@@ -420,3 +420,5 @@ body.qz-editing-short label.check:has(#qz-frac) { display: none; }
 .rc-short-qtext { font-weight: 700; margin-bottom: .3rem; }
 .rc-short-a { display: grid; grid-template-columns: 6em minmax(0, 1fr) auto; gap: .6rem; padding: .25rem .5rem; border-radius: 8px; background: var(--rc-soft); margin-bottom: .25rem; white-space: pre-wrap; word-break: break-word; }
 .rc-short-st { white-space: nowrap; color: #c2416a; }
+
+.rc-seat-ghost { opacity: .92; border-radius: 18px; }
