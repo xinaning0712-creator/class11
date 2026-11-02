@@ -62,6 +62,14 @@
 .exam-status.live { background: var(--accent); color: var(--accent-ink); }
 .exam-status.hurry { background: #d9434a; color: #fff; }
 
+/* 考試進度條 */
+.exam-progress {
+  flex-shrink: 0; height: clamp(14px, 2.2vh, 26px); border-radius: 99px; overflow: hidden;
+  background: #f8e3ea;
+}
+.exam-progress i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--accent); transition: width 1s linear; }
+.exam-progress.hurry i { background: #d9434a; }
+
 /* 英聽 */
 .exam-audio {
   flex-shrink: 0; display: flex; align-items: center; gap: .6rem;

@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021724';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021724';
-import { el, toast } from './ui.js?v=202611021724';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021724';
+import { CLASS_NAME } from './config.js?v=202611021726';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021726';
+import { el, toast } from './ui.js?v=202611021726';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021726';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -88,8 +88,18 @@ function setStatus(text, tone = '') {
   box.textContent = text;
 }
 
+// 考試進度條：這一節過了多少，時間到就滿
+function setProgress(ratio, hurry = false) {
+  const on = ratio != null;
+  $('exam-progress').hidden = !on;
+  if (!on) return;
+  $('exam-progress').classList.toggle('hurry', hurry);
+  $('exam-bar').style.width = `${Math.min(100, Math.max(0, ratio * 100))}%`;
+}
+
 function renderSchedule(now) {
   const day = currentDay();
+  setProgress(null);
   showAudio(day);
   const today = isoDate(now);
   $('exam-days').replaceChildren(...cfg.days.map((d) => el('button', {
@@ -131,6 +141,8 @@ function renderSchedule(now) {
   if (st.kind === 'exam') {
     const hurry = st.secLeft <= LAST_MINUTES * 60;
     setStatus(`${slot.subject} 考試中　還剩 ${clockText(st.secLeft)}`, hurry ? 'hurry' : 'live');
+    const total = (toMinutes(slot.end) - toMinutes(slot.start)) * 60;
+    setProgress(1 - st.secLeft / total, hurry);
   } else if (st.kind === 'done') {
     setStatus('今天考完了，大家辛苦了！');
   } else {

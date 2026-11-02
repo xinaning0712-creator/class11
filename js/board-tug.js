@@ -4,10 +4,10 @@
 //  - 題目：自動出分數題，或老師在後台建的題組（每隊各自抽題）
 //  - 手繪療癒風；不連線、不記錄成績
 // ============================================================
-import { setsOwner, rcQuery } from './rc-mode.js?v=202611021724';
-import { makeQuestion, promptHTML, typeLabel, optionHTML, loadSets, makeDeck, esc, sound, onTap, replayAnim, tween } from './live-common.js?v=202611021724';
-import { resetZoom } from './no-zoom.js?v=202611021724';
-import { music } from './live-music.js?v=202611021724';
+import { setsOwner, rcQuery } from './rc-mode.js?v=202611021726';
+import { makeQuestion, promptHTML, typeLabel, optionHTML, loadSets, makeDeck, esc, sound, onTap, replayAnim, tween } from './live-common.js?v=202611021726';
+import { resetZoom } from './no-zoom.js?v=202611021726';
+import { music } from './live-music.js?v=202611021726';
 
 const $ = id => document.getElementById(id);
 const LIMIT = 8;                       // 拉到 ±8 格就獲勝
