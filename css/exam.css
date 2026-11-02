@@ -148,24 +148,25 @@ body.exam-page[data-exam-theme="gallery"] {
 .exam-slot.next { border-color: var(--accent); }
 
 /* 人數 */
-.exam-stats { flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, .9vw, 16px); }
+.exam-stats { flex: 5 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(8px, .9vw, 16px); }
 .exam-stat {
   display: grid; justify-items: center; align-content: center;
   padding: clamp(4px, .8vh, 12px) .5rem; border-radius: 16px;
   background: var(--surface); border: 1px solid var(--line);
 }
-.exam-stat span { color: var(--muted); font-size: clamp(.95rem, min(1.3vw, 2.3vh), 1.5rem); }
+.exam-stat span { color: var(--muted); font-size: clamp(1rem, min(1.5vw, 2.8vh), 1.8rem); }
 .exam-stat strong {
   font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; line-height: 1.1;
-  font-size: clamp(2rem, min(4vw, 7.5vh), 4.8rem); font-variant-numeric: tabular-nums;
+  font-size: clamp(2.6rem, min(6vw, 13vh), 8rem); font-variant-numeric: tabular-nums;
 }
+.exam-stat.main strong { font-size: clamp(3.4rem, min(8.5vw, 18vh), 11rem); }
 .exam-stat em { font-style: normal; color: var(--soft-ink); text-align: center; font-size: clamp(.85rem, min(1.1vw, 2vh), 1.25rem); }
 .exam-stat.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .exam-stat.main span { color: var(--accent-ink); opacity: .85; }
 
 /* 座位表 */
 .exam-room {
-  flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: clamp(4px, .8vh, 10px);
+  flex: 8 1 0; min-height: 0; display: flex; flex-direction: column; gap: clamp(4px, .8vh, 10px);
   padding: clamp(8px, 1.1vh, 14px) clamp(10px, 1vw, 18px);
   background: var(--surface); border: 1px solid var(--line); border-radius: clamp(18px, 1.8vw, 30px);
 }
