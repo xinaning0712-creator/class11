@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021726';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021726';
-import { el, toast } from './ui.js?v=202611021726';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021726';
+import { CLASS_NAME } from './config.js?v=202611021728';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021728';
+import { el, toast } from './ui.js?v=202611021728';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021728';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -218,6 +218,41 @@ function setFace(face) {
 $('exam-clock').addEventListener('click', () => {
   setFace($('exam-clock').classList.contains('analog') ? 'digital' : 'analog');
 });
+
+// ---------- 🎨 風格（只有色塊，不放文字，避免出現考試生字；記在這台電腦） ----------
+const THEME = 'shiny11-exam-theme';
+const THEMES = [
+  { id: 'rose', label: '玫瑰奶茶', a: '#c25d7c', b: '#f8e3ea' },
+  { id: 'matcha', label: '抹茶拿鐵', a: '#6f8f4e', b: '#e6ecce' },
+  { id: 'bear', label: '奶茶熊', a: '#9c6f45', b: '#f0e3d0' },
+  { id: 'sky', label: '晴空藍', a: '#4f86b5', b: '#dcebf5' },
+  { id: 'night', label: '星空夜晚', a: '#1d2040', b: '#ffd86b' },
+  { id: 'lux', label: '黑金典雅', a: '#121214', b: '#c9a25b' },
+  { id: 'gallery', label: '極簡美術館', a: '#141414', b: '#ffffff' },
+];
+function setTheme(id) {
+  const theme = THEMES.some((t) => t.id === id) ? id : 'rose';
+  document.body.dataset.examTheme = theme;
+  store.set(THEME, theme);
+  document.querySelectorAll('.exam-theme').forEach((b) => b.classList.toggle('on', b.dataset.id === theme));
+}
+function showThemes(open) {
+  $('exam-themes').hidden = !open;
+  $('exam-theme-btn').setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+$('exam-themes').replaceChildren(...THEMES.map((t) => el('button', {
+  class: 'exam-theme', type: 'button', 'data-id': t.id, 'aria-label': t.label,
+  style: `--a:${t.a};--b:${t.b}`,
+  onclick: () => { setTheme(t.id); showThemes(false); },
+})));
+$('exam-theme-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  showThemes($('exam-themes').hidden);
+});
+document.addEventListener('click', (e) => {
+  if (!$('exam-themes').hidden && !e.target.closest('#exam-themes')) showThemes(false);
+});
+setTheme(store.get(THEME));
 
 // ---------- 全螢幕＋螢幕不要自動關 ----------
 let wake = null;

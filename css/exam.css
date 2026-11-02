@@ -1,3 +1,48 @@
+/* ---------- 考試頁風格：右下角 🎨 切換，只換這一組顏色 ---------- */
+body.exam-page {
+  --soft: #f8e3ea; --soft-ink: #9c3d5f; --face: #fff7f9;
+  --ball: #f6cdd9; --ball-ink: #6f2b45; --ball-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+  --gone: #c9b3bb; --hurry: #d9434a;
+}
+body.exam-page[data-exam-theme="matcha"] {
+  --bg: #f3f2e4; --surface: #fdfcf3; --ink: #33402a; --muted: #75805f; --line: #dfe2c6; --accent: #6f8f4e; --accent-ink: #fff;
+  --soft: #e6ecce; --soft-ink: #4f6c33; --face: #fbfbef; --ball: #cfdfae; --ball-ink: #3f5a28; --gone: #bcc2a4;
+}
+body.exam-page[data-exam-theme="bear"] {
+  --bg: #f5efe6; --surface: #fffaf3; --ink: #3a2e25; --muted: #7d6b5c; --line: #e3d5c3; --accent: #9c6f45; --accent-ink: #fff;
+  --soft: #f0e3d0; --soft-ink: #7c5430; --face: #fffaf3; --ball: #ecd6b8; --ball-ink: #5e3f22; --gone: #c9b9a6;
+}
+body.exam-page[data-exam-theme="sky"] {
+  --bg: #eef4f9; --surface: #fbfdff; --ink: #24384a; --muted: #62798e; --line: #d3e1ec; --accent: #4f86b5; --accent-ink: #fff;
+  --soft: #dcebf5; --soft-ink: #2f6690; --face: #f7fbfe; --ball: #bfdcf0; --ball-ink: #234f73; --gone: #b4c3cf;
+}
+body.exam-page[data-exam-theme="night"] {
+  --bg: #1d2040; --surface: #2a2e57; --ink: #f2f0ff; --muted: #b3b5da; --line: #41457a; --accent: #ffd86b; --accent-ink: #2a2440;
+  --soft: #383c70; --soft-ink: #ffd86b; --face: #23264b; --ball: #5a5fa8; --ball-ink: #fff; --ball-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  --gone: #6a6e9e; --hurry: #ff6b6b;
+}
+body.exam-page[data-exam-theme="lux"] {
+  --bg: #121214; --surface: #1c1c20; --ink: #f3ecdd; --muted: #a79f8d; --line: #34322c; --accent: #c9a25b; --accent-ink: #17140e;
+  --soft: #2a2720; --soft-ink: #e3c27f; --face: #17171a; --ball: #6d5a35; --ball-ink: #fff3d9; --ball-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  --gone: #5c5850; --hurry: #e0564f;
+}
+body.exam-page[data-exam-theme="gallery"] {
+  --bg: #f6f5f1; --surface: #fff; --ink: #141414; --muted: #6e6c66; --line: #dcdad4; --accent: #141414; --accent-ink: #fff;
+  --soft: #ecebe6; --soft-ink: #141414; --face: #fff; --ball: #e4e2dc; --ball-ink: #141414; --gone: #bdbbb4; --hurry: #c8332d;
+}
+.exam-themes-btn { right: 116px; }
+.exam-themes {
+  position: fixed; right: 12px; bottom: 66px; z-index: 15;
+  display: flex; gap: 10px; padding: 10px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+}
+.exam-theme {
+  width: 44px; height: 44px; padding: 0; cursor: pointer; border-radius: 50%;
+  border: 3px solid var(--line); background: linear-gradient(135deg, var(--a) 50%, var(--b) 50%);
+  touch-action: manipulation;
+}
+.exam-theme.on { border-color: var(--ink); }
+
 /* ---------- 考試頁：一個畫面放完，不用捲動 ---------- */
 .exam-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .exam-home { right: 64px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
@@ -10,7 +55,7 @@
 .exam-left, .exam-right { display: flex; flex-direction: column; gap: clamp(8px, 1.3vh, 16px); min-height: 0; }
 
 .exam-heading { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem 1rem; }
-.exam-heading h2 { font-size: clamp(1.6rem, min(2.8vw, 5vh), 3.2rem); font-weight: 400; letter-spacing: .06em; color: #9c3d5f; }
+.exam-heading h2 { font-size: clamp(1.6rem, min(2.8vw, 5vh), 3.2rem); font-weight: 400; letter-spacing: .06em; color: var(--soft-ink); }
 .exam-days { display: flex; flex-wrap: wrap; gap: .4rem; }
 .exam-day {
   min-height: 40px; padding: .15rem .9rem; border-radius: 999px;
@@ -39,8 +84,8 @@
 .exam-clock.analog .exam-digital { font-size: min(9.5cqw, 30cqh); }
 .exam-clock.analog .exam-date { font-size: min(3.2cqw, 10cqh); }
 .exam-analog { height: 100%; aspect-ratio: 1; max-width: 58cqw; flex-shrink: 0; }
-.exam-analog .face { fill: #fff7f9; stroke: var(--accent); stroke-width: 3; }
-.exam-analog .tick { stroke: #d9b3c0; stroke-width: 1; }
+.exam-analog .face { fill: var(--face); stroke: var(--accent); stroke-width: 3; }
+.exam-analog .tick { stroke: var(--line); stroke-width: 1; }
 .exam-analog .tick.big { stroke: var(--accent); stroke-width: 2.4; }
 .exam-analog text {
   fill: var(--ink); font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; font-size: 19px;
@@ -55,20 +100,20 @@
 /* 現在狀態 */
 .exam-status {
   flex-shrink: 0; margin: 0; padding: clamp(6px, 1vh, 12px) 1.1rem;
-  border-radius: 16px; background: #f8e3ea; color: #9c3d5f; text-align: center;
+  border-radius: 16px; background: var(--soft); color: var(--soft-ink); text-align: center;
   font-size: clamp(1.2rem, min(2.2vw, 3.8vh), 2.6rem);
   font-variant-numeric: tabular-nums;
 }
 .exam-status.live { background: var(--accent); color: var(--accent-ink); }
-.exam-status.hurry { background: #d9434a; color: #fff; }
+.exam-status.hurry { background: var(--hurry); color: #fff; }
 
 /* 考試進度條 */
 .exam-progress {
   flex-shrink: 0; height: clamp(14px, 2.2vh, 26px); border-radius: 99px; overflow: hidden;
-  background: #f8e3ea;
+  background: var(--soft);
 }
 .exam-progress i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--accent); transition: width 1s linear; }
-.exam-progress.hurry i { background: #d9434a; }
+.exam-progress.hurry i { background: var(--hurry); }
 
 /* 英聽 */
 .exam-audio {
@@ -77,7 +122,7 @@
   background: var(--surface); border: 1px solid var(--line);
 }
 .exam-audio .btn { flex-shrink: 0; white-space: nowrap; touch-action: manipulation; }
-.exam-audio-bar { flex: 1; min-width: 40px; height: 10px; border-radius: 99px; background: #f8e3ea; overflow: hidden; }
+.exam-audio-bar { flex: 1; min-width: 40px; height: 10px; border-radius: 99px; background: var(--soft); overflow: hidden; }
 .exam-audio-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
 .exam-audio-time { flex-shrink: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -98,8 +143,8 @@
 .exam-slot-subject { order: 1; }
 .exam-slot-state { order: 3; font-size: .5em; color: var(--muted); min-width: 3em; text-align: right; }
 .exam-slot.done { opacity: .5; }
-.exam-slot.now { background: #fbe2ea; border-color: var(--accent); }
-.exam-slot.now .exam-slot-state, .exam-slot.next .exam-slot-state { color: #9c3d5f; }
+.exam-slot.now { background: var(--soft); border-color: var(--accent); }
+.exam-slot.now .exam-slot-state, .exam-slot.next .exam-slot-state { color: var(--soft-ink); }
 .exam-slot.next { border-color: var(--accent); }
 
 /* 人數 */
@@ -114,9 +159,9 @@
   font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; line-height: 1.1;
   font-size: clamp(2rem, min(4vw, 7.5vh), 4.8rem); font-variant-numeric: tabular-nums;
 }
-.exam-stat em { font-style: normal; color: #9c3d5f; text-align: center; font-size: clamp(.85rem, min(1.1vw, 2vh), 1.25rem); }
+.exam-stat em { font-style: normal; color: var(--soft-ink); text-align: center; font-size: clamp(.85rem, min(1.1vw, 2vh), 1.25rem); }
 .exam-stat.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.exam-stat.main span { color: #fbdbe5; }
+.exam-stat.main span { color: var(--accent-ink); opacity: .85; }
 
 /* 座位表 */
 .exam-room {
@@ -126,7 +171,7 @@
 }
 .exam-podium {
   flex-shrink: 0; align-self: center; width: min(44%, 320px); text-align: center;
-  padding: .05rem 0; border-radius: 10px; background: #f8e3ea; color: #9c3d5f;
+  padding: .05rem 0; border-radius: 10px; background: var(--soft); color: var(--soft-ink);
   font-size: clamp(.95rem, min(1.2vw, 2.2vh), 1.4rem);
 }
 .exam-seats {
@@ -138,19 +183,19 @@
 .exam-cell { display: grid; place-items: center; min-width: 0; min-height: 0; }
 .exam-seat {
   --size: min(calc(100cqw / var(--cols) - 8px), calc(100cqh / var(--rows) - 8px));
-  --glass: #f6cdd9;
+  --glass: var(--ball);
   width: var(--size); height: var(--size); aspect-ratio: auto;
-  color: #6f2b45; font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600;
+  color: var(--ball-ink); font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600;
   font-size: calc(var(--size) * .42);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+  text-shadow: var(--ball-shadow);
 }
 .exam-seat.absent {
   background: transparent; box-shadow: none;
-  border: 3px dashed #c9b3bb; color: #b39aa3; text-shadow: none;
+  border: 3px dashed var(--gone); color: var(--gone); text-shadow: none;
 }
 .exam-note {
-  flex-shrink: 0; margin: 0; padding: clamp(4px, .8vh, 10px) 1.1rem; text-align: center;
-  border-radius: 14px; background: #f8e3ea; color: #9c3d5f;
+  flex-shrink: 0; margin: 0; padding: clamp(4px, .8vh, 10px) 170px clamp(4px, .8vh, 10px) 1.1rem; text-align: left;   /* 右邊留給角落按鈕 */
+  border-radius: 14px; background: var(--soft); color: var(--soft-ink);
   font-size: clamp(1rem, min(1.5vw, 2.6vh), 1.7rem);
 }
 

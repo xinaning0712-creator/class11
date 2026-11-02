@@ -1,6 +1,6 @@
 // 倒數日：從雲端讀出最近的 3 個，顯示在聯絡簿頁右欄或主畫面上方
-import { classroomDb } from './db.js?v=202611021726';
-import { el } from './ui.js?v=202611021726';
+import { classroomDb } from './db.js?v=202611021728';
+import { el } from './ui.js?v=202611021728';
 
 export const SHOW_MAX = 3;
 const TONES = ['red', 'blue', 'purple'];   // 最近 → 第二近 → 第三近
