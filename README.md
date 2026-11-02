@@ -7,6 +7,7 @@
 | 聯絡簿 | 白板投影：Canva 聯絡簿 | https://xinaning0712-creator.github.io/class11/contact.html |
 | 抽籤 | 白板投影：樂透機抽座號 | https://xinaning0712-creator.github.io/class11/roll.html |
 | 扭蛋頁 | 天堂／地獄扭蛋（獨立連結） | https://xinaning0712-creator.github.io/class11/gacha.html |
+| 考試 | 白板投影：大時鐘、考程、人數、座位表 | https://xinaning0712-creator.github.io/class11/exam.html |
 | 分數冒險 | 單機版擴分約分（新手村、鍛造工坊、雙人拔河） | https://xinaning0712-creator.github.io/class11/fraction.html （分享給其他老師用 `fraction.html?solo`，不會出現回班網按鈕） |
 | 全班對戰（白板） | 開房間、選玩法：全班拔河／搶答／玻璃球賽跑 | https://xinaning0712-creator.github.io/class11/live-host.html |
 | 全班對戰（iPad） | 孩子輸入房間代碼和暱稱加入 | https://xinaning0712-creator.github.io/class11/live.html |
@@ -113,6 +114,13 @@
 - 「點錯了，復原」的 10 秒過了以後，教室電腦會自動把這項作業移到後台「已封存的作業」（需要先執行 `07_自動封存與清除.sql`）。按錯可以在後台按「還原」。
 - 後台「已封存的作業」最下面有「🧹 清除一學期前的封存」，只會刪掉封存超過 6 個月的作業。
 - 作業數量決定排版：3 項以下每層 6 顆、4 層；4 項以上每排 4 個櫃子，每層 4 顆、6 層，超過 4 項會往下排。
+
+## 考試頁（`exam.html`）
+- 老師後台 →「📝 考試」設定：考試名稱（期中考、期末考…）、每天的科目和時間、班級人數、座位表、考場提醒。不用另外執行 SQL，設定存在 `settings` 表的 `exam_config`。
+- 考試頁自動跳到今天，顯示現在考哪一科、還剩多久；最後 5 分鐘狀態列變紅（`js/exam.js` 的 `LAST_MINUTES`）。沒有音效。
+- 座位表點座號標記缺考，應考人數自動減少。缺考只記在這台電腦，隔天自動清空，不用開教室模式。
+- 點大時鐘可以切換數字／指針時鐘；右下角 ⛶ 全螢幕會收起上方選單。
+- 設定會存一份在這台電腦，考試中網路斷了也能繼續顯示。
 
 ## 聯絡簿頁：📢 跑馬燈
 - 夾在聯絡簿和倒數中間，直的一條，文字由下往上捲（螢幕窄時會變成橫的一條）。

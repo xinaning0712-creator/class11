@@ -4,7 +4,7 @@
 //  - 跟糖果球同一套手繪風：扁平色塊＋深咖啡外框
 //  - 座標以頭的中心為 0,0，頭半徑 13（和糖果球一樣）
 // ============================================================
-import { LINE, FACES } from './candy-faces.js?v=202610311913';
+import { LINE, FACES } from './candy-faces.js?v=202611021513';
 
 export const ANIMALS = ['熊熊', '兔兔', '貓咪', '狗狗', '倉鼠', '小雞', '青蛙', '狐狸'];
 export const AVATAR_COUNT = 48;

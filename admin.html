@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202610311913">
+  <link rel="stylesheet" href="css/style.css?v=202611021513">
+  <link rel="stylesheet" href="css/exam.css?v=202611021513">
 </head>
 <body class="admin">
   <!-- 登入 -->
@@ -46,6 +47,7 @@
       <button class="tab" type="button" data-tab="draws">🧾 抽獎紀錄</button>
       <button class="tab" type="button" data-tab="contact">📒 聯絡簿</button>
       <button class="tab" type="button" data-tab="countdown">⏳ 倒數日</button>
+      <button class="tab" type="button" data-tab="exam">📝 考試</button>
       <button class="tab" type="button" data-tab="quiz">🎮 題庫</button>
       <button class="tab" type="button" data-tab="results">📊 成績紀錄</button>
       <a class="tab" href="gacha.html">扭蛋頁 ↗</a>
@@ -197,6 +199,44 @@
       </details>
     </main>
 
+    <!-- 📝 考試 -->
+    <main id="tab-exam" class="tab-panel" hidden>
+      <section class="card add-grid">
+        <p class="form-title">這次考試</p>
+        <label class="field"><span>考試名稱</span><input id="ex-title" type="text" maxlength="20" list="ex-names" placeholder="例如：期中考"></label>
+        <label class="field wide"><span>考場提醒（可不填，會顯示在考試頁）</span><input id="ex-note" type="text" maxlength="60" placeholder="例如：寫完要檢查，不可以提早交卷"></label>
+        <datalist id="ex-names"><option value="期中考"></option><option value="期末考"></option><option value="第一次定期評量"></option><option value="第二次定期評量"></option></datalist>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">考試科目與時間</h2>
+        <div id="ex-days"></div>
+        <datalist id="ex-subjects"><option value="國語"></option><option value="數學"></option><option value="英語"></option><option value="社會"></option><option value="自然"></option></datalist>
+        <button id="ex-add-day" class="btn small" type="button">＋ 新增考試日</button>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">班級人數與座位表</h2>
+        <div class="ex-seat-form">
+          <label class="field"><span>班級人數</span><input id="ex-size" type="number" min="1" max="60" inputmode="numeric"></label>
+          <label class="field"><span>幾欄（左右）</span><input id="ex-cols" type="number" min="1" max="12" inputmode="numeric"></label>
+          <label class="field"><span>幾排（前後）</span><input id="ex-rows" type="number" min="1" max="12" inputmode="numeric"></label>
+          <label class="field"><span>座號排法</span><select id="ex-order"></select></label>
+          <button id="ex-flip" class="btn small" type="button">⇄ 左右翻轉</button>
+        </div>
+        <p class="ex-podium">↑ 講台</p>
+        <div id="ex-grid" class="ex-grid"></div>
+        <p id="ex-seat-msg" class="error"></p>
+        <p class="hint">先點一個位子、再點另一個就能交換；虛線的是空位。改人數、欄排數或排法會重新排一次。</p>
+      </section>
+
+      <div class="ex-actions">
+        <button id="ex-save" class="btn primary" type="button">儲存</button>
+        <a class="btn" href="exam.html">打開考試頁 ↗</a>
+        <span class="hint">座號只顯示號碼，不放姓名。缺考在考試頁點座號標記，只記在那台電腦，隔天自動清空。</span>
+      </div>
+    </main>
+
     <!-- 🎮 題庫（全班對戰用） -->
     <main id="tab-quiz" class="tab-panel" hidden>
       <!-- 題組列表 -->
@@ -303,6 +343,6 @@
     </main>
   </section>
 
-  <script type="module" src="js/admin.js?v=202610311913"></script>
+  <script type="module" src="js/admin.js?v=202611021513"></script>
 </body>
 </html>

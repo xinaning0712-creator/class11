@@ -1,0 +1,163 @@
+/* ---------- 考試頁：一個畫面放完，不用捲動 ---------- */
+.exam-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.exam-page .board-header { flex-shrink: 0; }
+.exam-focus .board-header { display: none; }
+
+.exam-layout {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(12px, 1.4vw, 28px);
+}
+.exam-left, .exam-right { display: flex; flex-direction: column; gap: clamp(8px, 1.3vh, 16px); min-height: 0; }
+
+.exam-heading { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem 1rem; }
+.exam-heading h2 { font-size: clamp(1.6rem, min(2.8vw, 5vh), 3.2rem); font-weight: 400; letter-spacing: .06em; color: #9c3d5f; }
+.exam-days { display: flex; flex-wrap: wrap; gap: .4rem; }
+.exam-day {
+  min-height: 40px; padding: .15rem .9rem; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
+  font-size: clamp(.95rem, 1.2vw, 1.3rem);
+}
+.exam-day.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* 大時鐘 */
+.exam-clock {
+  flex: 1 1 0; min-height: 0;
+  container-type: size;
+  display: flex; align-items: center; justify-content: center; gap: 5cqw;
+  width: 100%; padding: 8px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: clamp(18px, 1.8vw, 30px);
+  box-shadow: 0 6px 24px rgba(60, 20, 35, .07);
+  touch-action: manipulation;
+}
+.exam-clock-text { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.exam-digital {
+  font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; line-height: 1.02;
+  font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap;
+  font-size: min(21cqw, 66cqh);
+}
+.exam-date { color: var(--muted); font-size: min(4.2cqw, 13cqh); }
+.exam-clock.analog .exam-digital { font-size: min(9.5cqw, 30cqh); }
+.exam-clock.analog .exam-date { font-size: min(3.2cqw, 10cqh); }
+.exam-analog { height: 100%; aspect-ratio: 1; max-width: 58cqw; flex-shrink: 0; }
+.exam-analog .face { fill: #fff7f9; stroke: var(--accent); stroke-width: 3; }
+.exam-analog .tick { stroke: #d9b3c0; stroke-width: 1; }
+.exam-analog .tick.big { stroke: var(--accent); stroke-width: 2.4; }
+.exam-analog text {
+  fill: var(--ink); font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; font-size: 19px;
+  text-anchor: middle; dominant-baseline: central;
+}
+.exam-analog .hand { stroke-linecap: round; }
+.exam-analog .hand.h { stroke: var(--ink); stroke-width: 6; }
+.exam-analog .hand.m { stroke: var(--ink); stroke-width: 4; }
+.exam-analog .hand.s { stroke: var(--accent); stroke-width: 1.8; }
+.exam-analog .pin { fill: var(--accent); }
+
+/* 現在狀態 */
+.exam-status {
+  flex-shrink: 0; margin: 0; padding: clamp(6px, 1vh, 12px) 1.1rem;
+  border-radius: 16px; background: #f8e3ea; color: #9c3d5f; text-align: center;
+  font-size: clamp(1.2rem, min(2.2vw, 3.8vh), 2.6rem);
+  font-variant-numeric: tabular-nums;
+}
+.exam-status.live { background: var(--accent); color: var(--accent-ink); }
+.exam-status.hurry { background: #d9434a; color: #fff; }
+
+/* 考程表 */
+.exam-slots {
+  flex: 0 1 auto; min-height: 0; overflow: auto; list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: clamp(3px, .6vh, 8px);
+}
+.exam-slot {
+  display: grid; grid-template-columns: 11.5ch minmax(0, 1fr) auto; align-items: center; gap: .9rem;
+  padding: clamp(3px, .7vh, 10px) 1.1rem; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: clamp(1.05rem, min(1.7vw, 3vh), 2rem);
+}
+.exam-slot-time { font-family: "Fredoka", "Huninn", sans-serif; font-variant-numeric: tabular-nums; color: var(--muted); }
+.exam-slot-state { font-size: .72em; color: var(--muted); }
+.exam-slot.done { opacity: .5; }
+.exam-slot.now { background: #fbe2ea; border-color: var(--accent); }
+.exam-slot.now .exam-slot-state, .exam-slot.next .exam-slot-state { color: #9c3d5f; }
+.exam-slot.next { border-color: var(--accent); }
+
+/* 人數 */
+.exam-stats { flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, .9vw, 16px); }
+.exam-stat {
+  display: grid; justify-items: center; align-content: center;
+  padding: clamp(4px, .8vh, 12px) .5rem; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.exam-stat span { color: var(--muted); font-size: clamp(.95rem, min(1.3vw, 2.3vh), 1.5rem); }
+.exam-stat strong {
+  font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600; line-height: 1.1;
+  font-size: clamp(2rem, min(4vw, 7.5vh), 4.8rem); font-variant-numeric: tabular-nums;
+}
+.exam-stat em { font-style: normal; color: #9c3d5f; text-align: center; font-size: clamp(.85rem, min(1.1vw, 2vh), 1.25rem); }
+.exam-stat.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.exam-stat.main span { color: #fbdbe5; }
+
+/* 座位表 */
+.exam-room {
+  flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: clamp(4px, .8vh, 10px);
+  padding: clamp(8px, 1.1vh, 14px) clamp(10px, 1vw, 18px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: clamp(18px, 1.8vw, 30px);
+}
+.exam-podium {
+  flex-shrink: 0; align-self: center; width: min(44%, 320px); text-align: center;
+  padding: .05rem 0; border-radius: 10px; background: #f8e3ea; color: #9c3d5f;
+  font-size: clamp(.95rem, min(1.2vw, 2.2vh), 1.4rem);
+}
+.exam-seats {
+  flex: 1 1 0; min-height: 0; container-type: size;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr));
+}
+.exam-cell { display: grid; place-items: center; min-width: 0; min-height: 0; }
+.exam-seat {
+  --size: min(calc(100cqw / var(--cols) - 8px), calc(100cqh / var(--rows) - 8px));
+  --glass: #f6cdd9;
+  width: var(--size); height: var(--size); aspect-ratio: auto;
+  color: #6f2b45; font-family: "Fredoka", "Huninn", sans-serif; font-weight: 600;
+  font-size: calc(var(--size) * .42);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+}
+.exam-seat.absent {
+  background: transparent; box-shadow: none;
+  border: 3px dashed #c9b3bb; color: #b39aa3; text-shadow: none;
+}
+.exam-hint { flex-shrink: 0; margin: 0; text-align: center; color: var(--muted); font-size: clamp(.8rem, min(1vw, 1.8vh), 1.1rem); }
+.exam-note {
+  flex-shrink: 0; margin: 0; padding: clamp(4px, .8vh, 10px) 1.1rem; text-align: center;
+  border-radius: 14px; background: #f8e3ea; color: #9c3d5f;
+  font-size: clamp(1rem, min(1.5vw, 2.6vh), 1.7rem);
+}
+
+@media (max-width: 800px) {
+  .exam-page { height: auto; min-height: 100vh; overflow: visible; }
+  .exam-layout { grid-template-columns: 1fr; }
+  .exam-clock { flex: none; height: 200px; }
+  .exam-room { flex: none; height: 62vw; min-height: 300px; }
+}
+
+/* ---------- 後台：考試設定 ---------- */
+#tab-exam .add-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.ex-day { display: grid; gap: .5rem; padding: .8rem 0; border-top: 1px solid var(--line); }
+.ex-day:first-child { border-top: none; padding-top: 0; }
+.ex-day-head, .ex-slot { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.ex-day input, .ex-seat-form input, .ex-seat-form select {
+  min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; font: inherit;
+}
+.ex-slot input[type="text"] { width: auto; flex: 1 1 8em; min-width: 6em; min-height: 44px; font-size: 1rem; }
+.ex-seat-form { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem; margin-bottom: .8rem; }
+.ex-seat-form input { width: 5em; }
+.ex-grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 56px)); gap: 6px; justify-content: center; }
+.ex-cell {
+  aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--line); background: #fff7f9;
+  font-weight: 700; cursor: pointer; padding: 0; touch-action: manipulation;
+}
+.ex-cell.blank { border-style: dashed; background: transparent; color: var(--muted); font-weight: 400; }
+.ex-cell.picked { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ex-podium { text-align: center; color: var(--muted); margin: 0 0 .4rem; }
+.ex-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }

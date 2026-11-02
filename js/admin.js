@@ -1,11 +1,12 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202610311913';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202610311913';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202610311913';
-import * as gacha from './admin-gacha.js?v=202610311913';
-import * as countdown from './admin-countdown.js?v=202610311913';
-import * as quizbank from './admin-quiz.js?v=202610311913';
-import * as results from './admin-results.js?v=202610311913';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202611021513';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202611021513';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202611021513';
+import * as gacha from './admin-gacha.js?v=202611021513';
+import * as countdown from './admin-countdown.js?v=202611021513';
+import * as exam from './admin-exam.js?v=202611021513';
+import * as quizbank from './admin-quiz.js?v=202611021513';
+import * as results from './admin-results.js?v=202611021513';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
@@ -29,9 +30,10 @@ async function showApp() {
   $('app-view').hidden = false;
   gacha.init(db);
   countdown.init(db);
+  exam.init(db);
   quizbank.init(db);
   results.init(db);
-  await Promise.all([load(), gacha.load(), loadContact(), countdown.load(), quizbank.load(), results.load()]);
+  await Promise.all([load(), gacha.load(), loadContact(), countdown.load(), exam.load(), quizbank.load(), results.load()]);
   const reloadGacha = debounce(gacha.load, 300);
   db.channel('admin')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lights' }, reload)
