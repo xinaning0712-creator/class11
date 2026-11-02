@@ -62,6 +62,17 @@
 .exam-status.live { background: var(--accent); color: var(--accent-ink); }
 .exam-status.hurry { background: #d9434a; color: #fff; }
 
+/* 英聽 */
+.exam-audio {
+  flex-shrink: 0; display: flex; align-items: center; gap: .6rem;
+  padding: clamp(4px, .7vh, 8px) .8rem; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.exam-audio .btn { flex-shrink: 0; white-space: nowrap; touch-action: manipulation; }
+.exam-audio-bar { flex: 1; min-width: 40px; height: 10px; border-radius: 99px; background: #f8e3ea; overflow: hidden; }
+.exam-audio-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.exam-audio-time { flex-shrink: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+
 /* 考程表 */
 .exam-slots {
   flex: 0 1 auto; min-height: 0; overflow: auto; list-style: none; margin: 0; padding: 0;
@@ -150,12 +161,22 @@
 .ex-slot input[type="text"] { width: auto; flex: 1 1 8em; min-width: 6em; min-height: 44px; font-size: 1rem; }
 .ex-seat-form { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem; margin-bottom: .8rem; }
 .ex-seat-form input { width: 5em; }
-.ex-grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 56px)); gap: 6px; justify-content: center; }
+.ex-grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 64px)); gap: 6px; justify-content: center; user-select: none; -webkit-user-select: none; }
 .ex-cell {
   aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--line); background: #fff7f9;
-  font-weight: 700; cursor: pointer; padding: 0; touch-action: manipulation;
+  font-weight: 700; cursor: grab; padding: 0; touch-action: none;
 }
 .ex-cell.blank { border-style: dashed; background: transparent; color: var(--muted); font-weight: 400; }
 .ex-cell.picked { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ex-cell.over { outline: 3px solid var(--accent); outline-offset: 1px; }
+.ex-cell.dragging { opacity: .3; }
+.ex-ghost {
+  position: fixed; z-index: 30; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  display: grid; place-items: center; border-radius: 50%; pointer-events: none;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 1.2rem;
+  box-shadow: 0 8px 20px rgba(60, 20, 35, .3);
+}
+.ex-audio-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.ex-audio-row input[type="date"] { min-height: 44px; padding: .3rem .6rem; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; font: inherit; }
 .ex-podium { text-align: center; color: var(--muted); margin: 0 0 .4rem; }
 .ex-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }

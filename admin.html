@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611021519">
-  <link rel="stylesheet" href="css/exam.css?v=202611021519">
+  <link rel="stylesheet" href="css/style.css?v=202611021522">
+  <link rel="stylesheet" href="css/exam.css?v=202611021522">
 </head>
 <body class="admin">
   <!-- 登入 -->
@@ -216,6 +216,18 @@
       </section>
 
       <section class="card">
+        <h2 class="section-title">🎧 英聽音檔</h2>
+        <div class="ex-audio-row">
+          <label class="field"><span>在哪一天的考試頁出現</span><input id="ex-audio-date" type="date"></label>
+          <label class="btn small" for="ex-audio-file">⬆ 上傳音檔</label>
+          <input id="ex-audio-file" type="file" accept=".mp3,.m4a,.wav,audio/*" hidden>
+          <button id="ex-audio-del" class="btn small ghost" type="button" hidden>刪除音檔</button>
+        </div>
+        <p id="ex-audio-msg" class="hint"></p>
+        <p class="hint">上傳完會自動存好，不用按下面的儲存。音檔最大 50MB，考完記得按「刪除音檔」。</p>
+      </section>
+
+      <section class="card">
         <h2 class="section-title">班級人數與座位表</h2>
         <div class="ex-seat-form">
           <label class="field"><span>班級人數</span><input id="ex-size" type="number" min="1" max="60" inputmode="numeric"></label>
@@ -227,7 +239,7 @@
         <p class="ex-podium">↑ 講台</p>
         <div id="ex-grid" class="ex-grid"></div>
         <p id="ex-seat-msg" class="error"></p>
-        <p class="hint">先點一個位子、再點另一個就能交換；虛線的是空位。改人數、欄排數或排法會重新排一次。</p>
+        <p class="hint">拖拉座號到另一個位子就能互換，拖到虛線空位就是搬過去（也可以先點一個、再點另一個）。排好記得按儲存。改人數、欄排數或排法會重新排一次。</p>
       </section>
 
       <div class="ex-actions">
@@ -343,6 +355,6 @@
     </main>
   </section>
 
-  <script type="module" src="js/admin.js?v=202611021519"></script>
+  <script type="module" src="js/admin.js?v=202611021522"></script>
 </body>
 </html>

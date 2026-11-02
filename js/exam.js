@@ -1,11 +1,12 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021519';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021519';
-import { el, toast } from './ui.js?v=202611021519';
-import { EXAM_KEY, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021519';
+import { CLASS_NAME } from './config.js?v=202611021522';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021522';
+import { el, toast } from './ui.js?v=202611021522';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021522';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
+const CACHE_AUDIO = 'shiny11-exam-audio';
 const ABSENT = 'shiny11-exam-absent';
 const FACE = 'shiny11-exam-clock';
 const LAST_MINUTES = 5;                   // 最後幾分鐘提醒
@@ -16,6 +17,7 @@ const store = {
 };
 
 let cfg = parseConfig(null);
+let audioInfo = null;
 let hasConfig = false;
 let chosenDate = null;     // 老師點選的日期；null 表示自動
 let absent = new Set();
@@ -88,6 +90,7 @@ function setStatus(text, tone = '') {
 
 function renderSchedule(now) {
   const day = currentDay();
+  showAudio(day);
   const today = isoDate(now);
   $('exam-days').replaceChildren(...cfg.days.map((d) => el('button', {
     class: `exam-day${d === day ? ' active' : ''}`,
@@ -133,6 +136,39 @@ function renderSchedule(now) {
     setStatus(`下一節 ${slot.subject}　${slot.start} 開始，還有 ${inMinutes(st.secLeft)}`);
   }
 }
+
+// ---------- 🎧 英聽（老師按播放才開始，不會自動播；畫面不顯示檔名） ----------
+const audio = $('audio');
+function showAudio(day) {
+  const show = !!audioInfo && audioInfo.date === day?.date;
+  $('exam-audio').hidden = !show;
+  if (!show && !audio.paused) audio.pause();
+}
+function setAudio(info) {
+  audioInfo = info;
+  const url = info?.url ?? '';
+  if (audio.getAttribute('src') === url || (!url && !audio.hasAttribute('src'))) return;   // 同一個檔案不要打斷播放
+  audio.pause();
+  if (url) { audio.src = url; audio.load(); } else audio.removeAttribute('src');
+  drawAudio();
+}
+function drawAudio() {
+  const total = Number.isFinite(audio.duration) ? audio.duration : 0;
+  const fmt = (s) => clockText(Math.floor(s));
+  $('au-play').textContent = audio.paused ? '▶ 播放英聽' : '⏸ 暫停';
+  $('au-time').textContent = total ? `${fmt(audio.currentTime)} / ${fmt(total)}` : '00:00';
+  $('au-bar').style.width = `${total ? (audio.currentTime / total) * 100 : 0}%`;
+}
+$('au-play').addEventListener('click', () => {
+  if (!audio.paused) return audio.pause();
+  audio.play().catch(() => toast('英聽播放失敗，請檢查網路', { tone: 'error', seconds: 5 }));
+});
+$('au-back').addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
+$('au-start').addEventListener('click', () => { audio.currentTime = 0; });
+for (const ev of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'seeked']) audio.addEventListener(ev, drawAudio);
+audio.addEventListener('error', () => {
+  if (audio.hasAttribute('src')) toast('英聽載入失敗，請檢查網路', { tone: 'error', seconds: 5 });
+});
 
 // ---------- 大時鐘 ----------
 function drawDial() {
@@ -203,13 +239,16 @@ function apply(text) {
 }
 
 async function load() {
-  const { data, error } = await classroomDb().from('settings').select('value').eq('key', EXAM_KEY).maybeSingle();
+  const { data, error } = await classroomDb().from('settings').select('key, value').in('key', [EXAM_KEY, AUDIO_KEY]);
   if (error) {
     if (!hasConfig) toast(`讀取失敗：${friendlyError(error)}`, { tone: 'error', seconds: 5 });
     return;
   }
-  const text = data?.value ?? '';
+  const setting = Object.fromEntries(data.map((r) => [r.key, r.value]));
+  const text = setting[EXAM_KEY] ?? '';
   store.set(CACHE, text);
+  store.set(CACHE_AUDIO, setting[AUDIO_KEY] ?? '');
+  setAudio(parseAudio(setting[AUDIO_KEY]));
   apply(text);
 }
 
@@ -217,6 +256,7 @@ async function start() {
   drawDial();
   setFace(store.get(FACE) === 'analog' ? 'analog' : 'digital');
   loadAbsent();
+  setAudio(parseAudio(store.get(CACHE_AUDIO)));
   apply(store.get(CACHE) || '');
   setInterval(tick, 1000);
   keepAwake();
