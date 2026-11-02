@@ -140,14 +140,22 @@ body.exam-page[data-exam-theme="gallery"] {
   background: var(--surface); border: 1.5px solid var(--line);
   font-size: clamp(1.3rem, min(4.4vw, 8vh, calc(17vw / var(--c, 4)), calc(11vh / var(--r, 1))), 6rem);
 }
+.exam-slot-no {
+  padding: .05em .75em; margin-bottom: .1em; border-radius: 999px;
+  background: var(--soft); color: var(--soft-ink); font-size: .42em; line-height: 1.5; white-space: nowrap;
+}
+.exam-slot.now .exam-slot-no { background: var(--accent); color: var(--accent-ink); }
+.exam-slots.two-rows .exam-slot {
+  display: grid; grid-template-columns: auto auto; justify-content: center; align-content: center; align-items: center; column-gap: .3em;
+}
+.exam-slots.two-rows .exam-slot-subject { grid-column: 1 / -1; }
+.exam-slots.two-rows .exam-slot-no { margin: 0; padding: 0 .5em; font-size: .34em; }
+.exam-slots.two-rows .exam-slot-time { font-size: .36em; }
 .exam-slot-time { font-family: "Fredoka", "Huninn", sans-serif; font-size: .46em; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .exam-slot-subject { line-height: 1.15; max-width: 100%; overflow-wrap: anywhere; }
-.exam-slot-state { position: absolute; left: 0; right: 0; bottom: .3em; font-size: .36em; color: var(--muted); }
-.exam-slot-state:empty { display: none; }
-.exam-slots.two-rows .exam-slot-state { display: none; }   /* 卡片矮，靠底色和上方狀態列看就好 */
+.exam-slot-state { display: none; }   /* 現在這節看「第幾節」標籤變色和底色 */
 .exam-slot.done { opacity: .5; }
 .exam-slot.now { background: var(--soft); border-color: var(--accent); }
-.exam-slot.now .exam-slot-state, .exam-slot.next .exam-slot-state { color: var(--soft-ink); }
 .exam-slot.next { border-color: var(--accent); }
 
 /* 人數 */

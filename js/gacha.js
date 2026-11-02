@@ -1,9 +1,9 @@
 // 扭蛋頁
-import { CLASS_NAME } from './config.js?v=202611021739';
-import { configured, classroomDb, findOperator, friendlyError } from './db.js?v=202611021739';
-import { SEATS, el, toast } from './ui.js?v=202611021739';
-import * as sound from './sound.js?v=202611021739';
-import { createMachine } from './machine.js?v=202611021739';
+import { CLASS_NAME } from './config.js?v=202611021741';
+import { configured, classroomDb, findOperator, friendlyError } from './db.js?v=202611021741';
+import { SEATS, el, toast } from './ui.js?v=202611021741';
+import * as sound from './sound.js?v=202611021741';
+import { createMachine } from './machine.js?v=202611021741';
 
 const $ = (id) => document.getElementById(id);
 const MAX_COUNT = 100;
