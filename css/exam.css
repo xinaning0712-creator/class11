@@ -132,15 +132,14 @@ body.exam-page[data-exam-theme="gallery"] {
 }
 .exam-slot {
   flex: 1 1 0; max-height: 17vh;
-  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 1.2rem;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .7em;
   padding: clamp(3px, .7vh, 10px) 1.4rem; border-radius: 16px;
   background: var(--surface); border: 1px solid var(--line);
   font-size: clamp(1rem, min(3.6vw, 6.4vh, calc(28vh / var(--n, 4))), 4.6rem);   /* 節數多時自動縮小，不用捲動 */
 }
 .exam-slot-subject { line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
-.exam-slot-time { order: 2; font-family: "Fredoka", "Huninn", sans-serif; font-size: .62em; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
-.exam-slot-subject { order: 1; }
-.exam-slot-state { order: 3; font-size: .5em; color: var(--muted); min-width: 3em; text-align: right; }
+.exam-slot-time { min-width: 5.6em; font-family: "Fredoka", "Huninn", sans-serif; font-size: .62em; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.exam-slot-state { font-size: .5em; color: var(--muted); min-width: 3em; text-align: right; }
 .exam-slot.done { opacity: .5; }
 .exam-slot.now { background: var(--soft); border-color: var(--accent); }
 .exam-slot.now .exam-slot-state, .exam-slot.next .exam-slot-state { color: var(--soft-ink); }
