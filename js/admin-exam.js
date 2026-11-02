@@ -1,7 +1,7 @@
 // 後台：考試設定（存在 settings 表的 exam_config，考試頁會自動更新）
-import { friendlyError } from './db.js?v=202611021513';
-import { el, toast } from './ui.js?v=202611021513';
-import { EXAM_KEY, ORDERS, parseConfig, autoLayout, isoDate, toMinutes, fromMinutes } from './exam-core.js?v=202611021513';
+import { friendlyError } from './db.js?v=202611021519';
+import { el, toast } from './ui.js?v=202611021519';
+import { EXAM_KEY, ORDERS, parseConfig, autoLayout, isoDate, toMinutes, fromMinutes } from './exam-core.js?v=202611021519';
 
 const $ = (id) => document.getElementById(id);
 const DEFAULT_MINUTES = 40;

@@ -1,5 +1,5 @@
 // 考試頁和後台共用：考試設定存在 settings 表的 exam_config（一段 JSON），不用另外開資料表
-import { SEAT_COUNT } from './config.js?v=202611021513';
+import { SEAT_COUNT } from './config.js?v=202611021519';
 
 export const EXAM_KEY = 'exam_config';
 export const SUBJECTS = ['國語', '數學', '英語', '社會', '自然'];

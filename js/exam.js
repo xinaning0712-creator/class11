@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021513';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021513';
-import { el, toast } from './ui.js?v=202611021513';
-import { EXAM_KEY, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021513';
+import { CLASS_NAME } from './config.js?v=202611021519';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021519';
+import { el, toast } from './ui.js?v=202611021519';
+import { EXAM_KEY, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021519';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -22,7 +22,6 @@ let absent = new Set();
 let lastKey = '';
 
 document.title = `考試｜${CLASS_NAME}`;
-$('class-name').textContent = CLASS_NAME;
 
 // ---------- 缺考 ----------
 function loadAbsent() {
@@ -188,9 +187,6 @@ $('exam-fs').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else if (root.requestFullscreen) root.requestFullscreen().catch(() => {});
   } catch { /* 不支援全螢幕 */ }
-});
-document.addEventListener('fullscreenchange', () => {
-  document.body.classList.toggle('exam-focus', !!document.fullscreenElement);
 });
 
 // ---------- 讀設定 ----------

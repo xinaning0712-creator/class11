@@ -7,24 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611021513">
-  <link rel="stylesheet" href="css/exam.css?v=202611021513">
+  <link rel="stylesheet" href="css/style.css?v=202611021519">
+  <link rel="stylesheet" href="css/exam.css?v=202611021519">
 </head>
 <body class="board compact-page exam-page">
-  <header class="board-header">
-    <div class="board-title">
-      <h1 id="class-name">最閃亮的11班</h1>
-      <nav class="board-nav" aria-label="切換頁面">
-        <a href="index.html">作業燈號</a>
-        <a href="contact.html">聯絡簿</a>
-        <a href="roll.html">抽籤</a>
-        <a href="exam.html" class="active" aria-current="page">考試</a>
-        <a href="fraction.html">分數冒險</a>
-        <a href="live-host.html">全班對戰</a>
-      </nav>
-    </div>
-  </header>
-
   <main class="exam-layout">
     <section class="exam-left">
       <div class="exam-heading">
@@ -54,15 +40,16 @@
       <div class="exam-room">
         <div class="exam-podium">講　台</div>
         <div id="exam-seats" class="exam-seats" aria-label="座位表，點座號可以標記缺考"></div>
-        <p class="exam-hint">點座號標記缺考，再點一次取消</p>
       </div>
 
       <p id="exam-note" class="exam-note" hidden></p>
     </section>
   </main>
 
+  <!-- 考試時不顯示其他頁面的文字（可能是考試生字），回主畫面只留圖示 -->
+  <a class="corner-btn exam-home" href="index.html" aria-label="回主畫面">⌂</a>
   <button id="exam-fs" class="corner-btn" type="button" aria-label="全螢幕">⛶</button>
 
-  <script type="module" src="js/exam.js?v=202611021513"></script>
+  <script type="module" src="js/exam.js?v=202611021519"></script>
 </body>
 </html>
