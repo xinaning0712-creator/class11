@@ -1,9 +1,9 @@
 // 抽籤：樂透機（只在這台裝置上記錄，不用登入、不存雲端）
-import { CLASS_NAME } from './config.js?v=202611021738';
-import { SEATS, el, startClock } from './ui.js?v=202611021738';
-import * as sound from './sound.js?v=202611021738';
-import { confetti } from './celebrate.js?v=202611021738';
-import { createLottery, ballColor } from './lottery.js?v=202611021738';
+import { CLASS_NAME } from './config.js?v=202611021739';
+import { SEATS, el, startClock } from './ui.js?v=202611021739';
+import * as sound from './sound.js?v=202611021739';
+import { confetti } from './celebrate.js?v=202611021739';
+import { createLottery, ballColor } from './lottery.js?v=202611021739';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'shiny11-lottery';

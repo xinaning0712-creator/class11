@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021738';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021738';
-import { el, toast } from './ui.js?v=202611021738';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021738';
+import { CLASS_NAME } from './config.js?v=202611021739';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021739';
+import { el, toast } from './ui.js?v=202611021739';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021739';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -122,7 +122,12 @@ function renderSchedule(now) {
   const key = `${day.date}|${st?.kind}|${st?.index}`;
   if (key !== lastKey) {
     lastKey = key;
-    $('exam-slots').style.setProperty('--n', Math.max(1, day.slots.length));
+    // 一排最多 4 張卡片，超過就排兩排
+    const count = Math.max(1, day.slots.length);
+    const perRow = count <= 4 ? count : Math.ceil(count / 2);
+    $('exam-slots').style.setProperty('--c', perRow);
+    $('exam-slots').style.setProperty('--r', Math.ceil(count / perRow));
+    $('exam-slots').classList.toggle('two-rows', count > 4);
     $('exam-slots').replaceChildren(...day.slots.map((s, i) => {
       const state = !st ? '' : i < st.index ? 'done' : i !== st.index ? '' : st.kind === 'exam' ? 'now' : 'next';
       return el('li', { class: `exam-slot ${state}` },

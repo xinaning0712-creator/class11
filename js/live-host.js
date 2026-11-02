@@ -8,13 +8,13 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat, SEAT_COUNT,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202611021738';
-import { resetZoom } from './no-zoom.js?v=202611021738';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202611021738';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202611021738';
-import { candyBallImg } from './candy-faces.js?v=202611021738';
-import { music } from './live-music.js?v=202611021738';
-import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202611021738';
+} from './live-common.js?v=202611021739';
+import { resetZoom } from './no-zoom.js?v=202611021739';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202611021739';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202611021739';
+import { candyBallImg } from './candy-faces.js?v=202611021739';
+import { music } from './live-music.js?v=202611021739';
+import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202611021739';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -1001,7 +1001,7 @@ async function getSaver(force){
     return saver;
   }
   try{
-    const m=await import('./db.js?v=202611021738');
+    const m=await import('./db.js?v=202611021739');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
