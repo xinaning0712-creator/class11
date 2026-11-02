@@ -1,5 +1,5 @@
 // 考試頁和後台共用：考試設定存在 settings 表的 exam_config（一段 JSON），不用另外開資料表
-import { SEAT_COUNT } from './config.js?v=202611021522';
+import { SEAT_COUNT } from './config.js?v=202611021557';
 
 export const EXAM_KEY = 'exam_config';
 export const AUDIO_KEY = 'exam_audio';     // 英聽：{ date, url, path, name }，上傳就直接存
@@ -40,7 +40,7 @@ export function autoLayout(classSize, cols, rows, order) {
 }
 
 export function defaultConfig() {
-  const cols = 6, rows = 4, order = 'col';
+  const cols = 5, rows = 5, order = 'col';   // 11班的座位：五欄，5、5、5、5、4 人
   return {
     title: '期中考', classSize: SEAT_COUNT, cols, rows, order,
     layout: autoLayout(SEAT_COUNT, cols, rows, order), note: '', days: [],
