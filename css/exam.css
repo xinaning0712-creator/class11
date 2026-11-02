@@ -122,8 +122,7 @@ body.exam-page[data-exam-theme="gallery"] {
   background: var(--surface); border: 1px solid var(--line);
 }
 .exam-audio .btn { flex-shrink: 0; white-space: nowrap; touch-action: manipulation; }
-.exam-audio-bar { flex: 1; min-width: 40px; height: 10px; border-radius: 99px; background: var(--soft); overflow: hidden; }
-.exam-audio-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.exam-audio-seek { flex: 1; min-width: 40px; height: 44px; margin: 0; accent-color: var(--accent); cursor: pointer; touch-action: none; }
 .exam-audio-time { flex-shrink: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* 考程表 */

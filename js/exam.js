@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021731';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021731';
-import { el, toast } from './ui.js?v=202611021731';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021731';
+import { CLASS_NAME } from './config.js?v=202611021734';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021734';
+import { el, toast } from './ui.js?v=202611021734';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611021734';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -165,12 +165,14 @@ function setAudio(info) {
   if (url) { audio.src = url; audio.load(); } else audio.removeAttribute('src');
   drawAudio();
 }
+let seeking = false;   // 手指還按著進度條時，不要被播放進度拉回去
 function drawAudio() {
   const total = Number.isFinite(audio.duration) ? audio.duration : 0;
   const fmt = (s) => clockText(Math.floor(s));
   $('au-play').textContent = audio.paused ? '▶ 播放英聽' : '⏸ 暫停';
   $('au-time').textContent = total ? `${fmt(audio.currentTime)} / ${fmt(total)}` : '00:00';
-  $('au-bar').style.width = `${total ? (audio.currentTime / total) * 100 : 0}%`;
+  $('au-seek').disabled = !total;
+  if (!seeking) $('au-seek').value = total ? Math.round((audio.currentTime / total) * 1000) : 0;
 }
 $('au-play').addEventListener('click', () => {
   if (!audio.paused) return audio.pause();
@@ -178,6 +180,17 @@ $('au-play').addEventListener('click', () => {
 });
 $('au-back').addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
 $('au-start').addEventListener('click', () => { audio.currentTime = 0; });
+// 拖進度條：放開才真的跳過去，拖的途中只更新時間顯示
+$('au-seek').addEventListener('input', () => {
+  seeking = true;
+  if (Number.isFinite(audio.duration)) {
+    $('au-time').textContent = `${clockText(Math.floor(($('au-seek').value / 1000) * audio.duration))} / ${clockText(Math.floor(audio.duration))}`;
+  }
+});
+$('au-seek').addEventListener('change', () => {
+  seeking = false;
+  if (Number.isFinite(audio.duration)) audio.currentTime = ($('au-seek').value / 1000) * audio.duration;
+});
 for (const ev of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'seeked']) audio.addEventListener(ev, drawAudio);
 audio.addEventListener('error', () => {
   if (audio.hasAttribute('src')) toast('英聽載入失敗，請檢查網路', { tone: 'error', seconds: 5 });
