@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021557';
-import { el, toast } from './ui.js?v=202611021557';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021557';
-import { ask, sure } from './dialogs.js?v=202611021557';
-import * as quizbank from './admin-quiz.js?v=202611021557';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021624';
+import { el, toast } from './ui.js?v=202611021624';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021624';
+import { ask, sure } from './dialogs.js?v=202611021624';
+import * as quizbank from './admin-quiz.js?v=202611021624';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -246,7 +246,7 @@ async function selectCourse(c) {
   A.picked.clear();
   try { sessionStorage.setItem('rc-course', String(c.id)); } catch { /* ignore */ }
   renderClassPills();
-  document.body.classList.toggle('rc-is-home', !!c.is_home);
+  document.body.classList.toggle('rc-is-home', !!c.stamps);   // 只有連到扭蛋集點的班才有「兌換集點」
   const play = `live-host.html?rc=${c.id}&n=${c.seat_count}`;
   $('bd-play').href = play;
   const qp = $('rc-quiz-play'); if (qp) qp.href = play;
@@ -272,7 +272,7 @@ async function loadCourse() {
       loadAll(() => db.from('rc_students').select('*').eq('course_id', id).order('seat')),
       loadAll(() => db.from('rc_groups').select('*').eq('course_id', id).order('sort').order('id')),
       loadAll(() => db.from('rc_events').select('*').eq('course_id', id).order('id')),
-      A.course.is_home ? loadAll(() => db.from('rc_exchanges').select('*').eq('course_id', id).order('id')) : [],
+      A.course.stamps ? loadAll(() => db.from('rc_exchanges').select('*').eq('course_id', id).order('id')) : [],
     ]);
     A.students = stu; A.groups = grp; A.events = ev; A.exchanges = ex;
   } catch (error) { return fail('讀取資料', error); }
@@ -313,7 +313,7 @@ function canUse(name) {
   const btn = document.querySelector(`.tab[data-tab="${name}"]`);
   if (!btn) return false;
   if ('own' in btn.dataset && !A.isOwner) return false;
-  if ('home' in btn.dataset && !A.course?.is_home) return false;
+  if ('home' in btn.dataset && !A.course?.stamps) return false;
   return true;
 }
 function showTab(name) {
@@ -442,10 +442,25 @@ function openBehaviors(target) {
   $('bh-plus').replaceChildren(...active.filter((b) => b.points > 0).map(btn));
   $('bh-minus').replaceChildren(...active.filter((b) => b.points < 0).map(btn));
   if (!active.length) $('bh-plus').replaceChildren(el('p', { class: 'hint' }, '還沒有加扣分項目，請到「⚙️ 設定」新增。'));
+  $('bh-custom').hidden = false;
   $('bh-dialog').showModal();
 }
 $('bh-close').addEventListener('click', () => $('bh-dialog').close());
+$('bh-custom').addEventListener('click', giveCustom);
 $('bh-dialog').addEventListener('click', (e) => { if (e.target === $('bh-dialog')) $('bh-dialog').close(); });
+
+/* ✏️ 自訂：臨時給幾分、寫個原因（不用先新增項目） */
+async function giveCustom() {
+  $('bh-dialog').close();
+  const pts = await ask('要加（或扣）幾分？扣分請打負數，例如 -2', {
+    value: '1', ok: '下一步',
+    check: (v) => (/^[+-]?\d+$/.test(v) && +v !== 0 && Math.abs(+v) <= 10 ? '' : '請輸入 −10～+10 的數字（不能是 0）'),
+  });
+  if (pts === null) return;
+  const why = await ask('原因（會記在加扣分紀錄裡）：', { placeholder: '例如：朗讀比賽', ok: '給分' });
+  if (why === null) return;
+  give({ emoji: '✏️', label: why.slice(0, 16), points: Number(pts) });
+}
 
 async function give(b) {
   const { kind, ids } = A.target;
@@ -755,7 +770,7 @@ async function removeGroup(g) {
    ============================================================ */
 function renderExBadge() {
   const rate = A.course?.point_rate || 5;
-  const n = A.course?.is_home ? A.students.filter((s) => balance(s.id) >= rate).length : 0;
+  const n = A.course?.stamps ? A.students.filter((s) => balance(s.id) >= rate).length : 0;
   $('ex-badge').hidden = !n;
   $('ex-badge').textContent = n;
 }
@@ -837,7 +852,7 @@ function renderStats() {
   const v = $('st-range').value;
   $('st-range-text').textContent = v === 'all' ? '' : `${fmtDate(range.start)} ～ ${fmtDate(new Date(range.end - 864e5))}`;
   const rows = statRows(range);
-  const home = A.course.is_home;
+  const home = A.course.stamps;
   const th = (...xs) => el('tr', {}, ...xs.map((x, i) => el('th', { class: i >= (xs[0] === '組別' ? 1 : 3) ? 'num' : null }, x)));
   const tbl = el('table', { class: 'rc-table' },
     el('thead', {}, th('座號', '姓名', '組別', '加分', '扣分', '🎡 遊戲', '合計', ...(home ? ['🎟 已換集點'] : []))),
@@ -894,7 +909,7 @@ async function awardGame(g) {
 $('st-export').addEventListener('click', () => {
   const range = currentRange();
   const rows = statRows(range);
-  const home = A.course.is_home;
+  const home = A.course.stamps;
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = [
     [`${A.course.name} ${A.course.owner === A.uid ? (A.me?.subject || '熊熊遊樂園') : (A.labels[A.course.id] || '熊熊遊樂園')} 課堂分數`, `${fmtDate(range.start)}～${fmtDate(new Date(range.end - 864e5))}`].map(q).join(','),
@@ -918,13 +933,13 @@ function renderSettings() {
   $('rule-join').value = A.me.game_join;
   $('rule-top').value = A.me.game_top;
   $('rule-win').value = A.me.game_win;
-  const home = A.courses.find((c) => c.is_home && c.owner === A.uid);
+  const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
   $('rate-field').hidden = !home;
   if (home) $('rule-rate').value = home.point_rate;
   $('me-name').value = A.me.name;
   $('me-subject').value = A.me.subject;
   $('cls-list').replaceChildren(...A.courses.filter((c) => c.owner === A.uid).map((c) => el('div', { class: 'rc-cls-row' },
-    el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.is_home ? '・可換 11 班扭蛋集點' : ''}`),
+    el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.stamps ? '・可換 11 班扭蛋集點' : ''}`),
     c.is_home ? '' : el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeCourse(c) }, '刪除'))));
 }
 
@@ -933,12 +948,15 @@ function renderBehaviorList() {
   list.replaceChildren(...A.behaviors.map((b) => {
     const emoji = el('input', { type: 'text', value: b.emoji, maxlength: '4', class: 'rc-bh-emoji-in', 'aria-label': '圖示' });
     const label = el('input', { type: 'text', value: b.label, maxlength: '16', 'aria-label': '項目名稱' });
-    const pts = el('select', { 'aria-label': '分數' },
-      ...[5, 4, 3, 2, 1, -1, -2, -3, -4, -5].map((n) => el('option', { value: n, selected: n === b.points }, (n > 0 ? '+' : '') + n)));
+    const pts = el('input', { type: 'number', min: '-10', max: '10', step: '1', value: b.points, class: 'rc-bh-pts-in', 'aria-label': '分數（−10～+10）' });
     const save = (patch) => saveBehavior(b, patch);
     emoji.addEventListener('change', () => save({ emoji: emoji.value.trim() || '⭐' }));
     label.addEventListener('change', () => { if (label.value.trim()) save({ label: label.value.trim() }); });
-    pts.addEventListener('change', () => save({ points: Number(pts.value) }));
+    pts.addEventListener('change', () => {
+      const n = Math.round(Number(pts.value));
+      if (!n || n < -10 || n > 10) { pts.value = b.points; return toast('分數請填 −10～+10（不能是 0）', { tone: 'error' }); }
+      save({ points: n });
+    });
     return el('div', { class: 'rc-bh-row' + (b.points < 0 ? ' minus' : ''), 'data-bh': b.id },
       el('span', { class: 'rc-handle', title: '拖曳調整順序' }, '⠿'), emoji, label, pts,
       el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeBehavior(b) }, '刪除'));
@@ -1002,7 +1020,7 @@ $('rule-form').addEventListener('submit', async (e) => {
   const { error } = await db.from('rc_teachers').update(patch).eq('user_id', A.me.user_id);
   if (error) return fail('儲存', error);
   Object.assign(A.me, patch);
-  const home = A.courses.find((c) => c.is_home && c.owner === A.uid);
+  const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
   if (home) {
     const rate = n('rule-rate', 1, 100);
     const { error: e2 } = await db.from('rc_courses').update({ point_rate: rate }).eq('id', home.id);

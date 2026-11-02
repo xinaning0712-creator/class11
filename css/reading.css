@@ -360,3 +360,7 @@ body[data-rc-theme="neon"] .rc-bh.minus, body[data-rc-theme="neon"] .rc-bh-row.m
 .rc-theme.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
 .rc-theme-sw { display: flex; gap: 4px; }
 .rc-theme-sw i { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); }
+
+.rc-bh-pts-in { width: 100%; min-height: 44px; padding: .2rem .4rem; border: 1.5px solid var(--line); border-radius: 12px; font: inherit; font-size: 1.1rem; text-align: center; background: #fff; }
+body[data-rc-dark] .rc-bh-pts-in { background: var(--bg); color: var(--ink); }
+.rc-custom-btn { border-style: dashed; }
