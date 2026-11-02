@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021638';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021638';
-import { el, toast } from './ui.js?v=202611021638';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021638';
+import { CLASS_NAME } from './config.js?v=202611021724';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021724';
+import { el, toast } from './ui.js?v=202611021724';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021724';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
@@ -112,6 +112,7 @@ function renderSchedule(now) {
   const key = `${day.date}|${st?.kind}|${st?.index}`;
   if (key !== lastKey) {
     lastKey = key;
+    $('exam-slots').style.setProperty('--n', Math.max(1, day.slots.length));
     $('exam-slots').replaceChildren(...day.slots.map((s, i) => {
       const state = !st ? '' : i < st.index ? 'done' : i !== st.index ? '' : st.kind === 'exam' ? 'now' : 'next';
       return el('li', { class: `exam-slot ${state}` },
