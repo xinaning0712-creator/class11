@@ -3,30 +3,37 @@ body.exam-page {
   --soft: #f8e3ea; --soft-ink: #9c3d5f; --face: #fff7f9;
   --ball: #f6cdd9; --ball-ink: #6f2b45; --ball-shadow: 0 1px 0 rgba(255, 255, 255, .6);
   --gone: #c9b3bb; --hurry: #d9434a;
+  --pop: #6aa8e6; --pop-ink: #fff; --pop-soft: #f8e3ea; --pop-strong: #c25d7c; --pop-soft-ink: #9c3d5f;
 }
 body.exam-page[data-exam-theme="matcha"] {
+  --pop: #f7a8a0; --pop-ink: #5a2420; --pop-soft: #fde4e0; --pop-strong: #e0736a; --pop-soft-ink: #5a2420;
   --bg: #f3f2e4; --surface: #fdfcf3; --ink: #33402a; --muted: #75805f; --line: #dfe2c6; --accent: #6f8f4e; --accent-ink: #fff;
   --soft: #e6ecce; --soft-ink: #4f6c33; --face: #fbfbef; --ball: #cfdfae; --ball-ink: #3f5a28; --gone: #bcc2a4;
 }
 body.exam-page[data-exam-theme="bear"] {
+  --pop: #8fc4e8; --pop-ink: #17405e; --pop-soft: #e0f0fa; --pop-strong: #4a93c4; --pop-soft-ink: #17405e;
   --bg: #f5efe6; --surface: #fffaf3; --ink: #3a2e25; --muted: #7d6b5c; --line: #e3d5c3; --accent: #9c6f45; --accent-ink: #fff;
   --soft: #f0e3d0; --soft-ink: #7c5430; --face: #fffaf3; --ball: #ecd6b8; --ball-ink: #5e3f22; --gone: #c9b9a6;
 }
 body.exam-page[data-exam-theme="sky"] {
+  --pop: #ffd95e; --pop-ink: #574000; --pop-soft: #fff4c8; --pop-strong: #d9a400; --pop-soft-ink: #574000;
   --bg: #eef4f9; --surface: #fbfdff; --ink: #24384a; --muted: #62798e; --line: #d3e1ec; --accent: #4f86b5; --accent-ink: #fff;
   --soft: #dcebf5; --soft-ink: #2f6690; --face: #f7fbfe; --ball: #bfdcf0; --ball-ink: #234f73; --gone: #b4c3cf;
 }
 body.exam-page[data-exam-theme="night"] {
+  --pop: #ff9ec2; --pop-ink: #4a1230; --pop-soft: #4a3560; --pop-strong: #e6588f; --pop-soft-ink: #ffd6e6;
   --bg: #1d2040; --surface: #2a2e57; --ink: #f2f0ff; --muted: #b3b5da; --line: #41457a; --accent: #ffd86b; --accent-ink: #2a2440;
   --soft: #383c70; --soft-ink: #ffd86b; --face: #23264b; --ball: #5a5fa8; --ball-ink: #fff; --ball-shadow: 0 1px 2px rgba(0, 0, 0, .4);
   --gone: #6a6e9e; --hurry: #ff6b6b;
 }
 body.exam-page[data-exam-theme="lux"] {
+  --pop: #a8324a; --pop-ink: #fff3e6; --pop-soft: #3a1d24; --pop-strong: #c9405c; --pop-soft-ink: #f6d9b8;
   --bg: #121214; --surface: #1c1c20; --ink: #f3ecdd; --muted: #a79f8d; --line: #34322c; --accent: #c9a25b; --accent-ink: #17140e;
   --soft: #2a2720; --soft-ink: #e3c27f; --face: #17171a; --ball: #6d5a35; --ball-ink: #fff3d9; --ball-shadow: 0 1px 2px rgba(0, 0, 0, .5);
   --gone: #5c5850; --hurry: #e0564f;
 }
 body.exam-page[data-exam-theme="gallery"] {
+  --pop: #ffd23f; --pop-ink: #141414; --pop-soft: #fff4c4; --pop-strong: #d9a400; --pop-soft-ink: #141414;
   --bg: #f6f5f1; --surface: #fff; --ink: #141414; --muted: #6e6c66; --line: #dcdad4; --accent: #141414; --accent-ink: #fff;
   --soft: #ecebe6; --soft-ink: #141414; --face: #fff; --ball: #e4e2dc; --ball-ink: #141414; --gone: #bdbbb4; --hurry: #c8332d;
 }
@@ -217,6 +224,33 @@ body.exam-page[data-exam-theme="gallery"] {
   .exam-clock { flex: none; height: 200px; }
   .exam-slots { grid-auto-rows: 120px; }
   .exam-room { flex: none; height: 62vw; min-height: 300px; }
+}
+
+/* ---------- 跳色：應考人數、進度條、現在這節、講台 ---------- */
+.exam-stat.main { background: var(--pop); border-color: var(--pop); color: var(--pop-ink); }
+.exam-stat.main span { color: var(--pop-ink); }
+.exam-progress { background: var(--pop-soft); container-type: inline-size; }
+.exam-progress i { background: var(--pop); }
+.exam-progress.hurry i { background: var(--hurry); }
+.exam-podium { background: var(--pop-soft); color: var(--pop-soft-ink); }
+.exam-slot.now { background: var(--pop-soft); border-color: var(--pop); }
+.exam-slot.now .exam-slot-no { background: var(--pop-strong); color: #fff; }
+.exam-slot.now .exam-slot-subject, .exam-slot.now .exam-slot-time { color: var(--pop-soft-ink); }
+.exam-slot.next { border-color: var(--pop); }
+
+/* 玫瑰色系：四科四色，現在這節用粗框標出來 */
+body[data-exam-theme="rose"] .exam-slot:nth-child(4n+1) { --card: #fbdbe5; --card-ink: #c25d7c; }
+body[data-exam-theme="rose"] .exam-slot:nth-child(4n+2) { --card: #fff0c9; --card-ink: #b67f00; }
+body[data-exam-theme="rose"] .exam-slot:nth-child(4n+3) { --card: #d5f0e6; --card-ink: #2f8a74; }
+body[data-exam-theme="rose"] .exam-slot:nth-child(4n+4) { --card: #d9e9fb; --card-ink: #3f78b8; }
+body[data-exam-theme="rose"] .exam-slot,
+body[data-exam-theme="rose"] .exam-slot.next { background: var(--card); border-color: var(--card); }
+body[data-exam-theme="rose"] .exam-slot.now { background: var(--card); border: 5px solid var(--card-ink); }
+body[data-exam-theme="rose"] .exam-slot .exam-slot-no { background: var(--card-ink); color: #fff; }
+body[data-exam-theme="rose"] .exam-slot .exam-slot-time { color: var(--card-ink); }
+body[data-exam-theme="rose"] .exam-slot .exam-slot-subject { color: var(--ink); }
+body[data-exam-theme="rose"] .exam-progress:not(.hurry) i {
+  background: linear-gradient(90deg, #f49ab5, #ffc23f, #7fc8b4, #7fb5ea) 0 0 / 100cqw 100% no-repeat;
 }
 
 /* ---------- 後台：考試設定 ---------- */

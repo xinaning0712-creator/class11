@@ -1,12 +1,12 @@
 // 老師後台
-import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202611021741';
-import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202611021741';
-import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202611021741';
-import * as gacha from './admin-gacha.js?v=202611021741';
-import * as countdown from './admin-countdown.js?v=202611021741';
-import * as exam from './admin-exam.js?v=202611021741';
-import * as quizbank from './admin-quiz.js?v=202611021741';
-import * as results from './admin-results.js?v=202611021741';
+import { CLASS_NAME, TEACHER_EMAIL } from './config.js?v=202611021852';
+import { configured, teacherDb, setRememberTeacher, roleOf, friendlyError } from './db.js?v=202611021852';
+import { STATUS, SEATS, el, toast, debounce, canvaEmbedUrl } from './ui.js?v=202611021852';
+import * as gacha from './admin-gacha.js?v=202611021852';
+import * as countdown from './admin-countdown.js?v=202611021852';
+import * as exam from './admin-exam.js?v=202611021852';
+import * as quizbank from './admin-quiz.js?v=202611021852';
+import * as results from './admin-results.js?v=202611021852';
 
 const $ = (id) => document.getElementById(id);
 const key = (a, s) => `${a}-${s}`;
