@@ -8,13 +8,13 @@ import {
   LIVE, TEAMS, CHOICES, TRAP_LABEL, CANDY, candyCss, makeQuestion, promptHTML, typeLabel, fracHTML, esc, cleanName,
   optionHTML, loadSets, toGameQuestion, cleanSeat, SEAT_COUNT,
   connect, sound, onTap, replayAnim, tween, randInt, shuffle, isTestMode, store
-} from './live-common.js?v=202611021624';
-import { resetZoom } from './no-zoom.js?v=202611021624';   // iPad 防放大（放大了會自動縮回）
-import { qrSvg } from './qr.js?v=202611021624';
-import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202611021624';
-import { candyBallImg } from './candy-faces.js?v=202611021624';
-import { music } from './live-music.js?v=202611021624';
-import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202611021624';
+} from './live-common.js?v=202611021632';
+import { resetZoom } from './no-zoom.js?v=202611021632';   // iPad 防放大（放大了會自動縮回）
+import { qrSvg } from './qr.js?v=202611021632';
+import { buildTrack, planRace, playRace, setMedal, setTag, guessMoment, TRACKS } from './live-marble.js?v=202611021632';
+import { candyBallImg } from './candy-faces.js?v=202611021632';
+import { music } from './live-music.js?v=202611021632';
+import { RC_COURSE, rcSession, setsOwner, rcCourseName, rcQuery } from './rc-mode.js?v=202611021632';
 
 const $ = id => document.getElementById(id);
 const MAX_PLAYERS = 40;
@@ -1001,7 +1001,7 @@ async function getSaver(force){
     return saver;
   }
   try{
-    const m=await import('./db.js?v=202611021624');
+    const m=await import('./db.js?v=202611021632');
     const r=await m.findOperator();
     saver= r.db ? r : null;
   }catch(e){ saver=null; }
@@ -1054,7 +1054,7 @@ function saveQuiz(g){
 function offerAward(gameId, db){
   const b=document.createElement('button');
   b.className='btn btn-rose award-btn'; b.textContent='⭐ 記到課堂分數';
-  b.title='有答題的同學 +分；前三名或獲勝隊伍再加分（規則在熊熊遊樂園後台設定）';
+  b.title='照熊熊遊樂園後台「⚙️ 設定」裡的換分規則加分';
   onTap(b, async ()=>{
     if(b.disabled) return;
     b.disabled=true; b.textContent='記分中…';

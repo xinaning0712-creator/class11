@@ -364,3 +364,13 @@ body[data-rc-theme="neon"] .rc-bh.minus, body[data-rc-theme="neon"] .rc-bh-row.m
 .rc-bh-pts-in { width: 100%; min-height: 44px; padding: .2rem .4rem; border: 1.5px solid var(--line); border-radius: 12px; font: inherit; font-size: 1.1rem; text-align: center; background: #fff; }
 body[data-rc-dark] .rc-bh-pts-in { background: var(--bg); color: var(--ink); }
 .rc-custom-btn { border-style: dashed; }
+
+.rc-game-rules { display: grid; gap: .45rem; }
+.rc-rule-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .35rem .5rem; border-radius: 12px; background: var(--rc-soft); }
+.rc-rule-row select { min-width: 13em; }
+.rc-rule-row .rc-bh-pts-in { width: 5em; }
+.rc-rule-n { width: 4.5em; min-height: 44px; padding: .2rem .4rem; border: 1.5px solid var(--line); border-radius: 12px; font: inherit; text-align: center; }
+.rc-rule-no { width: 1.6em; height: 1.6em; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink, #fff); font-size: .9rem; }
+.rc-rule-row .btn { margin-left: auto; }
+.rc-rules-eg { padding: .5rem .8rem; border-radius: 10px; background: var(--rc-cream); }
+body[data-rc-dark] .rc-rule-n { background: var(--bg); color: var(--ink); }

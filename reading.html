@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611021624">
-  <link rel="stylesheet" href="css/reading.css?v=202611021624">
+  <link rel="stylesheet" href="css/style.css?v=202611021632">
+  <link rel="stylesheet" href="css/reading.css?v=202611021632">
 </head>
 <body class="admin rc">
   <!-- 登入 -->
@@ -239,10 +239,13 @@
       </div>
 
       <form id="rule-form" class="card rc-rules">
-        <p class="form-title">🎡 熊熊遊樂園換成課堂分數的規則</p>
-        <label class="field">有答題的同學，每人 +<input id="rule-join" type="number" min="0" max="10" step="1"> 分</label>
-        <label class="field">個人賽（搶答、糖果球）前三名，再 +<input id="rule-top" type="number" min="0" max="10" step="1"> 分</label>
-        <label class="field">團隊賽（拔河、玻璃球）獲勝隊伍，每人再 +<input id="rule-win" type="number" min="0" max="10" step="1"> 分</label>
+        <div class="rc-section-head">
+          <p class="form-title">🎡 熊熊遊樂園換成課堂分數的規則</p>
+          <button id="gr-rule-add" class="btn small" type="button">＋ 新增規則</button>
+        </div>
+        <p class="hint">玩完一場、按「⭐ 記到課堂分數」時，每個有答題的孩子會照下面的規則加分；符合好幾條就加起來。規則可以自由新增、刪除、改分數（−10～+10）。</p>
+        <div id="game-rules" class="rc-game-rules"></div>
+        <p id="game-rules-eg" class="hint rc-rules-eg"></p>
         <label class="field" id="rate-field">11 班：個人分每 <input id="rule-rate" type="number" min="1" max="100" step="1"> 分換 1 個扭蛋集點</label>
         <div class="row-actions"><button class="btn primary" type="submit">儲存規則</button></div>
       </form>
@@ -293,6 +296,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/reading.js?v=202611021624"></script>
+  <script type="module" src="js/reading.js?v=202611021632"></script>
 </body>
 </html>

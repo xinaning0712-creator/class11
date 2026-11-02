@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021624';
-import { el, toast } from './ui.js?v=202611021624';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021624';
-import { ask, sure } from './dialogs.js?v=202611021624';
-import * as quizbank from './admin-quiz.js?v=202611021624';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021632';
+import { el, toast } from './ui.js?v=202611021632';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021632';
+import { ask, sure } from './dialogs.js?v=202611021632';
+import * as quizbank from './admin-quiz.js?v=202611021632';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -930,9 +930,8 @@ function renderSettings() {
   if (!A.isOwner) return;
   renderThemes();
   renderBehaviorList();
-  $('rule-join').value = A.me.game_join;
-  $('rule-top').value = A.me.game_top;
-  $('rule-win').value = A.me.game_win;
+  A.rules = gameRules();
+  renderGameRules();
   const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
   $('rate-field').hidden = !home;
   if (home) $('rule-rate').value = home.point_rate;
@@ -1013,13 +1012,79 @@ $('bh-add').addEventListener('click', async () => {
   });
 })();
 
+/* ---------- 🎡 熊熊遊樂園換分規則（一條一條，可以自由新增、刪除） ---------- */
+const RULE_TYPES = [
+  { t: 'join', label: '有答題的同學', n: false },
+  { t: 'correct', label: '每答對 1 題', n: false },
+  { t: 'rank', label: '第 n 名', n: true, pre: '第', post: '名' },
+  { t: 'top', label: '前 n 名', n: true, pre: '前', post: '名' },
+  { t: 'win', label: '獲勝隊伍的同學（拔河、玻璃球）', n: false },
+  { t: 'perfect', label: '全部答對（沒有答錯）', n: false },
+];
+function gameRules() {
+  if (Array.isArray(A.me?.game_rules)) return A.me.game_rules.map((r) => ({ ...r }));
+  // 還沒執行 13 號 SQL：用以前的三條
+  return [{ t: 'join', pts: A.me?.game_join ?? 1 }, { t: 'top', n: 3, pts: A.me?.game_top ?? 1 }, { t: 'win', pts: A.me?.game_win ?? 1 }];
+}
+function ruleText(r) {
+  const T = RULE_TYPES.find((x) => x.t === r.t);
+  const who = !T ? '?' : T.n ? `${T.pre} ${r.n || 1} ${T.post}` : T.label;
+  return `${who} ${r.pts > 0 ? '+' : ''}${r.pts} 分${r.t === 'correct' ? '（× 答對題數）' : ''}`;
+}
+function renderGameRules() {
+  const box = $('game-rules');
+  box.replaceChildren(...A.rules.map((r, i) => {
+    const type = el('select', { 'aria-label': '條件' }, ...RULE_TYPES.map((T) => el('option', { value: T.t, selected: T.t === r.t }, T.n ? `${T.pre} n ${T.post}` : T.label)));
+    const n = el('input', { type: 'number', min: '1', max: '40', step: '1', value: r.n || 1, class: 'rc-rule-n', 'aria-label': '名次' });
+    const pts = el('input', { type: 'number', min: '-10', max: '10', step: '1', value: r.pts, class: 'rc-bh-pts-in', 'aria-label': '分數' });
+    const T = RULE_TYPES.find((x) => x.t === r.t);
+    n.hidden = !T?.n;
+    type.addEventListener('change', () => { r.t = type.value; if (RULE_TYPES.find((x) => x.t === r.t)?.n && !r.n) r.n = r.t === 'rank' ? 1 : 3; renderGameRules(); });
+    n.addEventListener('input', () => { r.n = Math.max(1, Math.min(40, Math.round(+n.value) || 1)); renderExample(); });
+    pts.addEventListener('input', () => { r.pts = Math.max(-10, Math.min(10, Math.round(+pts.value) || 0)); renderExample(); });
+    return el('div', { class: 'rc-rule-row' },
+      el('span', { class: 'rc-rule-no' }, String(i + 1)), type, n,
+      el('span', { class: 'rc-rule-plus' }, '→'), pts, el('span', { class: 'muted' }, r.t === 'correct' ? '分／題' : '分'),
+      el('button', { class: 'btn small ghost', type: 'button', onclick: () => { A.rules.splice(i, 1); renderGameRules(); } }, '刪除'));
+  }));
+  if (!A.rules.length) box.replaceChildren(el('p', { class: 'muted' }, '目前沒有規則（玩完不會自動加分）。按「＋ 新增規則」新增。'));
+  renderExample();
+}
+/* 例子：讓老師一看就知道會加幾分 */
+function renderExample() {
+  const sim = (who) => A.rules.reduce((sum, r) => {
+    const p = Number(r.pts) || 0;
+    if (r.t === 'join') return sum + p;
+    if (r.t === 'correct') return sum + p * who.correct;
+    if (r.t === 'rank') return sum + (who.rank === (r.n || 1) ? p : 0);
+    if (r.t === 'top') return sum + (who.rank <= (r.n || 1) ? p : 0);
+    if (r.t === 'win') return sum + (who.win ? p : 0);
+    if (r.t === 'perfect') return sum + (who.wrong === 0 ? p : 0);
+    return sum;
+  }, 0);
+  const a = sim({ correct: 10, wrong: 0, rank: 1, win: true });
+  const b = sim({ correct: 5, wrong: 3, rank: 8, win: false });
+  $('game-rules-eg').textContent = `例如：全對 10 題、第 1 名、獲勝隊伍 → ${a > 0 ? '+' : ''}${a} 分；答對 5 題、答錯 3 題、第 8 名 → ${b > 0 ? '+' : ''}${b} 分`;
+}
+$('gr-rule-add').addEventListener('click', () => {
+  if (A.rules.length >= 20) return toast('最多 20 條規則', { tone: 'error' });
+  A.rules.push({ t: 'top', n: 3, pts: 1 });
+  renderGameRules();
+});
+
 $('rule-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const n = (id, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number($(id).value) || 0)));
-  const patch = { game_join: n('rule-join', 0, 10), game_top: n('rule-top', 0, 10), game_win: n('rule-win', 0, 10) };
+  const rules = A.rules.filter((r) => r.pts).map((r) => (RULE_TYPES.find((x) => x.t === r.t)?.n ? { t: r.t, n: r.n || 1, pts: r.pts } : { t: r.t, pts: r.pts }));
+  const patch = { game_rules: rules };
   const { error } = await db.from('rc_teachers').update(patch).eq('user_id', A.me.user_id);
-  if (error) return fail('儲存', error);
+  if (error) {
+    if (/game_rules/.test(error.message || '')) return toast('還差一步：請班導在 Supabase 執行 13_熊熊遊樂園換分規則.sql', { tone: 'error', seconds: 8 });
+    return fail('儲存', error);
+  }
   Object.assign(A.me, patch);
+  A.rules = gameRules();
+  renderGameRules();
   const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
   if (home) {
     const rate = n('rule-rate', 1, 100);

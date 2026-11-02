@@ -1,8 +1,8 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611021624';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611021624';
-import { el, toast } from './ui.js?v=202611021624';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021624';
+import { CLASS_NAME } from './config.js?v=202611021632';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611021632';
+import { el, toast } from './ui.js?v=202611021632';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus } from './exam-core.js?v=202611021632';
 
 const $ = (id) => document.getElementById(id);
 const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
