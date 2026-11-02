@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021632';
-import { el, toast } from './ui.js?v=202611021632';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021632';
-import { ask, sure } from './dialogs.js?v=202611021632';
-import * as quizbank from './admin-quiz.js?v=202611021632';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021638';
+import { el, toast } from './ui.js?v=202611021638';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021638';
+import { ask, sure } from './dialogs.js?v=202611021638';
+import * as quizbank from './admin-quiz.js?v=202611021638';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -938,8 +938,18 @@ function renderSettings() {
   $('me-name').value = A.me.name;
   $('me-subject').value = A.me.subject;
   $('cls-list').replaceChildren(...A.courses.filter((c) => c.owner === A.uid).map((c) => el('div', { class: 'rc-cls-row' },
-    el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.stamps ? '・可換 11 班扭蛋集點' : ''}`),
+    el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.stamps ? '・可換扭蛋集點' : ''}`),
+    el('button', { class: 'btn small ghost', type: 'button', onclick: () => renameCourse(c) }, '改名'),
     c.is_home ? '' : el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeCourse(c) }, '刪除'))));
+}
+async function renameCourse(c) {
+  const name = await ask('班級名稱：', { value: c.name, ok: '儲存' });
+  if (!name || name === c.name) return;
+  const { error } = await db.from('rc_courses').update({ name: name.slice(0, 12) }).eq('id', c.id);
+  if (error) return fail('改名', error);
+  c.name = name.slice(0, 12);
+  renderClassPills(); renderSettings();
+  toast(`已改名為「${c.name}」`);
 }
 
 function renderBehaviorList() {

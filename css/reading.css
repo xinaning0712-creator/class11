@@ -228,7 +228,7 @@ dialog.rc-sheet.wide { width: min(760px, calc(100vw - 24px)); }
 .rc-classes-edit { display: grid; gap: .4rem; margin-top: .4rem; }
 .rc-cls-row { display: flex; align-items: center; gap: .8rem; padding: .3rem 0; border-bottom: 1px dashed var(--line); }
 .rc-cls-row b { font-size: 1.15rem; min-width: 4em; }
-.rc-cls-row .btn { margin-left: auto; }
+.rc-cls-row .btn:first-of-type { margin-left: auto; }
 
 @media (max-width: 640px) {
   .rc-ro-row { grid-template-columns: 2em 48px minmax(0, 1fr); }
