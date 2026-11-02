@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021852';
-import { el, toast } from './ui.js?v=202611021852';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021852';
-import { ask, sure } from './dialogs.js?v=202611021852';
-import * as quizbank from './admin-quiz.js?v=202611021852';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021950';
+import { el, toast } from './ui.js?v=202611021950';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021950';
+import { ask, sure } from './dialogs.js?v=202611021950';
+import * as quizbank from './admin-quiz.js?v=202611021950';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -198,6 +198,9 @@ async function start() {
   // 有好幾個班：先問今天要上哪一班（重新整理時記得剛剛選的班，不會再問）
   const first = A.courses.find((c) => c.id === saved) || (A.courses.length > 1 ? await pickCourse(false) : A.courses[0]);
   await selectCourse(first);
+  let who = 'stu';
+  try { who = localStorage.getItem(WHO_KEY) || 'stu'; } catch { /* ignore */ }
+  setWho(['stu', 'grp', 'seat'].includes(who) ? who : 'stu');
   showTab(A.isOwner ? 'board' : 'roster');
 }
 
@@ -249,6 +252,8 @@ async function selectCourse(c) {
   document.body.classList.toggle('rc-is-home', !!c.stamps);   // 只有連到扭蛋集點的班才有「兌換集點」
   const play = `live-host.html?rc=${c.id}&n=${c.seat_count}`;
   $('bd-play').href = play;
+  $('bd-short').href = `short-host.html?rc=${c.id}`;
+  A.arranging = false;
   const qp = $('rc-quiz-play'); if (qp) qp.href = play;
   if (!canUse(A.tab)) showTab(A.isOwner ? 'board' : 'roster');   // 換到不能用這個分頁的班
   await loadCourse();
@@ -341,22 +346,27 @@ function renderTab() {
 /* ============================================================
    🌟 上課計分
    ============================================================ */
+const WHO_KEY = 'shiny11-rc-who';
 function setWho(who) {
-  A.who = who; A.picked.clear();
+  A.who = who; A.picked.clear(); A.arranging = false;
   $('bd-who-stu').classList.toggle('active', who === 'stu');
   $('bd-who-grp').classList.toggle('active', who === 'grp');
+  $('bd-who-seat').classList.toggle('active', who === 'seat');
+  try { localStorage.setItem(WHO_KEY, who); } catch { /* ignore */ }
   renderBoard();
 }
 $('bd-who-stu').addEventListener('click', () => setWho('stu'));
 $('bd-who-grp').addEventListener('click', () => setWho('grp'));
+$('bd-who-seat').addEventListener('click', () => setWho('seat'));
+const scoreKind = () => (A.who === 'grp' ? 'grp' : 'stu');   // 座位表點的也是個人
 $('bd-multi').addEventListener('click', () => { A.multi = !A.multi; A.picked.clear(); renderBoard(); });
 $('bd-multi-clear').addEventListener('click', () => { A.multi = false; A.picked.clear(); renderBoard(); });
 $('bd-multi-go').addEventListener('click', () => {
-  if (A.picked.size) openBehaviors({ kind: A.who, ids: [...A.picked] });
+  if (A.picked.size) openBehaviors({ kind: scoreKind(), ids: [...A.picked] });
 });
 $('bd-all').addEventListener('click', () => {
-  const ids = A.who === 'stu' ? A.students.map((s) => s.id) : A.groups.map((g) => g.id);
-  if (ids.length) openBehaviors({ kind: A.who, ids, all: true });
+  const ids = scoreKind() === 'stu' ? A.students.map((s) => s.id) : A.groups.map((g) => g.id);
+  if (ids.length) openBehaviors({ kind: scoreKind(), ids, all: true });
 });
 
 function renderBoard() {
@@ -364,18 +374,22 @@ function renderBoard() {
   const grid = $('bd-grid');
   $('bd-multi').classList.toggle('primary', A.multi);
   $('bd-multibar').hidden = !A.multi;
-  $('bd-multi-n').textContent = `已選 ${A.picked.size} ${A.who === 'stu' ? '人' : '組'}`;
+  $('bd-multi-n').textContent = `已選 ${A.picked.size} ${scoreKind() === 'stu' ? '人' : '組'}`;
   $('bd-multi-go').disabled = !A.picked.size;
+  $('bd-arrange').hidden = A.who !== 'seat' || A.arranging;
+  $('bd-arrangebar').hidden = A.who !== 'seat' || !A.arranging;
+  ['bd-multi', 'bd-all'].forEach((id) => { $(id).hidden = A.arranging; });
 
-  const empty = A.who === 'stu' ? !A.students.length : !A.groups.length;
+  const empty = scoreKind() === 'stu' ? !A.students.length : !A.groups.length;
   $('bd-empty').hidden = !empty;
   if (empty) {
-    $('bd-empty').replaceChildren(el('p', {}, A.who === 'stu' ? '這個班還沒有名單。' : '這個班還沒有分組。'),
+    $('bd-empty').replaceChildren(el('p', {}, scoreKind() === 'stu' ? '這個班還沒有名單。' : '這個班還沒有分組。'),
       el('button', { class: 'btn primary', type: 'button', onclick: () => showTab('roster') }, '到「👥 名單與分組」設定'));
     grid.replaceChildren();
     return;
   }
 
+  if (A.who === 'seat') { renderSeats(grid, term); return; }
   if (A.who === 'stu') {
     grid.className = 'rc-grid';
     grid.replaceChildren(...A.students.slice().sort(sortSeat).map((s) => {
@@ -406,6 +420,160 @@ function renderBoard() {
     }));
   }
 }
+/* ============================================================
+   🪑 座位表：照教室真正的座位排（layout = 每一直排幾個位子）
+   ============================================================ */
+const FLIP_KEY = 'shiny11-rc-flip';
+function seatLayout() {
+  const L = Array.isArray(A.course.layout) ? A.course.layout.map((n) => Math.max(1, Math.min(12, n | 0))) : null;
+  if (L && L.length) return L;
+  const n = Math.max(A.students.length, 1), cols = Math.ceil(n / 5);   // 還沒設定：每排 5 個
+  return Array.from({ length: cols }, (_, i) => (i < cols - 1 ? 5 : n - 5 * (cols - 1)));
+}
+/* 每個位子坐誰：Map('c-r' → 學生)；沒排過的孩子依座號一排一排補上 */
+function seatMap() {
+  const L = seatLayout(), map = new Map(), loose = [];
+  for (const s of A.students.slice().sort(sortSeat)) {
+    const k = `${s.seat_col}-${s.seat_row}`;
+    if (Number.isInteger(s.seat_col) && Number.isInteger(s.seat_row) && s.seat_col < L.length && s.seat_row < L[s.seat_col] && !map.has(k)) map.set(k, s);
+    else loose.push(s);
+  }
+  const anyPlaced = map.size > 0;
+  if (!anyPlaced) {                       // 一個都還沒排：依座號從第 1 排往後排
+    for (let c = 0, i = 0; c < L.length; c++) for (let r = 0; r < L[c] && i < loose.length; r++) map.set(`${c}-${r}`, loose[i++]);
+    return { L, map, loose: loose.slice(L.reduce((a, b) => a + b, 0)), auto: true };
+  }
+  return { L, map, loose, auto: false };
+}
+function renderSeats(grid, term) {
+  const { L, map, loose } = seatMap();
+  let flip = false;
+  try { flip = localStorage.getItem(FLIP_KEY) === '1'; } catch { /* ignore */ }
+  grid.className = 'rc-seatwrap' + (A.arranging ? ' arranging' : '') + (flip ? ' flip' : '');
+  const card = (s, c, r) => {
+    const g = byId(A.groups, s.group_id);
+    const pts = stuPoints(s.id, term);
+    return el('button', {
+      class: 'rc-card rc-seatcard' + (A.picked.has(s.id) ? ' picked' : ''), type: 'button', 'data-id': s.id, 'data-stu': s.id,
+      style: g ? `--gc:${groupColor(g)}` : null,
+      onclick: A.arranging ? null : () => tapCard('stu', s.id),
+    },
+    el('span', { class: 'rc-pts' + (pts < 0 ? ' neg' : '') }, String(pts)),
+    htmlEl('span', { class: 'rc-av' }, avatarImg(avatarOf(s), 84)),
+    el('span', { class: 'rc-name' }, s.name || `${s.seat} 號`));
+  };
+  const cols = L.map((n, c) => el('div', { class: 'rc-seatcol' },
+    ...Array.from({ length: n }, (_, r) => {
+      const s = map.get(`${c}-${r}`);
+      return el('div', { class: 'rc-slot' + (s ? '' : ' empty'), 'data-c': c, 'data-r': r }, s ? card(s, c, r) : '');
+    })));
+  const desk = el('div', { class: 'rc-desk' }, '🧑‍🏫 講台');
+  const parts = [desk, el('div', { class: 'rc-seatgrid', style: `--cols:${L.length}` }, ...cols)];
+  if (A.arranging || loose.length) {
+    parts.push(el('div', { class: 'rc-loose', 'data-loose': '1' },
+      el('span', { class: 'muted' }, loose.length ? `還沒有位子（${loose.length} 人）：` : '拖到這裡可以先讓他離開座位'),
+      ...loose.map((s) => card(s, -1, -1))));
+  }
+  grid.replaceChildren(...parts);
+}
+
+/* 排座位模式 */
+async function saveSeat(s, c, r) {
+  const patch = { seat_col: c, seat_row: r };
+  const { error } = await db.from('rc_students').update(patch).eq('id', s.id);
+  if (error) throw error;
+  Object.assign(s, patch);
+}
+/* 第一次排：把畫面上自動排好的位子先存起來 */
+async function persistAuto() {
+  const { map, auto } = seatMap();
+  if (!auto) return;
+  await Promise.all([...map.entries()].map(([k, s]) => { const [c, r] = k.split('-').map(Number); return saveSeat(s, c, r); }));
+}
+$('bd-arrange').addEventListener('click', async () => {
+  if (!A.isOwner) return;
+  try { await persistAuto(); } catch (e) { return fail('儲存座位', e); }
+  A.arranging = true; A.multi = false; A.picked.clear();
+  $('bd-layout').value = seatLayout().join(',');
+  renderBoard();
+});
+$('bd-arrange-done').addEventListener('click', () => { A.arranging = false; renderBoard(); toast('座位表已儲存'); });
+$('bd-flip').addEventListener('click', () => {
+  try { localStorage.setItem(FLIP_KEY, localStorage.getItem(FLIP_KEY) === '1' ? '0' : '1'); } catch { /* ignore */ }
+  renderBoard();
+});
+$('bd-layout-apply').addEventListener('click', async () => {
+  const L = $('bd-layout').value.split(/[,，、\s]+/).map((x) => parseInt(x, 10)).filter((n) => n > 0 && n <= 12);
+  if (!L.length || L.length > 12) return toast('請輸入每一直排的人數，例如：5,5,5,5,4', { tone: 'error' });
+  const { error } = await db.from('rc_courses').update({ layout: L }).eq('id', A.course.id);
+  if (error) return fail('儲存排法', error);
+  A.course.layout = L;
+  $('bd-layout').value = L.join(',');
+  const total = L.reduce((a, b) => a + b, 0);
+  toast(`排法已改成 ${L.join('、')}（共 ${total} 個位子）${total < A.students.length ? '，位子不夠的孩子會放在下面' : ''}`, { seconds: 5 });
+  renderBoard();
+});
+$('bd-auto-seat').addEventListener('click', async () => {
+  if (!(await sure('依座號從第 1 排、從講台往後重新排一次嗎？\n（目前排好的位子會被換掉）', { ok: '重新排' }))) return;
+  const L = seatLayout(), list = A.students.slice().sort(sortSeat);
+  const jobs = [];
+  for (let c = 0, i = 0; c < L.length; c++) for (let r = 0; r < L[c] && i < list.length; r++) jobs.push(saveSeat(list[i++], c, r));
+  try { await Promise.all(jobs); } catch (e) { return fail('排座位', e); }
+  renderBoard();
+});
+/* 拖曳換位子（滑鼠、手指都可以） */
+(function setupSeatDrag() {
+  const box = $('bd-grid');
+  let drag = null;
+  box.addEventListener('pointerdown', (e) => {
+    if (!A.arranging) return;
+    const card = e.target.closest('.rc-card.rc-seatcard');
+    if (!card) return;
+    e.preventDefault();
+    drag = { card, id: Number(card.dataset.stu), x: e.clientX, y: e.clientY, ghost: null, pid: e.pointerId };
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (!drag.ghost) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+      drag.ghost = drag.card.cloneNode(true);
+      drag.ghost.classList.add('rc-ghost');
+      document.body.append(drag.ghost);
+      drag.card.classList.add('dragging');
+      document.body.classList.add('rc-dragging');
+    }
+    e.preventDefault();
+    drag.ghost.style.left = `${e.clientX}px`;
+    drag.ghost.style.top = `${e.clientY}px`;
+    if (e.clientY > innerHeight - 70) scrollBy(0, 18); else if (e.clientY < 70) scrollBy(0, -18);   // 拖到邊邊自動捲動
+    document.querySelectorAll('.rc-slot.over, .rc-loose.over').forEach((x) => x.classList.remove('over'));
+    document.elementFromPoint(e.clientX, e.clientY)?.closest('.rc-slot, .rc-loose')?.classList.add('over');
+  }, { passive: false });
+  window.addEventListener('pointerup', async (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const d = drag; drag = null;
+    document.body.classList.remove('rc-dragging');
+    document.querySelectorAll('.rc-slot.over, .rc-loose.over').forEach((x) => x.classList.remove('over'));
+    if (!d.ghost) return;
+    d.ghost.remove(); d.card.classList.remove('dragging');
+    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.rc-slot, .rc-loose');
+    const s = byId(A.students, d.id);
+    if (!target || !s) return;
+    try {
+      if (target.dataset.loose) await saveSeat(s, null, null);
+      else {
+        const c = Number(target.dataset.c), r = Number(target.dataset.r);
+        const other = A.students.find((x) => x !== s && x.seat_col === c && x.seat_row === r);
+        const from = [s.seat_col ?? null, s.seat_row ?? null];
+        await saveSeat(s, c, r);
+        if (other) await saveSeat(other, from[0], from[1]);   // 有人坐：兩個人交換
+      }
+      sfx.pop();
+    } catch (err) { fail('換位子', err); }
+    renderBoard();
+  });
+})();
+
 function htmlEl(tag, attrs, html) { const n = el(tag, attrs); n.innerHTML = html; return n; }
 
 function tapCard(kind, id) {
@@ -884,6 +1052,35 @@ function renderStats() {
   }) : [el('p', { class: 'muted' }, '這段期間還沒有紀錄')]));
 
   loadGames(range);
+  loadShort(range);
+}
+
+/* ✍️ 小組簡答紀錄：一堂課一段，每題列出各組的答案和星星 */
+async function loadShort(range) {
+  const { data, error } = await db.from('rc_short_answers').select('*')
+    .eq('course_id', A.course.id).gte('created_at', range.start.toISOString()).lt('created_at', range.end.toISOString())
+    .order('created_at', { ascending: false }).limit(300);
+  const box = $('st-short');
+  if (error) { box.replaceChildren(el('p', { class: 'muted' }, /rc_short_answers|42P01|PGRST205/.test(`${error.code} ${error.message}`) ? '（還沒執行 14 號 SQL）' : '讀不到紀錄')); return; }
+  if (!data.length) { box.replaceChildren(el('p', { class: 'muted' }, '這段期間還沒有小組簡答紀錄')); return; }
+  const bySession = new Map();
+  for (const r of data) {
+    const k = r.session;
+    if (!bySession.has(k)) bySession.set(k, []);
+    bySession.get(k).push(r);
+  }
+  box.replaceChildren(...[...bySession.values()].map((rows) => {
+    const first = rows[rows.length - 1];
+    const qs = new Map();
+    rows.slice().reverse().forEach((r) => { if (!qs.has(r.q_index)) qs.set(r.q_index, []); qs.get(r.q_index).push(r); });
+    return el('div', { class: 'rc-short-session' },
+      el('p', { class: 'form-title' }, `${fmtTime(first.created_at)}・${first.set_title}`),
+      ...[...qs.values()].map((list) => el('div', { class: 'rc-short-q' },
+        el('div', { class: 'rc-short-qtext' }, `Q${list[0].q_index + 1}. ${list[0].question}`),
+        ...list.map((r) => el('div', { class: 'rc-short-a' },
+          el('b', {}, r.group_name), el('span', {}, r.answer),
+          el('span', { class: 'rc-short-st' }, r.stars ? `${'⭐'.repeat(r.stars)} +${r.points}` : '—'))))));
+  }));
 }
 
 const MODE_NAME = { tug: '🪢 拔河', marble: '🔮 玻璃球', quiz: '🎯 搶答', candy: '🍬 糖果球' };
@@ -932,6 +1129,8 @@ function renderSettings() {
   renderBehaviorList();
   A.rules = gameRules();
   renderGameRules();
+  const st = Array.isArray(A.me.short_stars) ? A.me.short_stars : [1, 2, 3];
+  [1, 2, 3].forEach((n) => { $(`star-${n}`).value = st[n - 1] ?? n; });
   const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
   $('rate-field').hidden = !home;
   if (home) $('rule-rate').value = home.point_rate;
@@ -1104,6 +1303,17 @@ $('rule-form').addEventListener('submit', async (e) => {
     renderExBadge();
   }
   toast('規則已儲存');
+});
+$('stars-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const v = [1, 2, 3].map((n) => Math.max(-10, Math.min(10, Math.round(Number($(`star-${n}`).value) || 0))));
+  const { error } = await db.from('rc_teachers').update({ short_stars: v }).eq('user_id', A.me.user_id);
+  if (error) {
+    if (/short_stars/.test(error.message || '')) return toast('還差一步：請班導在 Supabase 執行 14_座位表與小組簡答.sql', { tone: 'error', seconds: 8 });
+    return fail('儲存', error);
+  }
+  A.me.short_stars = v;
+  toast('已儲存');
 });
 $('me-form').addEventListener('submit', async (e) => {
   e.preventDefault();

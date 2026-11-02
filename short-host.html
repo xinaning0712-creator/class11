@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>小組簡答（白板）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="stylesheet" href="css/live.css?v=202611021950">
+<style>
+html,body{user-select:auto; -webkit-user-select:auto}
+input,select,textarea{user-select:text; -webkit-user-select:text; font-family:inherit}
+.icon-btn.rejoin{left:70px; width:auto; padding:0 14px; border-radius:999px; font-size:1.05rem; font-weight:900; white-space:nowrap}
+.wrap{max-width:1500px; margin:0 auto}
+.lobby{display:grid; grid-template-columns:minmax(260px,330px) 1fr; gap:16px; align-items:start}
+.join-card{text-align:center}
+.qr-box{width:min(100%,250px); margin:0 auto 10px; padding:8px; background:#fff; border:3px solid var(--rose); border-radius:18px}
+.qr-box svg{display:block; width:100%; height:auto}
+.room-code{font-size:clamp(3rem,5.5vw,5.5rem); font-weight:900; letter-spacing:.08em; color:#8b3550; line-height:1.1; margin:2px 0 8px}
+.join-url{font-size:.95rem; color:var(--muted); word-break:break-all; margin-bottom:8px}
+.groups{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px}
+.gtile{--gc:#f3e3cf; border-radius:18px; padding:12px 10px; text-align:center; background:#fff; border:3px solid var(--gc); border-bottom-width:7px; font-weight:900; font-size:clamp(1.2rem,1.8vw,1.6rem); position:relative}
+.gtile .st{display:block; font-size:.8em; color:var(--muted); margin-top:4px}
+.gtile.on{background:color-mix(in srgb,var(--gc) 35%,#fff)}
+.gtile.on .st{color:#2f6b3c}
+.gtile.done::after{content:'✅'; position:absolute; right:8px; top:6px}
+.setup{display:grid; gap:12px; margin-top:16px}
+.setup .row{display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-weight:800; font-size:1.15rem}
+.setup select,.setup input[type=text]{min-height:52px; border:3px solid var(--cream-d); border-radius:14px; padding:6px 12px; font-size:1.1rem; background:#fff; color:var(--ink)}
+.setup select{min-width:16em}
+.setup input[type=text]{flex:1; min-width:14em}
+.hint{color:var(--muted); font-size:.95rem; font-weight:700}
+.warn{color:#b2453f}
+.qbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px}
+.qno{font-weight:900; font-size:1.3rem; padding:6px 16px; border-radius:999px; background:#fff; border:3px solid var(--cream-d)}
+.timer{font-weight:900; font-size:clamp(1.6rem,3vw,2.6rem); color:#8b3550; min-width:3.5em; text-align:center}
+.timer.low{color:#d64d4d; animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.spacer{flex:1}
+.qcard{text-align:center; padding:22px}
+.qtext{font-size:clamp(1.8rem,3.4vw,3.2rem); font-weight:900; line-height:1.45; white-space:pre-wrap; word-break:break-word}
+.qimg{max-width:min(100%,720px); max-height:38vh; border-radius:14px; margin:12px auto 0; display:block; background:#fff}
+.status{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:14px}
+.status .gtile{font-size:1.2rem; padding:10px}
+.answers{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr)); gap:14px; margin-top:12px}
+.acard{--gc:#f3e3cf; position:relative; background:#fff; border:3px solid var(--cream-d); border-radius:22px; padding:14px 16px 12px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow); animation:flip .5s ease both}
+.acard.shown{border-color:var(--gc); border-bottom-width:8px}
+@keyframes flip{from{opacity:0; transform:rotateY(80deg)}to{opacity:1; transform:none}}
+.alabel{font-weight:900; font-size:1.15rem; color:#9a6b55; display:flex; align-items:center; gap:8px}
+.alabel .gname{padding:2px 12px; border-radius:999px; background:var(--gc); color:var(--ink)}
+.atext{font-size:clamp(1.3rem,2vw,1.9rem); font-weight:800; line-height:1.5; white-space:pre-wrap; word-break:break-word; min-height:2.5em}
+.atext.empty{color:var(--muted); font-size:1.1rem}
+.stars{display:flex; gap:8px; flex-wrap:wrap}
+.star-btn{flex:1; min-height:56px; border-radius:14px; border:3px solid var(--cream-d); background:var(--cream); font:inherit; font-size:1.25rem; font-weight:900; cursor:pointer; color:var(--ink)}
+.star-btn.on{background:linear-gradient(180deg,#fff2b8,#ffd86b); border-color:#d9a441; box-shadow:0 0 0 3px rgba(217,164,65,.35)}
+.star-btn.zero.on{background:#eee6e0; border-color:#b8a89c; box-shadow:none}
+.pts-pop{position:absolute; right:14px; top:8px; font-size:2rem; font-weight:900; color:#e8557d; animation:pop .6s ease}
+.ref{margin-top:12px; padding:12px 16px; border-radius:16px; background:#fff8e1; border:3px dashed #e5c46a; font-size:1.3rem; font-weight:800; white-space:pre-wrap}
+.ref b{color:#9a6b00}
+.btn-row{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:18px}
+.end-table{width:min(100%,700px); margin:12px auto; border-collapse:collapse; font-size:1.4rem; font-weight:800}
+.end-table td{padding:10px 14px; border-bottom:2px dashed var(--cream-d)}
+.end-table td:last-child{text-align:right; color:#c2416a}
+.save-note{font-size:.95rem; color:var(--muted); text-align:center; margin-top:8px}
+.modal{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; background:rgba(60,35,30,.35); padding:16px}
+.modal .card{max-width:560px; width:100%; text-align:center; font-size:1.2rem; font-weight:800}
+.modal .room-code{font-size:clamp(3rem,8vw,5rem)}
+.need-login{max-width:640px; margin:40px auto; text-align:center; font-size:1.3rem; font-weight:800}
+@media (max-width:900px){ .lobby{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <a id="homeBtn" class="icon-btn left" href="reading.html" aria-label="回熊熊遊樂園後台">🐻</a>
+    <button id="rejoinBtn" class="icon-btn rejoin hidden" aria-label="顯示加入用的 QR code">📲 回來玩</button>
+    <h1 id="title">✍️ 小組簡答</h1>
+    <button id="soundBtn" class="icon-btn right" aria-label="音效開關">🔊</button>
+  </header>
+
+  <main class="main" id="main">
+    <div class="wrap">
+      <!-- 沒登入 -->
+      <section id="sLogin" class="screen">
+        <div class="card need-login">
+          <p>請先登入熊熊遊樂園後台，再從「🌟 上課計分」按「✍️ 小組簡答」進來。</p>
+          <a class="btn btn-rose big" href="reading.html">🐻 到熊熊遊樂園後台</a>
+        </div>
+      </section>
+
+      <!-- 大廳 -->
+      <section id="sLobby" class="screen">
+        <div class="lobby">
+          <div class="card join-card">
+            <div class="label">📷 每組派一台 iPad 掃一下</div>
+            <div id="qrBox" class="qr-box"></div>
+            <div id="joinUrl" class="join-url"></div>
+            <div class="label">房間代碼</div>
+            <div id="roomCode" class="room-code">----</div>
+            <span id="netDot" class="net-dot">連線中…</span>
+          </div>
+          <div>
+            <div class="card">
+              <div class="label">👥 各組加入狀況（<b id="joinedN">0</b> / <span id="groupN">0</span> 組）</div>
+              <div id="lobbyGroups" class="groups"></div>
+              <p id="noGroups" class="hint warn hidden">這個班還沒有分組：請先到熊熊遊樂園後台的「👥 名單與分組」建立組別。</p>
+            </div>
+            <div class="card setup">
+              <div class="row">📚 題目
+                <select id="setSel"><option value="">✏️ 臨時出一題</option></select>
+                <span id="setInfo" class="hint"></span>
+              </div>
+              <div id="quickRow" class="row">
+                <input id="quickQ" type="text" maxlength="300" placeholder="輸入這一題的題目，例如：故事裡的主角為什麼要離開家？">
+              </div>
+              <div class="row">⏱ 作答時間
+                <select id="timeSel">
+                  <option value="0">不限時（老師按「收卷」）</option>
+                  <option value="60">1 分鐘</option>
+                  <option value="120">2 分鐘</option>
+                  <option value="180" selected>3 分鐘</option>
+                  <option value="300">5 分鐘</option>
+                  <option value="600">10 分鐘</option>
+                </select>
+              </div>
+              <div class="btn-row" style="margin-top:4px">
+                <button id="startBtn" class="btn btn-rose big">▶️ 開始第 1 題</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 作答中 -->
+      <section id="sQ" class="screen">
+        <div class="qbar">
+          <span id="qNo" class="qno">第 1 題</span>
+          <span class="spacer"></span>
+          <span id="timer" class="timer"></span>
+          <button id="collectBtn" class="btn btn-milk big">✋ 收卷，翻開答案</button>
+        </div>
+        <div class="card qcard">
+          <div id="qText" class="qtext"></div>
+          <img id="qImg" class="qimg hidden" alt="題目圖片">
+        </div>
+        <div id="qStatus" class="status"></div>
+      </section>
+
+      <!-- 翻開答案、評分 -->
+      <section id="sReveal" class="screen">
+        <div class="qbar">
+          <span id="rNo" class="qno">第 1 題</span>
+          <span id="rText" class="hint" style="font-size:1.2rem"></span>
+          <span class="spacer"></span>
+          <button id="refBtn" class="btn hidden">💡 參考答案</button>
+        </div>
+        <div id="refBox" class="ref hidden"></div>
+        <div id="answers" class="answers"></div>
+        <div class="btn-row">
+          <button id="scoreBtn" class="btn btn-rose big">🎉 揭曉組別並記分</button>
+          <button id="nextBtn" class="btn btn-rose big hidden">➡️ 下一題</button>
+          <button id="endBtn" class="btn btn-milk big">🏁 結束</button>
+        </div>
+        <div id="saveNote" class="save-note"></div>
+      </section>
+
+      <!-- 結束 -->
+      <section id="sEnd" class="screen">
+        <div class="card" style="text-align:center">
+          <div class="label" style="font-size:1.8rem">🏁 這一回合的小組分</div>
+          <table id="endTable" class="end-table"></table>
+          <div class="btn-row">
+            <button id="againBtn" class="btn btn-rose big">🔄 再來一回合</button>
+            <a class="btn btn-milk big" id="backBtn" href="reading.html">🐻 回熊熊遊樂園後台</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="rejoinModal" class="modal hidden">
+  <div class="card">
+    <div class="label">📲 不小心離開的組別，掃一下就能回來</div>
+    <div id="rejoinQr" class="qr-box"></div>
+    <div id="rejoinCode" class="room-code">----</div>
+    <div class="hint">選原本的組別，打好的答案會接著用</div>
+    <div class="btn-row"><button id="rejoinClose" class="btn btn-rose big">好了，關掉</button></div>
+  </div>
+</div>
+
+<script type="module" src="js/short-host.js?v=202611021950"></script>
+</body>
+</html>

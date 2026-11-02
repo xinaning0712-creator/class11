@@ -1,13 +1,13 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202611021852';
-import { el, toast } from './ui.js?v=202611021852';
+import { friendlyError } from './db.js?v=202611021950';
+import { el, toast } from './ui.js?v=202611021950';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202611021852';
-import { sure } from './dialogs.js?v=202611021852';
-import { readSheetFile } from './sheet-import.js?v=202611021852';
+} from './quiz-bank.js?v=202611021950';
+import { sure } from './dialogs.js?v=202611021950';
+import { readSheetFile } from './sheet-import.js?v=202611021950';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
@@ -23,7 +23,30 @@ const fail = (what, error) => toast(`${what}失敗：${friendlyError(error)}`, {
 const missingTable = (e) => /quiz_sets|42P01|PGRST205|does not exist|Could not find the table/i.test(`${e?.code} ${e?.message}`);
 
 /* ---------- 編輯器裡的一題：4 個選項格（空白的不算） ---------- */
-const blankQ = () => ({ text: '', img: '', slots: ['', '', '', ''], answer: 0 });
+const blankQ = () => ({ text: '', img: '', ref: '', slots: ['', '', '', ''], answer: 0 });
+const isShort = () => ed?.qtype === 'short';
+/* 簡答題：{ text, img, ref（參考答案，只有老師看得到） } */
+function cleanShort(q) {
+  if (!q || typeof q !== 'object') return null;
+  const text = String(q.text || '').trim().slice(0, LIMITS.text);
+  const img = typeof q.img === 'string' ? q.img.trim() : '';
+  const ref = String(q.ref || '').trim().slice(0, 300);
+  if (!text && !img) return null;
+  return { text, img, ref };
+}
+const shortToEdit = (q) => ({ text: q.text, img: q.img || '', ref: q.ref || '', slots: ['', '', '', ''], answer: 0 });
+/* 整批貼上（簡答）：題目｜參考答案 */
+function parseShortBulk(text) {
+  const rows = [], errors = [];
+  String(text || '').replace(/\r/g, '').split('\n').forEach((line, i) => {
+    if (!line.trim()) return;
+    const cells = (line.includes('\t') ? line.split('\t') : line.includes('｜') ? line.split('｜') : line.includes('|') ? line.split('|') : [line]).map((c) => c.trim());
+    if (/^(題目|問題|question)$/i.test(cells[0] || '')) return;
+    const q = cleanShort({ text: cells[0], ref: cells.slice(1).filter(Boolean).join(' ') });
+    if (!q) errors.push({ line: i + 1, msg: '題目是空的' }); else rows.push(q);
+  });
+  return { rows, errors };
+}
 function toEditQ(q) {
   const slots = ['', '', '', ''];
   q.options.forEach((o, i) => { slots[i] = o; });
@@ -54,6 +77,7 @@ export function init(client, opts = {}) {
   }
   $('qz-subject').replaceChildren(...SUBJECTS.map((s) => el('option', { value: s }, s)));
   $('qz-new').addEventListener('click', () => openEditor(null));
+  $('qz-new-short')?.addEventListener('click', () => openEditor(null, 'short'));
   $('qz-back').addEventListener('click', async () => {
     if (dirty && !(await sure('還沒儲存，確定要離開嗎？', { ok: '不存了，離開', danger: true }))) return;
     closeEditor();
@@ -90,10 +114,16 @@ export function init(client, opts = {}) {
    題組列表
    ============================================================ */
 export async function load() {
-  const cols = 'id, title, subject, frac, shuffle, questions, updated_at';
-  let q = db.from(TABLE).select(cols).order('updated_at', { ascending: false });
-  q = scope.owner ? q.eq('owner', scope.owner) : q.eq('kind', 'class11');
-  let { data, error } = await q;
+  let cols = 'id, title, subject, frac, shuffle, questions, updated_at, qtype';
+  const run = () => {
+    const q = db.from(TABLE).select(cols).order('updated_at', { ascending: false });
+    return scope.owner ? q.eq('owner', scope.owner) : q.eq('kind', 'class11');
+  };
+  let { data, error } = await run();
+  if (error && /qtype/.test(error.message || '')) {        // 還沒執行 14 號 SQL
+    cols = cols.replace(', qtype', '');
+    ({ data, error } = await run());
+  }
   // 還沒執行 10_熊熊遊樂園_科任老師.sql（沒有 kind 欄位）：照舊列出全部
   if (error && !scope.owner && /kind/.test(error.message || '')) {
     ({ data, error } = await db.from(TABLE).select(cols).order('updated_at', { ascending: false }));
@@ -119,6 +149,7 @@ function renderList() {
     return el('div', { class: 'card qz-set' },
       el('div', { class: 'qz-set-main' },
         scope.oneSubject ? '' : el('span', { class: 'qz-subject' }, s.subject),
+        s.qtype === 'short' ? el('span', { class: 'qz-subject qz-short-tag' }, '✍️ 簡答') : '',
         el('strong', { class: 'qz-set-title' }, s.title),
         el('span', { class: 'muted' }, `${n} 題・${date} 更新`)),
       el('span', { class: 'row-actions' },
@@ -141,9 +172,11 @@ async function useDemo() {
 function exportSet(s) {
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const qs = Array.isArray(s.questions) ? s.questions : [];
-  const lines = [['題目', '選項A', '選項B', '選項C', '選項D', '正確答案'].map(q).join(',')];
+  const short = s.qtype === 'short';
+  const lines = [(short ? ['題目', '參考答案'] : ['題目', '選項A', '選項B', '選項C', '選項D', '正確答案']).map(q).join(',')];
   let noText = 0;
   for (const x of qs) {
+    if (short) { if (!String(x.text || '').trim()) noText++; lines.push([x.text || '（圖片題）', x.ref || ''].map(q).join(',')); continue; }
     const opts = [0, 1, 2, 3].map((i) => x.options?.[i] ?? '');
     if (!String(x.text || '').trim()) noText++;
     lines.push([x.text || '（圖片題）', ...opts, LETTERS[x.answer] || 'A'].map(q).join(','));
@@ -158,7 +191,9 @@ function exportSet(s) {
 
 async function copySet(s) {
   const title = `${s.title}（複本）`.slice(0, LIMITS.title);
-  const { error } = await db.from(TABLE).insert({ title, subject: s.subject, frac: s.frac, shuffle: s.shuffle, questions: s.questions });
+  const row = { title, subject: s.subject, frac: s.frac, shuffle: s.shuffle, questions: s.questions };
+  if (s.qtype === 'short') row.qtype = 'short';
+  const { error } = await db.from(TABLE).insert(row);
   if (error) return fail('複製', error);
   toast(`已複製成「${title}」`);
   load();
@@ -175,11 +210,17 @@ async function removeSet(s) {
 /* ============================================================
    編輯器
    ============================================================ */
-function openEditor(s) {
+function openEditor(s, newType = 'choice') {
+  const qtype = s ? (s.qtype === 'short' ? 'short' : 'choice') : newType;
   ed = s
-    ? { id: s.id, title: s.title, subject: s.subject, frac: s.frac, shuffle: s.shuffle,
-        questions: (s.questions || []).map((q) => cleanQuestion(q)).filter(Boolean).map(toEditQ) }
-    : { id: null, title: '', subject: scope.oneSubject ? '國語' : '數學', frac: !scope.oneSubject, shuffle: true, questions: [blankQ()] };
+    ? { id: s.id, qtype, title: s.title, subject: s.subject, frac: s.frac, shuffle: s.shuffle,
+        questions: qtype === 'short'
+          ? (s.questions || []).map(cleanShort).filter(Boolean).map(shortToEdit)
+          : (s.questions || []).map((q) => cleanQuestion(q)).filter(Boolean).map(toEditQ) }
+    : { id: null, qtype, title: '', subject: scope.oneSubject ? '國語' : '數學', frac: !scope.oneSubject && qtype === 'choice', shuffle: true, questions: [blankQ()] };
+  document.body.classList.toggle('qz-editing-short', qtype === 'short');
+  const badge = $('qz-type-badge');
+  if (badge) badge.textContent = qtype === 'short' ? '✍️ 簡答題組：用在「小組簡答」，每組在 iPad 上打字回答，老師在白板評分。' : '';
   dirty = false;
   $('qz-title').value = ed.title;
   $('qz-subject').value = ed.subject;
@@ -241,6 +282,23 @@ function questionCard(q, i) {
         el('button', { class: 'btn small ghost', type: 'button', onclick: () => { q.img = ''; touch(); renderQuestions(); } }, '移除圖片'))
     : el('button', { class: 'btn small', type: 'button', onclick: () => pickImage(i) }, '🖼️ 加圖片');
 
+  if (isShort()) {
+    const ref = el('textarea', { rows: 2, maxlength: 300, placeholder: '參考答案（只有老師的白板看得到，可以不填）', class: 'qz-ref' });
+    ref.value = q.ref || '';
+    ref.addEventListener('input', () => { q.ref = ref.value; touch(); });
+    return el('div', { class: 'card qz-q' },
+      el('div', { class: 'qz-q-head' },
+        el('strong', {}, `第 ${i + 1} 題`),
+        el('span', { class: 'row-actions' },
+          el('button', { class: 'btn small ghost', type: 'button', title: '上移', 'aria-label': '上移', onclick: () => move(i, -1), disabled: i === 0 }, '↑'),
+          el('button', { class: 'btn small ghost', type: 'button', title: '下移', 'aria-label': '下移', onclick: () => move(i, 1), disabled: i === ed.questions.length - 1 }, '↓'),
+          el('button', { class: 'btn small ghost', type: 'button', onclick: async () => {
+            if ((q.text || q.ref) && !(await sure(`確定要刪除第 ${i + 1} 題嗎？`, { ok: '刪除', danger: true }))) return;
+            ed.questions.splice(i, 1); touch(); renderQuestions();
+          } }, '刪除'))),
+      text, preview, imgBox,
+      el('p', { class: 'hint' }, '💡 參考答案：'), ref);
+  }
   const opts = q.slots.map((s, k) => {
     const radio = el('input', { type: 'radio', name: `qz-ans-${i}`, 'aria-label': `正確答案是 ${LETTERS[k]}` });
     radio.checked = q.answer === k;
@@ -279,8 +337,13 @@ async function save() {
   if (!title) { $('qz-title').focus(); return toast('請幫題組取個名字', { tone: 'error' }); }
   const questions = [], problems = [];
   ed.questions.forEach((q, i) => {
-    const blank = !q.text.trim() && !q.img && q.slots.every((s) => !s.trim());
+    const blank = !q.text.trim() && !q.img && q.slots.every((s) => !s.trim()) && !(q.ref || '').trim();
     if (blank) return;                       // 完全空白的題目直接略過
+    if (isShort()) {
+      const sq = cleanShort(q);
+      if (!sq) problems.push(`第 ${i + 1} 題：題目是空的`); else questions.push(sq);
+      return;
+    }
     const r = fromEditQ(q);
     if (r.error) problems.push(`第 ${i + 1} 題：${r.error}`);
     else questions.push(r.q);
@@ -289,6 +352,7 @@ async function save() {
   if (!questions.length) return toast('至少要有一題', { tone: 'error' });
 
   const row = { title, subject: ed.subject, frac: ed.frac, shuffle: ed.shuffle, questions, updated_at: new Date().toISOString() };
+  if (isShort()) row.qtype = 'short';
   $('qz-save').disabled = true;
   setStatus('儲存中…');
   const res = ed.id
@@ -297,17 +361,17 @@ async function save() {
   $('qz-save').disabled = false;
   if (res.error) { setStatus('● 還沒儲存'); return fail('儲存', res.error); }
   ed.id = res.data.id;
-  ed.questions = questions.map(toEditQ);
+  ed.questions = isShort() ? questions.map(shortToEdit) : questions.map(toEditQ);
   dirty = false;
   renderQuestions();
   setStatus(`✓ 已儲存（${questions.length} 題）`);
-  toast(`「${title}」已儲存，全班對戰的白板重新整理後就能選`);
+  toast(isShort() ? `「${title}」已儲存，開「✍️ 小組簡答」時就能選` : `「${title}」已儲存，全班對戰的白板重新整理後就能選`);
 }
 
 /* ---------- 整批貼上 ---------- */
 let bulkRows = [];
 function previewBulk() {
-  const { rows, errors } = parseBulk($('qz-bulk-text').value);
+  const { rows, errors } = isShort() ? parseShortBulk($('qz-bulk-text').value) : parseBulk($('qz-bulk-text').value);
   bulkRows = rows;
   const box = $('qz-bulk-preview');
   const room = MAX_QUESTIONS - (ed ? ed.questions.filter((q) => q.text || q.slots.some((s) => s)).length : 0);
@@ -344,9 +408,9 @@ async function onSheetFile(e) {
 function addBulk() {
   if (!bulkRows.length) return;
   // 如果編輯器裡只有一題空白的，直接取代掉
-  ed.questions = ed.questions.filter((q) => q.text.trim() || q.img || q.slots.some((s) => s.trim()));
+  ed.questions = ed.questions.filter((q) => q.text.trim() || q.img || q.slots.some((s) => s.trim()) || (q.ref || '').trim());
   const room = MAX_QUESTIONS - ed.questions.length;
-  const add = bulkRows.slice(0, room).map(toEditQ);
+  const add = bulkRows.slice(0, room).map(isShort() ? shortToEdit : toEditQ);
   ed.questions.push(...add);
   touch();
   renderQuestions();

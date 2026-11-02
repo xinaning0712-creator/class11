@@ -374,3 +374,49 @@ body[data-rc-dark] .rc-bh-pts-in { background: var(--bg); color: var(--ink); }
 .rc-rule-row .btn { margin-left: auto; }
 .rc-rules-eg { padding: .5rem .8rem; border-radius: 10px; background: var(--rc-cream); }
 body[data-rc-dark] .rc-rule-n { background: var(--bg); color: var(--ink); }
+
+/* ============================================================
+   🪑 座位表
+   ============================================================ */
+.rc-seatwrap { display: flex; flex-direction: column; gap: .8rem; }
+.rc-seatwrap.flip { flex-direction: column-reverse; }
+.rc-seatwrap.flip .rc-loose { order: -1; }
+.rc-desk {
+  align-self: center; padding: .35rem 2.4rem; border-radius: 12px; background: var(--rc-milk);
+  color: var(--ink); font-size: 1.1rem; letter-spacing: .2em;
+}
+.rc-seatgrid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 28px); align-items: start; }
+.rc-seatwrap.flip .rc-seatcol { flex-direction: column-reverse; }
+.rc-seatcol { display: flex; flex-direction: column; gap: clamp(5px, .6vw, 10px); }
+.rc-slot { min-height: clamp(84px, 8.6vw, 132px); border-radius: 18px; display: flex; }
+.rc-slot.empty { border: 2px dashed var(--line); background: transparent; }
+.rc-slot.over, .rc-loose.over { outline: 3px solid var(--accent); outline-offset: 2px; background: var(--rc-pick); }
+.rc-card.rc-seatcard { width: 100%; height: 100%; padding: .4rem .3rem .5rem; }
+.rc-card.rc-seatcard .rc-av { width: 52%; max-width: 72px; }
+.rc-card.rc-seatcard .rc-name { font-size: clamp(.95rem, 1.25vw, 1.3rem); }
+.rc-card.rc-seatcard .rc-pts { font-size: clamp(.85rem, 1.1vw, 1.15rem); }
+.rc-seatwrap.arranging .rc-card.rc-seatcard { cursor: grab; touch-action: none; }
+.rc-seatwrap.arranging .rc-card.rc-seatcard.dragging { opacity: .3; }
+.rc-loose { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .7rem; border-radius: 16px; border: 2px dashed var(--line); min-height: 80px; }
+.rc-loose .rc-card.rc-seatcard { width: 110px; height: auto; }
+.rc-arrangebar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; }
+.rc-arr-tip { flex-basis: 100%; color: var(--muted); }
+.rc-arr-layout { display: flex; align-items: center; gap: .4rem; }
+.rc-arr-layout input { width: 9em; min-height: 40px; }
+.rc-arrangebar #bd-arrange-done { margin-left: auto; }
+
+/* 題庫：簡答題組 */
+body:not(.qz-editing-short) .qz-short-only { display: none; }
+body.qz-editing-short .qz-choice-only, body.qz-editing-short #qz-frac { display: none; }
+body.qz-editing-short label.check:has(#qz-frac) { display: none; }
+.qz-short-tag { background: #e8f4ff; color: #2f5e8a; }
+.qz-type-badge:empty { display: none; }
+.qz-ref { width: 100%; }
+
+/* 小組簡答 */
+.rc-stars-row { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; }
+.rc-short-session { padding: .4rem 0 .8rem; border-bottom: 1px dashed var(--line); }
+.rc-short-q { margin: .4rem 0 .6rem; }
+.rc-short-qtext { font-weight: 700; margin-bottom: .3rem; }
+.rc-short-a { display: grid; grid-template-columns: 6em minmax(0, 1fr) auto; gap: .6rem; padding: .25rem .5rem; border-radius: 8px; background: var(--rc-soft); margin-bottom: .25rem; white-space: pre-wrap; word-break: break-word; }
+.rc-short-st { white-space: nowrap; color: #c2416a; }

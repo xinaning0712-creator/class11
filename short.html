@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>小組簡答・加入</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="stylesheet" href="css/live.css?v=202611021950">
+<style>
+textarea,input{user-select:text; -webkit-user-select:text; font-family:inherit}
+.center{max-width:760px; margin:0 auto; text-align:center}
+.join-box h2{margin:4px 0 12px; font-size:clamp(1.6rem,4vw,2.4rem); color:#8b3550}
+.big-emoji{font-size:clamp(3rem,10vw,5rem)}
+.field{display:block; text-align:left; font-weight:900; font-size:1.25rem; margin:14px 0 6px; color:#9a6b55}
+.inp{width:100%; height:72px; font-size:2rem; font-weight:900; text-align:center; letter-spacing:.3em; color:var(--ink);
+  border:3px solid var(--cream-d); border-radius:16px; background:#fff; outline:none}
+.inp:focus{border-color:var(--rose-d); box-shadow:0 0 0 4px rgba(236,140,168,.35)}
+.msg{min-height:1.6em; margin-top:12px; font-weight:800; font-size:1.15rem; color:#b2453f}
+.groups{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:10px}
+.gbtn{--gc:#f3e3cf; min-height:92px; border-radius:20px; border:3px solid var(--gc); border-bottom-width:8px; background:#fff;
+  font:inherit; font-size:1.6rem; font-weight:900; color:var(--ink); cursor:pointer}
+.gbtn small{display:block; font-size:.6em; color:var(--muted); margin-top:2px}
+.gbtn:active{transform:translateY(3px)}
+.gbtn.taken{opacity:.55}
+.me{display:inline-block; padding:4px 18px; border-radius:999px; background:var(--gc,#f3e3cf); font-weight:900; font-size:1.3rem}
+.qtext{font-size:clamp(1.4rem,4.4vw,2.2rem); font-weight:900; line-height:1.5; white-space:pre-wrap; word-break:break-word; text-align:left}
+.qimg{max-width:100%; max-height:32vh; border-radius:14px; margin:10px auto 0; display:block; background:#fff}
+.answer{width:100%; min-height:180px; font-size:1.5rem; font-weight:800; line-height:1.5; padding:14px; border-radius:18px;
+  border:3px solid var(--cream-d); background:#fff; color:var(--ink); resize:vertical; outline:none; margin-top:12px}
+.answer:focus{border-color:var(--rose-d)}
+.answer:disabled{background:#f7f1ec; color:#7d6b5c}
+.count{text-align:right; color:var(--muted); font-weight:800; margin-top:4px}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+.timer{font-weight:900; font-size:1.5rem; color:#8b3550}
+.sent{font-size:clamp(1.4rem,5vw,2rem); font-weight:900; color:#2f6b3c; margin:10px 0}
+.wait-anim{font-size:4rem; animation:bob 1.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.wait-text{font-size:1.5rem; font-weight:900; margin-top:8px}
+.result{font-size:clamp(2.4rem,9vw,4rem); font-weight:900; margin:10px 0}
+.my-answer{white-space:pre-wrap; text-align:left; font-size:1.2rem; font-weight:800; padding:12px; border-radius:14px; background:#fff; border:2px dashed var(--cream-d); margin-top:10px}
+#sendBtn{width:100%; margin-top:12px}
+.back-btn{width:100%; margin:0 0 6px; background:#e9f6ec; border-color:#7bbf8a; color:#2f6b3c}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <h1>✍️ 小組簡答</h1>
+    <span id="netDot" class="net-dot" style="position:absolute;right:12px">連線中…</span>
+  </header>
+  <main class="main" id="main">
+    <!-- 輸入代碼 -->
+    <section id="pCode" class="screen active">
+      <div class="card center join-box">
+        <div class="big-emoji">🐻✍️</div>
+        <h2>小組簡答</h2>
+        <button id="backBtn" class="btn big back-btn hidden">🔄 回到剛剛的組別</button>
+        <label class="field" for="codeIn">🔢 房間代碼（看白板）</label>
+        <input id="codeIn" class="inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
+        <button id="codeBtn" class="btn btn-rose big" style="width:100%;margin-top:16px">下一步</button>
+        <div id="codeMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- 選組別 -->
+    <section id="pGroup" class="screen">
+      <div class="card center">
+        <h2 style="color:#8b3550;margin:6px 0">👥 你們是哪一組？</h2>
+        <div class="field" style="text-align:center">一組只要一台 iPad 喔</div>
+        <div id="groupList" class="groups"></div>
+        <div id="groupMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- 等待 -->
+    <section id="pWait" class="screen">
+      <div class="card center">
+        <div><span id="meTag" class="me"></span></div>
+        <div class="wait-anim">⏳</div>
+        <div id="waitText" class="wait-text">等老師出題…</div>
+      </div>
+    </section>
+
+    <!-- 作答 -->
+    <section id="pQ" class="screen">
+      <div class="card center">
+        <div class="bar"><span id="meTag2" class="me"></span><span id="qNo" style="font-weight:900;color:var(--muted)"></span><span id="timer" class="timer"></span></div>
+        <div id="qText" class="qtext"></div>
+        <img id="qImg" class="qimg hidden" alt="題目圖片">
+        <textarea id="answer" class="answer" maxlength="300" placeholder="在這裡打你們這組的答案…"></textarea>
+        <div id="count" class="count">0 / 300</div>
+        <button id="sendBtn" class="btn btn-rose big" disabled>📤 送出答案（送出後就不能改囉）</button>
+        <div id="sentBox" class="hidden">
+          <div class="sent">✅ 已送出！</div>
+          <div class="wait-text">等其他組寫完，答案會一起出現在大螢幕</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 結果 -->
+    <section id="pResult" class="screen">
+      <div class="card center">
+        <div><span id="meTag3" class="me"></span></div>
+        <div id="resultBig" class="result"></div>
+        <div id="resultSub" class="wait-text"></div>
+        <div id="myAnswer" class="my-answer hidden"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="sureModal" class="modal hidden">
+  <div class="card">
+    <div style="font-size:1.4rem">確定要送出嗎？<br><small>送出後就不能改了</small></div>
+    <div class="row">
+      <button id="sureYes" class="btn btn-rose big">📤 送出</button>
+      <button id="sureNo" class="btn big">再想一下</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/short-play.js?v=202611021950"></script>
+</body>
+</html>
