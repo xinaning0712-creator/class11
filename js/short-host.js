@@ -2,14 +2,14 @@
 // ✍️ 小組簡答・白板端（老師）
 //  網址：short-host.html?rc=班級編號（從熊熊遊樂園後台「✍️ 小組簡答」進來）
 // ============================================================
-import { connect, sound, onTap, store, isTestMode } from './live-common.js?v=202611021956';
-import { qrSvg } from './qr.js?v=202611021956';
-import { RC_COURSE, rcSession } from './rc-mode.js?v=202611021956';
-import { groupColor, cleanAnswer, esc } from './short-common.js?v=202611021956';
+import { connect, sound, onTap, store, isTestMode } from './live-common.js?v=202611022002';
+import { qrSvg } from './qr.js?v=202611022002';
+import { RC_COURSE, rcSession } from './rc-mode.js?v=202611022002';
+import { groupColor, cleanAnswer, esc } from './short-common.js?v=202611022002';
 
 const $ = (id) => document.getElementById(id);
 const S = {
-  db: null, uid: null, course: null, groups: [], sets: [], stars: [1, 2, 3],
+  db: null, uid: null, course: null, groups: [], students: [], sets: [], stars: [1, 2, 3], toMember: true,
   code: '', net: null,
   devices: new Map(),          // 組別 id → iPad 的 id
   phase: 'lobby',              // lobby | q | reveal | end
@@ -40,11 +40,14 @@ async function boot() {
   const ses = await rcSession();
   if (!ses || !RC_COURSE) { show('sLogin'); return; }
   S.db = ses.db; S.uid = ses.uid;
-  const [{ data: course }, { data: groups }, { data: me }] = await Promise.all([
+  const [{ data: course }, { data: groups }, { data: me }, { data: students }] = await Promise.all([
     S.db.from('rc_courses').select('id, name, owner').eq('id', RC_COURSE).maybeSingle(),
     S.db.from('rc_groups').select('id, name, color, sort').eq('course_id', RC_COURSE).order('sort').order('id'),
-    S.db.from('rc_teachers').select('short_stars').eq('user_id', S.uid).maybeSingle(),
+    S.db.from('rc_teachers').select('*').eq('user_id', S.uid).maybeSingle(),
+    S.db.from('rc_students').select('id, group_id').eq('course_id', RC_COURSE),
   ]);
+  S.students = students || [];
+  S.toMember = me?.group_to_member !== false;
   if (!course || course.owner !== S.uid) { show('sLogin'); return; }
   S.course = course;
   S.groups = groups || [];
@@ -310,7 +313,15 @@ onTap($('scoreBtn'), async () => {
   const label = `✍️ 小組簡答${S.qCount > 1 ? ` 第${S.qi + 1}題` : ''}`;
   const batch = `short-${Date.now().toString(36)}`;
   const events = S.order.filter((g) => starPts(S.scores.get(g)) !== 0)
-    .map((g) => ({ course_id: RC_COURSE, group_id: g, label, points: starPts(S.scores.get(g)), batch }));
+    .map((g) => ({ course_id: RC_COURSE, group_id: g, student_id: null, label, points: starPts(S.scores.get(g)), batch, source: 'manual' }));
+  if (S.toMember) {         // 小組分也累積到組員的個人分
+    for (const ev of events.slice()) {
+      const gname = gById(ev.group_id)?.name || '小組';
+      S.students.filter((st) => st.group_id === ev.group_id).forEach((st) => events.push({
+        course_id: RC_COURSE, student_id: st.id, group_id: null, label: `👥 ${gname}：${label}`.slice(0, 40), points: ev.points, batch, source: 'group',
+      }));
+    }
+  }
   const rows = S.order.map((g) => ({
     course_id: RC_COURSE, session: S.session, set_title: S.set ? S.set.title : '臨時出題', q_index: S.qi,
     question: (S.q.text || '（圖片題）').slice(0, 400), group_id: g, group_name: gById(g)?.name || '',
@@ -328,7 +339,7 @@ onTap($('scoreBtn'), async () => {
     if (events.length) { const { error } = await S.db.from('rc_events').insert(events); if (error) throw error; }
     const { error: e2 } = await S.db.from('rc_short_answers').insert(rows);
     if (e2) throw e2;
-    $('saveNote').textContent = `💾 ✓ 已記到小組分（${events.length} 組）`;
+    $('saveNote').textContent = `💾 ✓ 已記到小組分（${events.filter((e) => e.group_id).length} 組）${S.toMember ? '，組員的個人分也加了' : ''}`;
   } catch (err) {
     $('saveNote').innerHTML = `⚠️ 沒存好：${esc(err?.message || err)} <button class="btn" id="retrySave">↻ 再存一次</button>`;
     $('retrySave')?.addEventListener('click', async () => {

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611021956">
-  <link rel="stylesheet" href="css/reading.css?v=202611021956">
+  <link rel="stylesheet" href="css/style.css?v=202611022002">
+  <link rel="stylesheet" href="css/reading.css?v=202611022002">
 </head>
 <body class="admin rc">
   <!-- 登入 -->
@@ -268,6 +268,12 @@
         <div class="row-actions"><button class="btn primary" type="submit">儲存規則</button></div>
       </form>
 
+      <div class="card rc-rules">
+        <p class="form-title">👥 小組分也加到個人</p>
+        <label class="check"><input id="g2m" type="checkbox"> 幫小組加分（或小組簡答得分）時，組員每個人的個人分也加一樣的分數</label>
+        <p class="hint">按「復原」會一起取消。學期統計會另外列「👥 小組」一欄，看得出個人分有多少是從小組來的。</p>
+      </div>
+
       <form id="stars-form" class="card rc-rules">
         <p class="form-title">✍️ 小組簡答：幾顆星換幾分</p>
         <p class="hint">在白板上幫各組的答案評分時，每個星星數會加這麼多小組分。</p>
@@ -325,6 +331,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/reading.js?v=202611021956"></script>
+  <script type="module" src="js/reading.js?v=202611022002"></script>
 </body>
 </html>

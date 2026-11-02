@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611021956';
-import { el, toast } from './ui.js?v=202611021956';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611021956';
-import { ask, sure } from './dialogs.js?v=202611021956';
-import * as quizbank from './admin-quiz.js?v=202611021956';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611022002';
+import { el, toast } from './ui.js?v=202611022002';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611022002';
+import { ask, sure } from './dialogs.js?v=202611022002';
+import * as quizbank from './admin-quiz.js?v=202611022002';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -637,10 +637,20 @@ async function give(b) {
   const { kind, ids } = A.target;
   $('bh-dialog').close();
   const batch = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  const label = `${b.emoji || ''} ${b.label}`.trim();
   const rows = ids.map((id) => ({
-    course_id: A.course.id, label: `${b.emoji || ''} ${b.label}`.trim(), points: b.points, batch,
-    student_id: kind === 'stu' ? id : null, group_id: kind === 'grp' ? id : null,
+    course_id: A.course.id, label, points: b.points, batch,
+    student_id: kind === 'stu' ? id : null, group_id: kind === 'grp' ? id : null, source: 'manual',
   }));
+  // 小組加分也累積到組員的個人分（設定裡可以關掉）；同一批，按「復原」會一起取消
+  if (kind === 'grp' && groupToMember()) {
+    for (const gid of ids) {
+      const g = byId(A.groups, gid);
+      for (const s of A.students.filter((x) => x.group_id === gid)) {
+        rows.push({ course_id: A.course.id, label: `👥 ${g?.name || '小組'}：${label}`.slice(0, 40), points: b.points, batch, student_id: s.id, group_id: null, source: 'group' });
+      }
+    }
+  }
   const { data, error } = await db.from('rc_events').insert(rows).select('*');
   if (error) return fail('加分', error);
   A.events.push(...data);
@@ -1006,16 +1016,17 @@ $('st-range').addEventListener('change', renderStats);
 
 function statRows(range) {
   return A.students.slice().sort(sortSeat).map((s) => {
-    let plus = 0, minus = 0, game = 0;
+    let plus = 0, minus = 0, game = 0, grp = 0;
     for (const e of A.events) {
       if (e.student_id !== s.id || !live(e) || !inRange(e.created_at, range)) continue;
       if (e.source === 'game') game += e.points;
+      else if (e.source === 'group') grp += e.points;
       else if (e.points > 0) plus += e.points;
       else minus += e.points;
     }
     const stamps = A.exchanges.filter((x) => x.student_id === s.id && live(x) && inRange(x.created_at, range)).reduce((a, x) => a + x.stamps, 0);
     const g = byId(A.groups, s.group_id);
-    return { s, group: g?.name || '', plus, minus, game, total: plus + minus + game, stamps };
+    return { s, group: g?.name || '', plus, minus, grp, game, total: plus + minus + grp + game, stamps };
   });
 }
 function renderStats() {
@@ -1026,11 +1037,11 @@ function renderStats() {
   const home = A.course.stamps;
   const th = (...xs) => el('tr', {}, ...xs.map((x, i) => el('th', { class: i >= (xs[0] === '組別' ? 1 : 3) ? 'num' : null }, x)));
   const tbl = el('table', { class: 'rc-table' },
-    el('thead', {}, th('座號', '姓名', '組別', '加分', '扣分', '🎡 遊戲', '合計', ...(home ? ['🎟 已換集點'] : []))),
+    el('thead', {}, th('座號', '姓名', '組別', '加分', '扣分', '👥 小組', '🎡 遊戲', '合計', ...(home ? ['🎟 已換集點'] : []))),
     el('tbody', {}, ...rows.map((r) => el('tr', {},
       el('td', {}, String(r.s.seat)), el('td', {}, r.s.name), el('td', {}, r.group),
       el('td', { class: 'num plus' }, r.plus ? `+${r.plus}` : '0'), el('td', { class: 'num minus' }, String(r.minus)),
-      el('td', { class: 'num' }, String(r.game)), el('td', { class: 'num total' }, String(r.total)),
+      el('td', { class: 'num' }, String(r.grp)), el('td', { class: 'num' }, String(r.game)), el('td', { class: 'num total' }, String(r.total)),
       ...(home ? [el('td', { class: 'num' }, String(r.stamps))] : [])))));
   $('st-students').replaceChildren(rows.length ? tbl : el('p', { class: 'muted' }, '還沒有名單'));
 
@@ -1113,8 +1124,8 @@ $('st-export').addEventListener('click', () => {
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = [
     [`${A.course.name} ${A.course.owner === A.uid ? (A.me?.subject || '熊熊遊樂園') : (A.labels[A.course.id] || '熊熊遊樂園')} 課堂分數`, `${fmtDate(range.start)}～${fmtDate(new Date(range.end - 864e5))}`].map(q).join(','),
-    ['座號', '姓名', '組別', '加分', '扣分', '遊戲', '合計', ...(home ? ['已換集點'] : []), '小組分'].map(q).join(','),
-    ...rows.map((r) => [r.s.seat, r.s.name, r.group, r.plus, r.minus, r.game, r.total, ...(home ? [r.stamps] : []),
+    ['座號', '姓名', '組別', '加分', '扣分', '小組分到個人', '遊戲', '合計', ...(home ? ['已換集點'] : []), '小組分'].map(q).join(','),
+    ...rows.map((r) => [r.s.seat, r.s.name, r.group, r.plus, r.minus, r.grp, r.game, r.total, ...(home ? [r.stamps] : []),
       r.s.group_id ? grpPoints(r.s.group_id, range) : ''].map(q).join(',')),
   ];
   const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
@@ -1132,6 +1143,7 @@ function renderSettings() {
   renderBehaviorList();
   A.rules = gameRules();
   renderGameRules();
+  $('g2m').checked = groupToMember();
   const st = Array.isArray(A.me.short_stars) ? A.me.short_stars : [1, 2, 3];
   [1, 2, 3].forEach((n) => { $(`star-${n}`).value = st[n - 1] ?? n; });
   const home = A.courses.find((c) => c.stamps && c.owner === A.uid);
@@ -1306,6 +1318,18 @@ $('rule-form').addEventListener('submit', async (e) => {
     renderExBadge();
   }
   toast('規則已儲存');
+});
+function groupToMember() { return A.me?.group_to_member !== false; }
+$('g2m').addEventListener('change', async () => {
+  const v = $('g2m').checked;
+  const { error } = await db.from('rc_teachers').update({ group_to_member: v }).eq('user_id', A.me.user_id);
+  if (error) {
+    $('g2m').checked = !v;
+    if (/group_to_member/.test(error.message || '')) return toast('還差一步：請班導在 Supabase 執行 15_小組分也加到個人.sql', { tone: 'error', seconds: 8 });
+    return fail('儲存', error);
+  }
+  A.me.group_to_member = v;
+  toast(v ? '小組加分時，組員的個人分也會一起加' : '小組分和個人分分開算');
 });
 $('stars-form').addEventListener('submit', async (e) => {
   e.preventDefault();
