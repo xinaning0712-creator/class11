@@ -1,13 +1,17 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611022002';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611022002';
-import { el, toast } from './ui.js?v=202611022002';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611022002';
+import { CLASS_NAME } from './config.js?v=202611030847';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611030847';
+import { el, toast } from './ui.js?v=202611030847';
+import { localDb, localAudioUrl, SOLO_PREFIX } from './exam-local.js?v=202611030847';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611030847';
 
 const $ = (id) => document.getElementById(id);
-const CACHE = 'shiny11-exam-config';      // 最後一次讀到的設定：考試時網路斷了也能用
-const CACHE_AUDIO = 'shiny11-exam-audio';
-const ABSENT = 'shiny11-exam-absent';
+// 同事版（exam.html?solo）：不連班網資料庫，資料只存在這台電腦
+const SOLO = new URLSearchParams(location.search).has('solo');
+const KEY_HEAD = SOLO ? 'solo-exam' : 'shiny11-exam';
+const CACHE = `${KEY_HEAD}-config`;       // 最後一次讀到的設定：考試時網路斷了也能用
+const CACHE_AUDIO = `${KEY_HEAD}-audio`;
+const ABSENT = `${KEY_HEAD}-absent`;
 const FACE = 'shiny11-exam-clock';
 const LAST_MINUTES = 5;                   // 最後幾分鐘提醒
 
@@ -23,7 +27,13 @@ let chosenDate = null;     // 老師點選的日期；null 表示自動
 let absent = new Set();
 let lastKey = '';
 
-document.title = `考試｜${CLASS_NAME}`;
+document.title = SOLO ? '考試' : `考試｜${CLASS_NAME}`;
+if (SOLO) {
+  const corner = document.querySelector('.exam-home');
+  corner.href = 'exam-setup.html';
+  corner.textContent = '⚙︎';
+  corner.setAttribute('aria-label', '考試設定');
+}
 
 // ---------- 缺考 ----------
 function loadAbsent() {
@@ -112,7 +122,7 @@ function renderSchedule(now) {
   if (!day) {
     lastKey = '';
     $('exam-slots').replaceChildren();
-    return setStatus(hasConfig ? '後台還沒有排考試科目和時間' : '老師還沒有設定考試：到後台「📝 考試」設定');
+    return setStatus(SOLO ? '請按右下角 ⚙︎ 設定考試' : hasConfig ? '後台還沒有排考試科目和時間' : '老師還沒有設定考試：到後台「📝 考試」設定');
   }
 
   const isToday = day.date === today;
@@ -163,11 +173,15 @@ function showAudio(day) {
   $('exam-audio').hidden = !show;
   if (!show && !audio.paused) audio.pause();
 }
-function setAudio(info) {
+let audioRaw = '';
+async function setAudio(info) {
   audioInfo = info;
-  const url = info?.url ?? '';
-  if (audio.getAttribute('src') === url || (!url && !audio.hasAttribute('src'))) return;   // 同一個檔案不要打斷播放
+  const raw = info?.url ?? '';
+  if (raw === audioRaw) return;   // 同一個檔案不要打斷播放
+  audioRaw = raw;
   audio.pause();
+  const url = raw.startsWith(SOLO_PREFIX) ? await localAudioUrl(raw).catch(() => '') : raw;
+  if (raw !== audioRaw) return;
   if (url) { audio.src = url; audio.load(); } else audio.removeAttribute('src');
   drawAudio();
 }
@@ -296,7 +310,7 @@ $('exam-fs').addEventListener('click', () => {
 function apply(text) {
   hasConfig = !!text;
   cfg = parseConfig(text);
-  document.title = `${cfg.title}｜${CLASS_NAME}`;
+  document.title = SOLO ? cfg.title : `${cfg.title}｜${CLASS_NAME}`;
   $('exam-title').textContent = cfg.title;
   $('exam-note').textContent = cfg.note;
   $('exam-note').hidden = !cfg.note;
@@ -306,7 +320,7 @@ function apply(text) {
 }
 
 async function load() {
-  const { data, error } = await classroomDb().from('settings').select('key, value').in('key', [EXAM_KEY, AUDIO_KEY]);
+  const { data, error } = await (SOLO ? localDb : classroomDb()).from('settings').select('key, value').in('key', [EXAM_KEY, AUDIO_KEY]);
   if (error) {
     if (!hasConfig) toast(`讀取失敗：${friendlyError(error)}`, { tone: 'error', seconds: 5 });
     return;
@@ -332,8 +346,9 @@ async function start() {
     keepAwake();
     loadAbsent();
     renderRoom();
-    if (configured) load();
+    if (SOLO || configured) load();
   });
+  if (SOLO) { await load(); return; }
   if (!configured) return;
   await load();
   classroomDb().channel('exam')

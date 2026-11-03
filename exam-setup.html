@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="rose">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>考試設定</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=202611030847">
+  <link rel="stylesheet" href="css/exam.css?v=202611030847">
+</head>
+<body class="admin">
+  <header class="admin-header">
+    <h1>考試設定</h1>
+    <div class="admin-actions"><a class="btn small" href="exam.html?solo">打開考試頁</a></div>
+  </header>
+  <p class="hint" style="max-width:1100px;margin:0 auto 1rem">這些設定只存在這台電腦的瀏覽器，換電腦要重新填；請不要用無痕視窗。</p>
+  <main class="tab-panel">
+      <section class="card add-grid">
+        <p class="form-title">這次考試</p>
+        <label class="field"><span>考試名稱</span><input id="ex-title" type="text" maxlength="20" list="ex-names" placeholder="例如：期中考"></label>
+        <label class="field wide"><span>考場提醒（可不填，會顯示在考試頁）</span><input id="ex-note" type="text" maxlength="60" placeholder="例如：寫完要檢查，不可以提早交卷"></label>
+        <datalist id="ex-names"><option value="期中考"></option><option value="期末考"></option><option value="第一次定期評量"></option><option value="第二次定期評量"></option></datalist>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">考試科目與時間</h2>
+        <div id="ex-days"></div>
+        <datalist id="ex-subjects"><option value="國語"></option><option value="數學"></option><option value="英語"></option><option value="社會"></option><option value="自然"></option></datalist>
+        <button id="ex-add-day" class="btn small" type="button">＋ 新增考試日</button>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">🎧 英聽音檔</h2>
+        <div class="ex-audio-row">
+          <label class="field"><span>在哪一天的考試頁出現</span><input id="ex-audio-date" type="date"></label>
+          <label class="btn small" for="ex-audio-file">⬆ 上傳音檔</label>
+          <input id="ex-audio-file" type="file" accept=".mp3,.m4a,.wav,audio/*" hidden>
+          <button id="ex-audio-del" class="btn small ghost" type="button" hidden>刪除音檔</button>
+        </div>
+        <p id="ex-audio-msg" class="hint"></p>
+        <p class="hint">上傳完會自動存好，不用按下面的儲存。音檔只存在這台電腦，不會上傳。</p>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">班級人數與座位表</h2>
+        <div class="ex-seat-form">
+          <label class="field"><span>班級人數</span><input id="ex-size" type="number" min="1" max="60" inputmode="numeric"></label>
+          <label class="field"><span>幾欄（左右）</span><input id="ex-cols" type="number" min="1" max="12" inputmode="numeric"></label>
+          <label class="field"><span>幾排（前後）</span><input id="ex-rows" type="number" min="1" max="12" inputmode="numeric"></label>
+          <label class="field"><span>座號排法</span><select id="ex-order"></select></label>
+          <button id="ex-flip" class="btn small" type="button">⇄ 左右翻轉</button>
+        </div>
+        <p class="ex-podium">↑ 講台</p>
+        <div id="ex-grid" class="ex-grid"></div>
+        <p id="ex-seat-msg" class="error"></p>
+        <p class="hint">拖拉座號到另一個位子就能互換，拖到虛線空位就是搬過去（也可以先點一個、再點另一個）。排好記得按儲存。改人數、欄排數或排法會重新排一次。</p>
+      </section>
+
+      <div class="ex-actions">
+        <button id="ex-save" class="btn primary" type="button">儲存</button>
+        <a class="btn" href="exam.html?solo">打開考試頁 ↗</a>
+        <span class="hint">座號只顯示號碼，不放姓名。缺考在考試頁點座號標記，只記在那台電腦，隔天自動清空。</span>
+      </div>
+    </main>
+
+  <script type="module" src="js/exam-setup.js?v=202611030847"></script>
+</body>
+</html>
