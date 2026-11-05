@@ -422,3 +422,9 @@ body.qz-editing-short label.check:has(#qz-frac) { display: none; }
 .rc-short-st { white-space: nowrap; color: #c2416a; }
 
 .rc-seat-ghost { opacity: .92; border-radius: 18px; }
+
+.rc-adjust { border: 0; background: transparent; font: inherit; font-weight: 700; color: inherit; cursor: pointer; padding: .1rem .3rem; border-radius: 8px; }
+.rc-adjust:hover { background: var(--rc-pick); }
+.rc-adjust small { opacity: .55; }
+.rc-reset { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin-top: .8rem; padding-top: .8rem; border-top: 1px dashed var(--line); }
+.rc-reset .btn { border-color: #e8b4b4; color: #b2453f; }

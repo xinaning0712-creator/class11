@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611041352';
-import { el, toast } from './ui.js?v=202611041352';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611041352';
-import { ask, sure } from './dialogs.js?v=202611041352';
-import * as quizbank from './admin-quiz.js?v=202611041352';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611051921';
+import { el, toast } from './ui.js?v=202611051921';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611051921';
+import { ask, sure } from './dialogs.js?v=202611051921';
+import * as quizbank from './admin-quiz.js?v=202611051921';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
@@ -1041,7 +1041,10 @@ function renderStats() {
     el('tbody', {}, ...rows.map((r) => el('tr', {},
       el('td', {}, String(r.s.seat)), el('td', {}, r.s.name), el('td', {}, r.group),
       el('td', { class: 'num plus' }, r.plus ? `+${r.plus}` : '0'), el('td', { class: 'num minus' }, String(r.minus)),
-      el('td', { class: 'num' }, String(r.grp)), el('td', { class: 'num' }, String(r.game)), el('td', { class: 'num total' }, String(r.total)),
+      el('td', { class: 'num' }, String(r.grp)), el('td', { class: 'num' }, String(r.game)),
+      el('td', { class: 'num total' }, A.isOwner
+        ? el('button', { class: 'rc-adjust', type: 'button', title: '手動調整分數', onclick: () => adjustScore('stu', r.s, r.total) }, String(r.total), el('small', {}, ' ✏️'))
+        : String(r.total)),
       ...(home ? [el('td', { class: 'num' }, String(r.stamps))] : [])))));
   $('st-students').replaceChildren(rows.length ? tbl : el('p', { class: 'muted' }, '還沒有名單'));
 
@@ -1050,7 +1053,9 @@ function renderStats() {
     el('thead', {}, th('組別', '人數', '小組分')),
     el('tbody', {}, ...gRows.map((r) => el('tr', {},
       el('td', {}, el('span', { class: 'rc-dot', style: `background:${groupColor(r.g)}` }), r.g.name),
-      el('td', { class: 'num' }, String(r.n)), el('td', { class: 'num total' }, String(r.pts))))))
+      el('td', { class: 'num' }, String(r.n)), el('td', { class: 'num total' }, A.isOwner
+        ? el('button', { class: 'rc-adjust', type: 'button', title: '手動調整分數', onclick: () => adjustScore('grp', r.g, r.pts) }, String(r.pts), el('small', {}, ' ✏️'))
+        : String(r.pts))))))
     : el('p', { class: 'muted' }, '還沒有分組'));
 
   // 加扣分紀錄（最新的 150 筆）
@@ -1106,10 +1111,73 @@ async function loadGames(range) {
   $('st-games').replaceChildren(...(data.length ? data.map((g) => el('div', { class: 'rc-log' },
     el('span', { class: 'muted' }, fmtTime(g.played_at)),
     el('span', {}, `${MODE_NAME[g.mode] || g.mode}・${g.source}・${g.player_count} 人`),
-    g.awarded_at ? el('span', { class: 'muted' }, '⭐ 已記分')
-      : A.isOwner ? el('button', { class: 'btn small primary', type: 'button', onclick: () => awardGame(g) }, '⭐ 記到課堂分數') : el('span', { class: 'muted' }, '未記分')))
+    el('span', { class: 'row-actions' },
+      g.awarded_at ? el('span', { class: 'muted' }, '⭐ 已記分')
+        : A.isOwner ? el('button', { class: 'btn small primary', type: 'button', onclick: () => awardGame(g) }, '⭐ 記到課堂分數') : el('span', { class: 'muted' }, '未記分'),
+      A.isOwner ? el('button', { class: 'btn small ghost', type: 'button', onclick: () => removeGame(g) }, '🗑 刪除') : '')))
     : [el('p', { class: 'muted' }, '這段期間還沒有玩過熊熊遊樂園')]));
 }
+/* 刪除一場熊熊遊樂園（例如試玩的）：這一場換來的課堂分數也一起取消 */
+async function removeGame(g) {
+  if (!(await sure(`確定要刪除這一場嗎？\n${fmtTime(g.played_at)}・${MODE_NAME[g.mode] || g.mode}${g.awarded_at ? '\n這一場記到的課堂分數也會一起取消。' : ''}`, { ok: '刪除', danger: true }))) return;
+  const now = new Date().toISOString();
+  if (g.awarded_at) {
+    const { error } = await db.from('rc_events').update({ undone_at: now }).eq('course_id', A.course.id).eq('game_id', g.id).is('undone_at', null);
+    if (error) return fail('取消分數', error);
+  }
+  const { error } = await db.from('game_results').delete().eq('id', g.id);
+  if (error) return fail('刪除', error);
+  toast('已刪除這一場');
+  await loadCourse();
+}
+
+/* 手動調整：直接把分數改成想要的數字（會記一筆「✏️ 手動調整」，紀錄裡看得到、也可以撤銷） */
+async function adjustScore(kind, x, current) {
+  const who = kind === 'stu' ? stuLabel(x) : x.name;
+  const v = await ask(`把 ${who} 的分數改成幾分？\n（目前這段期間是 ${current} 分）`, {
+    value: String(current), ok: '調整',
+    check: (t) => (/^-?\d+$/.test(t) && Math.abs(+t) <= 9999 ? '' : '請輸入數字'),
+  });
+  if (v === null) return;
+  let diff = Number(v) - current;
+  if (!diff) return;
+  const batch = `adj-${Date.now().toString(36)}`, rows = [];
+  while (diff) {                                   // 一筆最多 ±50，差太多就分成幾筆
+    const p = Math.max(-50, Math.min(50, diff));
+    rows.push({ course_id: A.course.id, label: '✏️ 手動調整', points: p, batch, source: 'manual',
+      student_id: kind === 'stu' ? x.id : null, group_id: kind === 'grp' ? x.id : null });
+    diff -= p;
+  }
+  const { error } = await db.from('rc_events').insert(rows);
+  if (error) return fail('調整', error);
+  toast(`${who} 已調整成 ${v} 分`);
+  await loadCourse();
+}
+
+/* 🧹 分數歸零：這個班的加扣分、熊熊遊樂園場次、小組簡答紀錄全部清掉（名單、分組、座位不動） */
+async function resetCourse() {
+  const c = A.course;
+  const typed = await ask(`確定要把「${c.name}」的分數全部歸零嗎？\n・個人分、小組分全部變 0\n・熊熊遊樂園場次、小組簡答紀錄會刪掉${c.stamps ? '\n・兌換集點的紀錄也會撤銷' : ''}\n・名單、分組、座位表不會動\n請輸入班級名稱「${c.name}」確認：`, {
+    ok: '歸零', danger: true, check: (t) => (t === c.name ? '' : `請輸入「${c.name}」`),
+  });
+  if (typed !== c.name) return;
+  const now = new Date().toISOString();
+  try {
+    const r1 = await db.from('rc_events').update({ undone_at: now }).eq('course_id', c.id).is('undone_at', null);
+    if (r1.error) throw r1.error;
+    for (const x of A.exchanges.filter(live)) {
+      const { error } = await db.rpc('rc_undo_exchange', { p_id: x.id });
+      if (error) throw error;
+    }
+    const r2 = await db.from('game_results').delete().eq('course_id', c.id);
+    if (r2.error) throw r2.error;
+    const r3 = await db.from('rc_short_answers').delete().eq('course_id', c.id);
+    if (r3.error && !/rc_short_answers|42P01|PGRST205/.test(`${r3.error.code} ${r3.error.message}`)) throw r3.error;
+  } catch (e) { return fail('歸零', e); }
+  toast(`「${c.name}」的分數已經歸零`);
+  await loadCourse();
+}
+
 async function awardGame(g) {
   const { data, error } = await db.rpc('rc_award_game', { p_game: g.id });
   if (error) return fail('記分', error);
@@ -1151,6 +1219,7 @@ function renderSettings() {
   if (home) $('rule-rate').value = home.point_rate;
   $('me-name').value = A.me.name;
   $('me-subject').value = A.me.subject;
+  $('cls-reset').textContent = `🧹 把「${A.course.name}」的分數歸零`;
   $('cls-list').replaceChildren(...A.courses.filter((c) => c.owner === A.uid).map((c) => el('div', { class: 'rc-cls-row' },
     el('b', {}, c.name), el('span', { class: 'muted' }, `${c.seat_count} 人${c.stamps ? '・可換扭蛋集點' : ''}`),
     el('button', { class: 'btn small ghost', type: 'button', onclick: () => renameCourse(c) }, '改名'),
@@ -1351,6 +1420,7 @@ $('me-form').addEventListener('submit', async (e) => {
   $('rc-who').textContent = A.me.subject;
   toast('已儲存');
 });
+$('cls-reset').addEventListener('click', resetCourse);
 $('cls-add').addEventListener('click', async () => {
   const name = await ask('新班級的名稱（例如：510）：', { ok: '新增' });
   if (!name) return;

@@ -3,9 +3,9 @@
 //  輸入房間代碼 → 選組別 → 看題目、打字作答 → 送出（送出後鎖住）→ 看評分
 //  不小心關掉網頁：3 小時內重新打開會自動回到同一組；白板也可以叫出「📲 回來玩」
 // ============================================================
-import { connect, sound, onTap, keep, randomId } from './live-common.js?v=202611041352';
-import { groupColor, cleanAnswer, esc, REJOIN_MS, ANSWER_MAX } from './short-common.js?v=202611041352';
-import { resetZoom } from './no-zoom.js?v=202611041352';
+import { connect, sound, onTap, keep, randomId } from './live-common.js?v=202611051921';
+import { groupColor, cleanAnswer, esc, REJOIN_MS, ANSWER_MAX } from './short-common.js?v=202611051921';
+import { resetZoom } from './no-zoom.js?v=202611051921';
 
 const $ = (id) => document.getElementById(id);
 const P = {

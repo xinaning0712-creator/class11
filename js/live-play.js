@@ -6,11 +6,11 @@
 // ============================================================
 import {
   LIVE, TEAMS, CHOICES, LEVELS, CANDY, candyCss, makeQuestion, cleanQuestion, promptHTML, typeLabel, fracHTML, esc,
-  optionHTML, cleanSet, makeDeck,
+  optionHTML, cleanSet, makeDeck, toGameQuestion,
   cleanName, cleanSeat, SEAT_COUNT, randomId, connect, sound, onTap, store, keep, replayAnim
-} from './live-common.js?v=202611041352';
-import { candyBallImg } from './candy-faces.js?v=202611041352';
-import { resetZoom } from './no-zoom.js?v=202611041352';   // iPad 防放大（放大了會自動縮回）
+} from './live-common.js?v=202611051921';
+import { candyBallImg } from './candy-faces.js?v=202611051921';
+import { resetZoom } from './no-zoom.js?v=202611051921';   // iPad 防放大（放大了會自動縮回）
 
 const $ = id => document.getElementById(id);
 const P = {
@@ -170,7 +170,7 @@ function handle(event,p){
     case 'start':
       P.mode=p.mode; P.teamN=p.teamN; P.team=teamOf(p.map);
       P.level=LEVELS[p.level]?p.level:'easy';
-      useSet(p.set);
+      useSet(p.set, p.gid, true);
       if(P.mode==='candy'){ startPlay({ left:p.left, correct:0 }); break; }
       if(P.team<0){ showWait(); send('join',joinInfo()); break; }  // 剛好晚一步加入：再報到一次拿隊伍
       startPlay({ left:p.left, correct:0 });
@@ -187,9 +187,9 @@ function handle(event,p){
 function applySync(s){
   if(s.colors) setColors(s.colors);
   if(s.phase==='play'){
-    P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN; useSet(s.set);
+    P.mode=s.mode; P.level=LEVELS[s.level]?s.level:'easy'; P.teamN=s.teamN; useSet(s.set, s.gid, false);
     P.team=Number.isInteger(s.team)?s.team:-1;
-    if(P.team>=0||P.mode==='candy'){ startPlay({ left:s.left, correct:s.correct }); return; }
+    if(P.team>=0||P.mode==='candy'){ startPlay({ left:s.left, correct:s.correct, done:s.done }); return; }
   }else if(s.phase==='race'){
     if(!P.mode) P.mode='marble';
     showRace(); return;
@@ -277,7 +277,37 @@ function ballHTML(size){ const c=CANDY[P.color]; return c ? '<span class="my-bal
 /* 🌸 糖果球個人賽用手繪療癒風（其他玩法維持原樣） */
 function setCozy(){ document.body.classList.toggle('cozy', P.mode==='candy'); }
 /* 老師選了自訂題組：在 iPad 上建一台抽題機 */
-function useSet(raw){ P.set=raw?cleanSet(raw):null; P.deck=P.set?makeDeck(P.set):null; }
+/* 照題組順序（拔河、賽跑）：從第 1 題答到最後一題，答完就停；不小心關掉網頁回來，從剛剛那題接著答 */
+function useSet(raw, gid, fresh){
+  P.set=raw?cleanSet(raw):null;
+  P.inOrder=!!(raw&&raw.inOrder&&P.set);
+  P.posKey='fr-pos-'+P.code+'-'+(gid||0);
+  if(fresh) keep.set(P.posKey,'0');
+  if(!P.set){ P.deck=null; return; }
+  if(!P.inOrder){ P.deck=makeDeck(P.set); return; }
+  const qs=P.set.questions;
+  let pos=Math.max(0, Number(keep.get(P.posKey))||0);
+  P.deck=()=>{
+    if(pos>=qs.length) return null;
+    const q=toGameQuestion(qs[pos], P.set);
+    pos++; keep.set(P.posKey,String(pos));
+    q.no=pos; q.total=qs.length;
+    return q;
+  };
+}
+/* 全部題目都答完了 */
+function finishAll(){
+  P.playing=false; P.token++;
+  $('playOpts').innerHTML='';
+  $('playPrompt').innerHTML='';
+  $('playType').textContent='';
+  $('playCalm').classList.add('hidden');
+  $('playTimeup').innerHTML='🎉 全部答完了！<br><small>看白板，等大家一起～</small>';
+  $('playTimeup').classList.remove('hidden');
+  stopCountdown();
+  send('done',{ id:P.id });
+  sound.win();
+}
 function endPlaying(){ P.playing=false; P.token++; stopCountdown(); }
 
 /* ============================================================
@@ -302,14 +332,17 @@ function startPlay(s){
   }
   $('playCount').textContent='⭐ '+P.correct;
   $('playTimeup').classList.add('hidden');
+  $('playTimeup').textContent='⏰ 時間到！看白板～';
   showScreen('pPlay');
-  startCountdown($('playTimer'), s.left, ()=>{ P.playing=false; P.token++; $('playTimeup').classList.remove('hidden'); });
+  startCountdown($('playTimer'), s.left, ()=>{ P.playing=false; P.token++; $('playTimeup').textContent='⏰ 時間到！看白板～'; $('playTimeup').classList.remove('hidden'); });
+  if(s.done){ finishAll(); return; }
   nextPlayQ();
 }
 function nextPlayQ(){
   if(!P.playing) return;
   P.q=P.deck ? P.deck() : makeQuestion(P.level);
-  $('playType').textContent=typeLabel(P.q);
+  if(!P.q){ finishAll(); return; }
+  $('playType').textContent=typeLabel(P.q)+(P.q.no?'　第 '+P.q.no+' / '+P.q.total+' 題':'');
   $('playPrompt').innerHTML=promptHTML(P.q);
   const T=(P.mode==='candy'?CANDY[P.color]:TEAMS[P.team])||TEAMS[0];
   $('playOpts').innerHTML=P.q.options.map((o,i)=>'<button class="opt" data-index="'+i+'" style="border-color:'+T.light+'">'+optionHTML(o,P.q)+'</button>').join('');
