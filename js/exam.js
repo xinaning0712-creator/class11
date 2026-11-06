@@ -1,9 +1,9 @@
 // 考試頁：投影到白板。考程、座位在後台設定；缺考只記在這台裝置，過了今天自動清空
-import { CLASS_NAME } from './config.js?v=202611061442';
-import { configured, classroomDb, friendlyError } from './db.js?v=202611061442';
-import { el, toast } from './ui.js?v=202611061442';
-import { localDb, localAudioUrl, SOLO_PREFIX } from './exam-local.js?v=202611061442';
-import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611061442';
+import { CLASS_NAME } from './config.js?v=202611061447';
+import { configured, classroomDb, friendlyError } from './db.js?v=202611061447';
+import { el, toast } from './ui.js?v=202611061447';
+import { localDb, localAudioUrl, SOLO_PREFIX } from './exam-local.js?v=202611061447';
+import { EXAM_KEY, AUDIO_KEY, parseAudio, parseConfig, isoDate, dayLabel, pickDay, slotStatus, toMinutes } from './exam-core.js?v=202611061447';
 
 const $ = (id) => document.getElementById(id);
 // 同事版（exam.html?solo）：不連班網資料庫，資料只存在這台電腦

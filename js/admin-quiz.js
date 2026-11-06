@@ -1,13 +1,13 @@
 // 後台：🎮 題庫（全班對戰用的自訂題組）
 //  - 題組列表：新增、編輯、複製、刪除
 //  - 編輯器：題目、圖片、2～4 個選項、勾選正解；可整批從試算表貼上
-import { friendlyError } from './db.js?v=202611061442';
-import { el, toast } from './ui.js?v=202611061442';
+import { friendlyError } from './db.js?v=202611061447';
+import { el, toast } from './ui.js?v=202611061447';
 import {
   SUBJECTS, MAX_QUESTIONS, LIMITS, IMG_BUCKET, cleanQuestion, parseBulk, richText, DEMO_SET,
-} from './quiz-bank.js?v=202611061442';
-import { sure } from './dialogs.js?v=202611061442';
-import { readSheetFile } from './sheet-import.js?v=202611061442';
+} from './quiz-bank.js?v=202611061447';
+import { sure } from './dialogs.js?v=202611061447';
+import { readSheetFile } from './sheet-import.js?v=202611061447';
 
 const $ = (id) => document.getElementById(id);
 const TABLE = 'quiz_sets';
