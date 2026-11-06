@@ -386,7 +386,10 @@ body[data-rc-dark] .rc-rule-n { background: var(--bg); color: var(--ink); }
   color: var(--ink); font-size: 1.1rem; letter-spacing: .2em;
 }
 .rc-seatgrid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 28px); align-items: start; }
+/* 講台換到下面＝從老師站的地方看過去：上下、左右都要反過來（整張座位表轉 180 度） */
 .rc-seatwrap.flip .rc-seatcol { flex-direction: column-reverse; }
+.rc-seatwrap.flip .rc-seatgrid { direction: rtl; align-items: end; }
+.rc-seatwrap.flip .rc-seatcol { direction: ltr; }
 .rc-seatcol { display: flex; flex-direction: column; gap: clamp(5px, .6vw, 10px); }
 .rc-slot { min-height: clamp(84px, 8.6vw, 132px); border-radius: 18px; display: flex; }
 .rc-slot.empty { border: 2px dashed var(--line); background: transparent; }

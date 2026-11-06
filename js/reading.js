@@ -5,11 +5,11 @@
 //   👥 名單與分組  🎟 兌換集點（11 班）  📊 學期統計  🎮 題庫  ⚙️ 設定
 //  班導（用自己的老師帳號登入）：只看得到 11 班的名單、兌換集點、學期統計
 // ============================================================
-import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611051921';
-import { el, toast } from './ui.js?v=202611051921';
-import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611051921';
-import { ask, sure } from './dialogs.js?v=202611051921';
-import * as quizbank from './admin-quiz.js?v=202611051921';
+import { configured, rcDb, setRememberRc, friendlyError } from './db.js?v=202611061442';
+import { el, toast } from './ui.js?v=202611061442';
+import { avatarImg, avatarOf, AVATAR_COUNT, avatarName } from './bear-friends.js?v=202611061442';
+import { ask, sure } from './dialogs.js?v=202611061442';
+import * as quizbank from './admin-quiz.js?v=202611061442';
 
 const $ = (id) => document.getElementById(id);
 const DOMAIN = '@shiny11.local';
